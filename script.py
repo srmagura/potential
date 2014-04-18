@@ -1,7 +1,6 @@
 import numpy as np
 import sys
 
-import solver
 import problems
 
 problem = problems.ComplexWave()
@@ -11,7 +10,7 @@ def test_convergence():
     prev_error = None
 
     for N in (16, 32, 64, 128, 256): 
-        my_solver = solver.Solver(problem, N)
+        my_solver = problem.get_solver(N)
         error = my_solver.run()
 
         print('---- {0} x {0} ----'.format(N)) 
@@ -39,6 +38,6 @@ if __name__ == '__main__':
         N = 16
 
     if verbose:
-        my_solver = solver.Solver(problem, N, verbose=True)
+        my_solver = problem.get_solver(N, verbose=True)
         error = my_solver.run()
         print('Error:', error)

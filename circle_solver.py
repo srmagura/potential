@@ -4,6 +4,9 @@ import math
 import collections
 import numpy as np
 
+import solver
+import matrices
+
 # Grid size for boundary. Should be divisible by 2
 fourier_N = 1024
 
@@ -14,15 +17,15 @@ fourier_lower_bound = 5e-15
 #plot_grid = False
 plot_c1_error = False
 
-class CircularDomain:
+class CircleSolver(solver.Solver):
     # Side length of square domain on which AP is solved
     AD_len = 2*np.pi
 
     # Radius of circular region Omega
     R = 2.3
 
-    def __init__(self, problem):
-        self.problem = problem
+    def __init__(self, problem, N, **kwargs):
+        super().__init__(problem, N, **kwargs)
 
     # Get the polar coordinates of grid point (i,j)
     def get_polar(self, i, j):
@@ -35,7 +38,6 @@ class CircularDomain:
             self.AD_len * j / self.N - self.AD_len/2)
         return x
 
-
     # Choose which Fourier coefficients to keep
     def choose_n_basis(self, J_range, c0_raw):
         for J in J_range:
@@ -46,7 +48,7 @@ class CircularDomain:
 
     # Applies FFT to the boundary data to get c0, then solves the 
     # system Q1 * c1 = -Q0 * c0 by least squares to find c1. 
-    def get_c0(self):
+    def get_c(self):
         grid = np.arange(0, 2*np.pi, 2*np.pi / fourier_N)
         discrete_phi = [self.problem.eval_bc(th) for th in grid]
         c0_raw = np.fft.fft(discrete_phi)
@@ -66,31 +68,11 @@ class CircularDomain:
             c0[i] = c0_raw[J] / fourier_N
             i += 1
 
-        return c0
+        Q0 = self.get_Q(0)
+        Q1 = self.get_Q(1)
 
-        #if verbose:
-        #    fourier_test(c0, 'c0', self.problem.eval_expected)
-        #    fourier_test(c1, 'c1', 
-        #        self.problem.eval_expected_derivative)
-
-    # Prints the error caused by truncating the Fourier series.
-#    def fourier_test(self, c, name, expected):
-#        error = []
-#        exp = []
-#        act = []
-#        step = .01
-
-#        th_range = np.arange(0, 2*np.pi, step)
-#        for th in th_range:
-#            x = 0
-#            for J in J_dict:
-#                x += c[J_dict[J]] * cmath.exp(complex(0, J*th))
-
-#            error.append(abs(x - expected(th)))
-#            act.append(x)
-#            exp.append(expected(th))
-
-#        print('Fourier error ({}): '.format(name), max(error))
+        c1 = np.linalg.lstsq(Q1, -Q0.dot(c0))[0]
+        return c0, c1
 
 
     def _v0(self, J, r, th):
@@ -168,64 +150,52 @@ class CircularDomain:
 
         return boundary
 
-    # Construct the various grids used in the algorithm.
-    def construct_grids(self, N):
-        self.N = N
-        self.N0 = set(it.product(range(0, N+1), repeat=2))
-        self.M0 = set(it.product(range(1, N), repeat=2))
 
-        #K0 = set()
-        #for i, j in it.product(range(0, N+1), repeat=2):
-        #    if(i != 0 and i != N) or (j != 0 and j != N):
-        #        K0.add((i, j))
+    # Calculate the difference potential of a function xi 
+    # that is defined on gamma.
+    def get_potential(self, xi):
+        w = np.zeros([(self.N-1)**2], dtype=complex)
 
-        self.Mplus = {(i, j) for i, j in self.M0 
-            if self.get_polar(i, j)[0] <= self.R}
-        self.Mminus = self.M0 - self.Mplus
+        for l in range(len(self.gamma)):
+            w[matrices.get_index(self.N, *self.gamma[l])] = xi[l]
 
-        self.Nplus = set()
-        self.Nminus = set()
-               
-        for i, j in self.M0:
-            Nm = set([(i, j), (i-1, j), (i+1, j), (i, j-1), (i, j+1)])
+        Lw = np.ravel(self.L.dot(w))
 
-            if (i, j) in self.Mplus:
-                self.Nplus |= Nm
-            else:
-                self.Nminus |= Nm
+        for i,j in self.Mminus:
+            Lw[matrices.get_index(self.N, i, j)] = 0
 
-        self.gamma = list(self.Nplus & self.Nminus)
+        return w - self.LU_factorization.solve(Lw)
 
-#        def convert(points):
-#            x = []
-#            y = []
+    def get_projection(self, potential):
+        projection = np.zeros(len(self.gamma), dtype=complex)
 
-#            for p in points:
-#                x1, y1 = get_coord(*p)
-#                x.append(x1)
-#                y.append(y1)
+        for l in range(len(self.gamma)):
+            index = matrices.get_index(self.N, *self.gamma[l])
+            projection[l] = potential[index]
 
-#            return x, y
+        return projection
 
-#        if plot_grid:
-#            plt.plot(*convert(M0), marker='o', label='M0', ms=1, linestyle='',
-#                color='black')
-#            plt.plot(*convert(gamma), marker='^', label='M0', ms=4, linestyle='',
-#                color='red')
-            #plt.plot(*convert(Mplus), marker='o', label='Mplus', linestyle='',
-            #    color='gray')
-            #plt.plot(*convert(Nplus), marker='x', label='Nplus', ms=9, linestyle='',
-            #    color='black')
+    # Returns the matrix Q0 or Q1, depending on the value of `index`.
+    def get_Q(self, index):
+        columns = []
 
-#            xdata = []
-#            ydata = []
-#            for th in np.linspace(0, 4*np.pi, 2000):
-#                xdata.append(R*np.cos(th))
-#                ydata.append(R*np.sin(th))
+        for J in self.J_dict:
+            ext = self.extend_basis(J, index)
+            potential = self.get_potential(ext)
+            projection = self.get_projection(potential)
 
-#            plt.plot(xdata, ydata, color='blue')
-#            plt.xlim(-4,4)
-#            plt.ylim(-4,4)
-            #plt.legend()
-#            plt.show()
+            columns.append(projection - ext)
 
+        return np.column_stack(columns)
+
+    def run(self):
+        c0, c1 = self.get_c()
+        if self.verbose:
+            print('Using {} basis functions.'.
+                format(len(self.J_dict)))
+
+        ext = self.extend_boundary(c0,c1)
+        u_act = self.get_potential(ext)
+
+        error = self.eval_error(u_act)
+        return error

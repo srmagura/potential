@@ -1,19 +1,22 @@
 import numpy as np
-import domain
+import circle_solver
 
-class ComplexWave:
+class Problem:
+    def get_solver(self, *args, **kwargs):
+        return self.solver_class(self, *args, **kwargs)
+
+class ComplexWave(Problem):
     # Wave number
     k = 1 
     kx = .8*k
     ky = .6*k
 
-    def __init__(self):
-        self.domain = domain.CircularDomain(self)
+    R = 2.3
+    solver_class = circle_solver.CircleSolver
 
     # Boundary data
     def eval_bc(self, th):
-        R = self.domain.R
-        return self.eval_expected(R*np.cos(th), R*np.sin(th))
+        return self.eval_expected(self.R*np.cos(th), self.R*np.sin(th))
 
     # Expected solution
     def eval_expected(self, x, y):
