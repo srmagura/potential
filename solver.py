@@ -9,6 +9,7 @@ class Solver:
 
     def __init__(self, problem, N, **kwargs):
         self.problem = problem
+        self.k = self.problem.k
         self.N = N
 
         if 'verbose' in kwargs:
