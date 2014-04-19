@@ -24,9 +24,6 @@ class CircleSolver(solver.Solver):
     # Radius of circular region Omega
     R = 2.3
 
-    def __init__(self, problem, N, **kwargs):
-        super().__init__(problem, N, **kwargs)
-
     # Get the polar coordinates of grid point (i,j)
     def get_polar(self, i, j):
         x, y = self.get_coord(i, j)
@@ -37,6 +34,9 @@ class CircleSolver(solver.Solver):
         x = (self.AD_len * i / self.N - self.AD_len/2, 
             self.AD_len * j / self.N - self.AD_len/2)
         return x
+
+    def is_interior(self, i, j):
+        return self.get_polar(i, j)[0] <= self.R
 
     # Calculate the difference potential of a function xi 
     # that is defined on gamma.

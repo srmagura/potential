@@ -50,12 +50,18 @@ class Solver:
         self.M0 = set(it.product(range(1, self.N), repeat=2))
 
         self.K0 = set()
-        for i, j in it.product(range(0, self.N+1), repeat=2):
-            if(i != 0 and i != self.N) or (j != 0 and j != self.N):
-                self.K0.add((i, j))
+        self.src_f = np.zeros((self.N-1)**2, dtype=complex)
 
-        self.Mplus = {(i, j) for i, j in self.M0 
-            if self.get_polar(i, j)[0] <= self.R}
+        #for i, j in it.product(range(0, self.N+1), repeat=2):
+        #    if(i != 0 and i != self.N) or (j != 0 and j != self.N):
+        for i, j in it.product(range(1, self.N), repeat=2):
+            self.K0.add((i, j))
+            self.src_f[matrices.get_index(self.N, i, j)] =\
+                self.problem.eval_f(*self.get_coord(i, j))
+
+        self.Mplus = {(i, j) for i, j in self.M0
+            if self.is_interior(i, j)} 
+            
         self.Mminus = self.M0 - self.Mplus
 
         self.Nplus = set()
@@ -70,3 +76,20 @@ class Solver:
                 self.Nminus |= Nm
 
         self.gamma = list(self.Nplus & self.Nminus)
+
+class SquareSolver(Solver):
+
+    AD_len = 2*np.pi
+
+    # Get the rectangular coordinates of grid point (i,j)
+    def get_coord(self, i, j):
+        x = (self.AD_len * i / self.N - self.AD_len/2, 
+            self.AD_len * j / self.N - self.AD_len/2)
+        return x
+
+    def is_interior(self, i, j):
+        return (i != 0 and i != self.N and j != 0 and j != self.N)
+
+    def run(self):
+        u_act = self.LU_factorization.solve(self.src_f)
+        return self.eval_error(u_act)
