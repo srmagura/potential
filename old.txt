@@ -31,29 +31,3 @@
             #plt.legend()
 #            plt.show()
             
-
-
-
-        #if verbose:
-        #    fourier_test(c0, 'c0', self.problem.eval_expected)
-        #    fourier_test(c1, 'c1', 
-        #        self.problem.eval_expected_derivative)
-
-    # Prints the error caused by truncating the Fourier series.
-#    def fourier_test(self, c, name, expected):
-#        error = []
-#        exp = []
-#        act = []
-#        step = .01
-
-#        th_range = np.arange(0, 2*np.pi, step)
-#        for th in th_range:
-#            x = 0
-#            for J in J_dict:
-#                x += c[J_dict[J]] * cmath.exp(complex(0, J*th))
-
-#            error.append(abs(x - expected(th)))
-#            act.append(x)
-#            exp.append(expected(th))
-
-#        print('Fourier error ({}): '.format(name), max(error))

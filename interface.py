@@ -31,7 +31,6 @@ class Interface:
                 N = int(sys.argv[1])
             except ValueError:
                 verbose = False
-                plot_grid = False
                 self.test_convergence()
                    
         if N <= 0:

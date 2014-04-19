@@ -2,8 +2,7 @@ import itertools as it
 import numpy as np
 import scipy.sparse.linalg
 
-import problems
-import matrices
+import potential.matrices as matrices
 
 class Solver:  
 
@@ -22,10 +21,6 @@ class Solver:
             print('Grid is {0} x {0}.'.format(self.N))
 
         self.L = matrices.get_L(self.N, self.AD_len, self.problem.k)
-        if self.verbose:
-            print('Sparse matrix has {} entries.'.
-                format(self.L.nnz))
-
         self.LU_factorization = scipy.sparse.linalg.splu(self.L)
 
 
@@ -49,18 +44,20 @@ class Solver:
         self.N0 = set(it.product(range(0, self.N+1), repeat=2))
         self.M0 = set(it.product(range(1, self.N), repeat=2))
 
-        self.K0 = set()
+        #self.K0 = set()
         self.src_f = np.zeros((self.N-1)**2, dtype=complex)
 
         #for i, j in it.product(range(0, self.N+1), repeat=2):
         #    if(i != 0 and i != self.N) or (j != 0 and j != self.N):
-        for i, j in it.product(range(1, self.N), repeat=2):
-            self.K0.add((i, j))
-            self.src_f[matrices.get_index(self.N, i, j)] =\
-                self.problem.eval_f(*self.get_coord(i, j))
+        #for i, j in it.product(range(1, self.N), repeat=2):
+            #self.K0.add((i, j))
 
-        self.Mplus = {(i, j) for i, j in self.M0
-            if self.is_interior(i, j)} 
+        self.Mplus = set()
+        for i, j  in self.M0:
+            if self.is_interior(i, j): 
+                self.Mplus.add((i, j))
+                self.src_f[matrices.get_index(self.N, i, j)] =\
+                    self.problem.eval_f(*self.get_coord(i, j))
             
         self.Mminus = self.M0 - self.Mplus
 

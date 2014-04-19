@@ -4,8 +4,8 @@ import math
 import collections
 import numpy as np
 
-import solver
-import matrices
+from potential.solver import Solver
+import potential.matrices as matrices
 
 # Grid size for boundary. Should be divisible by 2
 fourier_N = 1024
@@ -14,15 +14,16 @@ fourier_N = 1024
 # coefficients lower than this number
 fourier_lower_bound = 5e-15
 
-#plot_grid = False
-plot_c1_error = False
-
-class CircleSolver(solver.Solver):
+class CircleSolver(Solver):
     # Side length of square domain on which AP is solved
     AD_len = 2*np.pi
 
     # Radius of circular region Omega
     R = 2.3
+
+    def __init__(self, problem, N, **kwargs):
+        super().__init__(problem, N, **kwargs)
+        problem.R = self.R
 
     # Get the polar coordinates of grid point (i,j)
     def get_polar(self, i, j):
@@ -53,12 +54,12 @@ class CircleSolver(solver.Solver):
 
         return w - self.LU_factorization.solve(Lw)
 
-    def get_projection(self, potential):
+    def get_trace(self, data):
         projection = np.zeros(len(self.gamma), dtype=complex)
 
         for l in range(len(self.gamma)):
             index = matrices.get_index(self.N, *self.gamma[l])
-            projection[l] = potential[index]
+            projection[l] = data[index]
 
         return projection
 
@@ -69,7 +70,7 @@ class CircleSolver(solver.Solver):
         for J in self.J_dict:
             ext = self.extend_basis(J, index)
             potential = self.get_potential(ext)
-            projection = self.get_projection(potential)
+            projection = self.get_trace(potential)
 
             columns.append(projection - ext)
 
@@ -108,17 +109,38 @@ class CircleSolver(solver.Solver):
         Q0 = self.get_Q(0)
         Q1 = self.get_Q(1)
 
-        c1 = np.linalg.lstsq(Q1, -Q0.dot(c0))[0]
+        self.ap_sol_f = self.LU_factorization.solve(self.src_f)
+        rhs = -Q0.dot(c0) - self.get_trace(self.ap_sol_f)
+        c1 = np.linalg.lstsq(Q1, rhs)[0]
+
         return c0, c1
 
-    def extend(self, r, xi0, xi1, d2_xi0_th):
+    def fourier_test(self, c, name, expected):
+        step = .01
+        error = []
+
+        th_range = np.arange(0, 2*np.pi, step)
+        for th in th_range:
+            x = 0
+            for J, i in self.J_dict.items():
+                x += c[i] * np.exp(complex(0, J*th))
+
+            error.append(abs(x - expected(th)))
+
+        print('Fourier error ({}): '.format(name), max(error))
+
+    def extend(self, r, th, xi0, xi1, d2_xi0_th):
         R = self.R
         k = self.k
 
         derivs = []
         derivs.append(xi0) 
         derivs.append(xi1)
-        derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
+
+        x = R * np.cos(th)
+        y = R * np.sin(th)
+        f = self.problem.eval_f(x, y)
+        derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0 + f)
 
         v = 0
         for l in range(len(derivs)):
@@ -136,9 +158,9 @@ class CircleSolver(solver.Solver):
             exp = np.exp(complex(0, J*th))
 
             if index == 0:
-                ext[l] = self.extend(r, exp, 0, -J**2 * exp)
+                ext[l] = self.extend(r, th, exp, 0, -J**2 * exp)
             else:
-                ext[l] = self.extend(r, 0, exp, 0)  
+                ext[l] = self.extend(r, th, 0, exp, 0)  
 
         return ext
 
@@ -162,7 +184,7 @@ class CircleSolver(solver.Solver):
                 xi1 += c1[i] * exp
                 d2_xi0_th += -J**2 * c0[i] * exp
 
-            boundary[l] = self.extend(r, xi0, xi1, d2_xi0_th)
+            boundary[l] = self.extend(r, th, xi0, xi1, d2_xi0_th)
 
         return boundary
 
@@ -171,9 +193,11 @@ class CircleSolver(solver.Solver):
         if self.verbose:
             print('Using {} basis functions.'.
                 format(len(self.J_dict)))
+            self.fourier_test(c1, 'c1', 
+                self.problem.eval_expected_derivative)
 
         ext = self.extend_boundary(c0,c1)
-        u_act = self.get_potential(ext)
+        u_act = self.get_potential(ext) + self.ap_sol_f
 
         error = self.eval_error(u_act)
         return error
