@@ -7,9 +7,15 @@ class Interface:
         self.problem = problem
 
     def test_convergence(self):
+        if len(sys.argv) == 3:
+            N_max = int(sys.argv[2])
+        else:
+            N_max = 128
+
         prev_error = None
 
-        for N in (16, 32, 64, 128, 256): 
+        N = 16
+        while N <= N_max:
             my_solver = self.problem.get_solver(N)
             error = my_solver.run()
 
@@ -20,23 +26,22 @@ class Interface:
                 print('Convergence:', np.log2(prev_error / error))
 
             prev_error = error
+            N *= 2
             print()
 
     def run(self):
-        N = 0
-        verbose = True
-
+        N = 16
         if len(sys.argv) > 1:
-            try:
-                N = int(sys.argv[1])
-            except ValueError:
-                verbose = False
+            if sys.argv[1] == 'c':
                 self.test_convergence()
-                   
-        if N <= 0:
-            N = 16
-
-        if verbose:
+                N = 0
+            else:
+                try:
+                    N = int(sys.argv[1])
+                except ValueError:
+                    print('Could not parse integer `{}`.'.format(N))
+        
+        if N > 0:
             my_solver = self.problem.get_solver(N, verbose=True)
             error = my_solver.run()
             print('Error:', error)
