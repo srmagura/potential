@@ -17,16 +17,18 @@ class Solver:
         else:
             self.verbose = False
 
-
         self.construct_grids()
         if self.verbose:
-            print('Using {}th order scheme.'.format(self.scheme_order))
+            print('Using scheme of order {}.'.format(self.scheme_order))
             print('Grid is {0} x {0}.'.format(self.N))
 
         self.L = matrices.get_L(self.scheme_order, self.N, 
             self.AD_len, self.problem.k)
         self.LU_factorization = scipy.sparse.linalg.splu(self.L)
 
+        self.B = matrices.get_B(self.scheme_order, self.N,
+            self.AD_len, self.k)
+        self.B_src_f = self.B.dot(self.src_f)
 
     # Returns || u_act - u_exp ||_inf, the error between 
     # actual and expected solutions under the infinity-norm. 
@@ -56,9 +58,8 @@ class Solver:
                 self.src_f[matrices.get_index(self.N, i, j)] =\
                     self.problem.eval_f(*self.get_coord(i, j))
                 self.Mplus.add((i, j))
-            
-        self.Mminus = self.M0 - self.Mplus
 
+        self.Mminus = self.M0 - self.Mplus
         self.Nplus = set()
         self.Nminus = set()
                
@@ -86,5 +87,5 @@ class SquareSolver(Solver):
         return (i != 0 and i != self.N and j != 0 and j != self.N)
 
     def run(self):
-        u_act = self.LU_factorization.solve(self.src_f)
+        u_act = self.LU_factorization.solve(self.B_src_f)
         return self.eval_error(u_act)

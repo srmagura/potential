@@ -2,14 +2,21 @@ import itertools as it
 import numpy as np
 import scipy.sparse
 
+def validate_order(order):
+    if order not in {2, 4}:
+        raise Exception('Invalid order')
+
 # Mapping (i,j) -> k where i and j are in 1 ... N-1 
 # and k is in 0 ... (N-1)**2
 def get_index(N, i, j):
     return (i-1)*(N-1) + j-1
 
-def get_L(order, N, AD_len, k):
+def build_matrix(update_local, order, N, AD_len, k):
+    validate_order(order)
+
     h = AD_len / N
     h2 = h**2
+    k2 = k**2
 
     row_index = []
     col_index = []
@@ -19,7 +26,7 @@ def get_L(order, N, AD_len, k):
         index = get_index(N, i, j)
 
         local = np.zeros([3, 3])
-        update_local2(local, k, h2)
+        update_local(order, local, k2, h2)
 
         for di, dj in it.product((-1, 0, 1), repeat=2):
             i1 = i + di
@@ -34,7 +41,16 @@ def get_L(order, N, AD_len, k):
         shape=((N-1)**2, (N-1)**2), dtype=complex)
     return L.tocsc()
 
-def update_local2(local, k, h2):
+def get_L(order, N, AD_len, k):
+    return build_matrix(update_local_L, order, N, AD_len, k)
+
+def update_local_L(order, local, k2, h2):
+    update_local_L2(local, k2, h2)
+
+    if order == 4:
+        update_local_L4(local, k2, h2)
+
+def update_local_L2(local, k2, h2):
     local[1, 0] += 1 / h2
     local[0, 0] += -2 / h2
     local[-1, 0] += 1 / h2
@@ -43,4 +59,53 @@ def update_local2(local, k, h2):
     local[0, 0] += -2 / h2
     local[0, -1] += 1 / h2
 
-    local[0, 0] += k**2
+    local[0, 0] += k2
+
+def update_local_L4(local, k2, h2):
+    _local = np.zeros([3, 3])
+    _local[1, 1] += 1 / h2
+    _local[1, 0] += -2 / h2
+    _local[1, -1] += 1 / h2
+
+    _local[0, 1] += -2 / h2
+    _local[0, 0] += 4 / h2
+    _local[0, -1] += -2 / h2
+
+    _local[-1, 1] += 1 / h2
+    _local[-1, 0] += -2 / h2
+    _local[-1, -1] += 1 / h2
+
+    local += _local / 6
+
+    _local = np.zeros([3, 3])
+    _local[1, 0] += k2
+    _local[0, 0] += -2 * k2
+    _local[-1, 0] += k2
+
+    _local[0, 1] += k2
+    _local[0, 0] += -2 * k2
+    _local[0, -1] += k2
+
+    local += _local / 12
+
+def get_B(order, N, AD_len, k):
+    return build_matrix(update_local_B, order, N, AD_len, k)
+
+def update_local_B(order, local, k2, h2):
+    local[0, 0] = 1
+
+    if order == 4:
+        update_local_B4(local, k2, h2)
+
+def update_local_B4(local, k2, h2):
+    _local = np.zeros([3, 3])
+    _local[1, 0] += 1
+    _local[0, 0] += -2
+    _local[-1, 0] += 1
+
+    _local[0, 1] += 1
+    _local[0, 0] += -2
+    _local[0, -1] += 1
+
+    local += _local / 12
+
