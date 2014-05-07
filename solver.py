@@ -6,21 +6,25 @@ import potential.matrices as matrices
 
 class Solver:  
 
-    def __init__(self, problem, N, **kwargs):
+    def __init__(self, problem, N, scheme_order, **kwargs):
         self.problem = problem
         self.k = self.problem.k
         self.N = N
+        self.scheme_order = scheme_order
 
         if 'verbose' in kwargs:
             self.verbose = kwargs['verbose']
         else:
             self.verbose = False
 
+
         self.construct_grids()
         if self.verbose:
+            print('Using {}th order scheme.'.format(self.scheme_order))
             print('Grid is {0} x {0}.'.format(self.N))
 
-        self.L = matrices.get_L(self.N, self.AD_len, self.problem.k)
+        self.L = matrices.get_L(self.scheme_order, self.N, 
+            self.AD_len, self.problem.k)
         self.LU_factorization = scipy.sparse.linalg.splu(self.L)
 
 
