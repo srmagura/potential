@@ -66,6 +66,10 @@ class Solver:
         for i, j in self.M0:
             Nm = set([(i, j), (i-1, j), (i+1, j), (i, j-1), (i, j+1)])
 
+            if self.scheme_order > 2:
+                Nm |= set([(i-1, j-1), (i+1, j-1), (i-1, j+1),
+                    (i+1, j+1)])
+
             if (i, j) in self.Mplus:
                 self.Nplus |= Nm
             else:

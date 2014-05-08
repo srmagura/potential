@@ -23,8 +23,8 @@ class CircleSolver(Solver):
     # Radius of circular region Omega
     R = 2.3
 
-    def __init__(self, problem, N, **kwargs):
-        super().__init__(problem, N, **kwargs)
+    def __init__(self, problem, N, scheme_order, **kwargs):
+        super().__init__(problem, N, scheme_order, **kwargs)
         problem.R = self.R
 
     # Get the polar coordinates of grid point (i,j)
@@ -116,7 +116,7 @@ class CircleSolver(Solver):
         Q0 = self.get_Q(0)
         Q1 = self.get_Q(1)
 
-        self.ap_sol_f = self.LU_factorization.solve(self.src_f)
+        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
         ext_f = self.extend_inhomogeneous_f()    
         proj_f = self.get_trace(self.get_potential(ext_f))
 
@@ -139,7 +139,7 @@ class CircleSolver(Solver):
 
         print('Fourier error (c1):', max(error))
 
-    def extend(self, r, th, xi0, xi1, d2_xi0_th):
+    def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
         R = self.R
         k = self.k
 
@@ -147,6 +147,13 @@ class CircleSolver(Solver):
         derivs.append(xi0) 
         derivs.append(xi1)
         derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
+        derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
+            d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
+        derivs.append(-6 * xi1 / R**3 + 
+            (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
+            6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
+            (3*k**2 / R**2 - k**4) * xi0 +
+            2 * k**2 / R * xi1)
 
         v = 0
         for l in range(len(derivs)):
@@ -164,9 +171,9 @@ class CircleSolver(Solver):
             exp = np.exp(complex(0, J*th))
 
             if index == 0:
-                ext[l] = self.extend(r, th, exp, 0, -J**2 * exp)
+                ext[l] = self.extend(r, th, exp, 0, -J**2 * exp, 0, J**4 * exp)
             else:
-                ext[l] = self.extend(r, th, 0, exp, 0)  
+                ext[l] = self.extend(r, th, 0, exp, 0, -J**2 * exp, 0)  
 
         return ext
 
@@ -196,15 +203,21 @@ class CircleSolver(Solver):
             i, j = self.gamma[l]
             r, th = self.get_polar(i, j)
 
-            xi0 = xi1 = d2_xi0_th = 0 
+            xi0 = xi1 = 0
+            d2_xi0_th = d2_xi1_th = 0 
+            d4_xi0_th = 0
 
             for J, i in self.J_dict.items():
                 exp = cmath.exp(complex(0, J*th))
                 xi0 += c0[i] * exp 
-                xi1 += c1[i] * exp
                 d2_xi0_th += -J**2 * c0[i] * exp
+                d4_xi0_th += J**4 * c0[i] * exp
 
-            boundary[l] = self.extend(r, th, xi0, xi1, d2_xi0_th)
+                xi1 += c1[i] * exp
+                d2_xi1_th += -J**2 * c1[i] * exp
+
+            boundary[l] = self.extend(r, th, xi0, xi1, d2_xi0_th, d2_xi1_th,
+                d4_xi0_th)
             boundary[l] += self.extend_inhomogeneous(r, th)
 
         return boundary
