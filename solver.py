@@ -1,5 +1,6 @@
 import os
 import pickle
+import zlib
 import itertools as it
 
 import numpy as np
@@ -41,7 +42,8 @@ class Solver:
 
         if os.path.isfile(cache_filename):
             cache_file = open(cache_filename, 'rb')
-            self.LU_factorization = pickle.load(cache_file)
+            pickle_bytes = zlib.decompress(cache_file.read())
+            self.LU_factorization = pickle.loads(pickle_bytes)
 
             if self.verbose:
                 print('Loaded LU from cache.')
@@ -53,8 +55,11 @@ class Solver:
             if not os.path.isdir('LU_cache'):
                 os.mkdir('LU_cache')
             
+            pickle_bytes = pickle.dumps(self.LU_factorization)
+            compressed = zlib.compress(pickle_bytes)
+
             cache_file = open(cache_filename, 'wb')
-            pickle.dump(self.LU_factorization, cache_file)
+            cache_file.write(compressed)
 
             if self.verbose:
                 print('Wrote LU to cache.')
