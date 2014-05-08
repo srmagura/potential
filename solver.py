@@ -1,8 +1,12 @@
+import os
+import pickle
 import itertools as it
+
 import numpy as np
 import scipy.sparse.linalg
 
 import potential.matrices as matrices
+import potential.util as util
 
 class Solver:  
 
@@ -22,9 +26,22 @@ class Solver:
             print('Using scheme of order {}.'.format(self.scheme_order))
             print('Grid is {0} x {0}.'.format(self.N))
 
-        self.L = matrices.get_L(self.scheme_order, self.N, 
-            self.AD_len, self.problem.k)
-        self.LU_factorization = scipy.sparse.linalg.splu(self.L)
+        cache_filename = 'LU_cache/L{}_N={}_k={}'.format(
+            self.scheme_order, self.N, self.k)
+
+        if False:
+            pass
+        else:
+            self.L = matrices.get_L(self.scheme_order, self.N, 
+                self.AD_len, self.problem.k)
+            self.LU_factorization = util.LU_Factorization(self.L)
+
+            if not os.path.isdir('LU_cache'):
+                os.mkdir('LU_cache')
+            
+            cache_file = open(cache_filename, 'wb')
+            pickle.dump(self.LU_factorization, cache_file)
+
 
         self.B = matrices.get_B(self.scheme_order, self.N,
             self.AD_len, self.k)

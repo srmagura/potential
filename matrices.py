@@ -38,7 +38,7 @@ def build_matrix(update_local, order, N, AD_len, k):
                 data.append(local[di, dj])  
 
     L = scipy.sparse.coo_matrix((data, (row_index, col_index)),
-        shape=((N-1)**2, (N-1)**2), dtype=complex)
+        shape=((N-1)**2, (N-1)**2))
     return L.tocsc()
 
 def get_L(order, N, AD_len, k):
