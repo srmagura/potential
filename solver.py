@@ -26,11 +26,25 @@ class Solver:
             print('Using scheme of order {}.'.format(self.scheme_order))
             print('Grid is {0} x {0}.'.format(self.N))
 
+        self.L = matrices.get_L(self.scheme_order, self.N, 
+            self.AD_len, self.problem.k)
+
+        self.B = matrices.get_B(self.scheme_order, self.N,
+            self.AD_len, self.k)
+        self.B_src_f = self.B.dot(self.src_f)
+
+        self.setup_LU()
+
+    def setup_LU(self):
         cache_filename = 'LU_cache/L{}_N={}_k={}'.format(
             self.scheme_order, self.N, self.k)
 
-        if False:
-            pass
+        if os.path.isfile(cache_filename):
+            cache_file = open(cache_filename, 'rb')
+            self.LU_factorization = pickle.load(cache_file)
+
+            if self.verbose:
+                print('Loaded LU from cache.')
         else:
             self.L = matrices.get_L(self.scheme_order, self.N, 
                 self.AD_len, self.problem.k)
@@ -42,10 +56,8 @@ class Solver:
             cache_file = open(cache_filename, 'wb')
             pickle.dump(self.LU_factorization, cache_file)
 
-
-        self.B = matrices.get_B(self.scheme_order, self.N,
-            self.AD_len, self.k)
-        self.B_src_f = self.B.dot(self.src_f)
+            if self.verbose:
+                print('Wrote LU to cache.')
 
     # Returns || u_act - u_exp ||_inf, the error between 
     # actual and expected solutions under the infinity-norm. 
