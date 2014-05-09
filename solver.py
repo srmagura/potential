@@ -11,6 +11,8 @@ import potential.util as util
 
 class Solver:  
 
+    enable_caching = False
+
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.problem = problem
         self.k = self.problem.k
@@ -27,8 +29,11 @@ class Solver:
             print('Using scheme of order {}.'.format(self.scheme_order))
             print('Grid is {0} x {0}.'.format(self.N))
 
+        if not self.enable_caching:
+            kwargs = {'dtype': complex}
+
         self.L = matrices.get_L(self.scheme_order, self.N, 
-            self.AD_len, self.problem.k)
+            self.AD_len, self.problem.k, **kwargs)
 
         self.B = matrices.get_B(self.scheme_order, self.N,
             self.AD_len, self.k)
@@ -40,7 +45,9 @@ class Solver:
         cache_filename = 'LU_cache/L{}_N={}_k={}'.format(
             self.scheme_order, self.N, self.k)
 
-        if os.path.isfile(cache_filename):
+        if not self.enable_caching:
+            self.LU_factorization = scipy.sparse.linalg.splu(self.L)
+        elif os.path.isfile(cache_filename):
             cache_file = open(cache_filename, 'rb')
             pickle_bytes = zlib.decompress(cache_file.read())
             self.LU_factorization = pickle.loads(pickle_bytes)
@@ -48,8 +55,6 @@ class Solver:
             if self.verbose:
                 print('Loaded LU from cache.')
         else:
-            self.L = matrices.get_L(self.scheme_order, self.N, 
-                self.AD_len, self.problem.k)
             self.LU_factorization = util.LU_Factorization(self.L)
 
             if not os.path.isdir('LU_cache'):
