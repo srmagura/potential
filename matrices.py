@@ -11,7 +11,7 @@ def validate_order(order):
 def get_index(N, i, j):
     return (i-1)*(N-1) + j-1
 
-def build_matrix(update_local, order, N, AD_len, k, **kwargs):
+def build_matrix(update_local, order, N, AD_len, k):
     validate_order(order)
 
     h = AD_len / N
@@ -37,16 +37,12 @@ def build_matrix(update_local, order, N, AD_len, k, **kwargs):
                 col_index.append(index)
                 data.append(local[di, dj])  
 
-    dtype = float
-    if 'dtype' in kwargs:
-        dtype = kwargs['dtype']
-
     L = scipy.sparse.coo_matrix((data, (row_index, col_index)),
-        shape=((N-1)**2, (N-1)**2), dtype=dtype)
+        shape=((N-1)**2, (N-1)**2), dtype=complex)
     return L.tocsc()
 
-def get_L(order, N, AD_len, k, **kwargs):
-    return build_matrix(update_local_L, order, N, AD_len, k, **kwargs)
+def get_L(order, N, AD_len, k):
+    return build_matrix(update_local_L, order, N, AD_len, k)
 
 def update_local_L(order, local, k2, h2):
     update_local_L2(local, k2, h2)

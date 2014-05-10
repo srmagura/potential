@@ -1,17 +1,11 @@
-import os
-import pickle
-import zlib
 import itertools as it
 
 import numpy as np
 import scipy.sparse.linalg
 
 import potential.matrices as matrices
-import potential.util as util
 
 class Solver:  
-
-    enable_caching = False
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.problem = problem
@@ -29,21 +23,18 @@ class Solver:
             print('Using scheme of order {}.'.format(self.scheme_order))
             print('Grid is {0} x {0}.'.format(self.N))
 
-        if not self.enable_caching:
-            kwargs = {'dtype': complex}
-
         self.L = matrices.get_L(self.scheme_order, self.N, 
-            self.AD_len, self.problem.k, **kwargs)
+            self.AD_len, self.problem.k)
+        self.LU_factorization = scipy.sparse.linalg.splu(self.L)
 
         self.setup_src_f()
+
         self.B = matrices.get_B(self.scheme_order, self.N,
             self.AD_len, self.k)
         self.B_src_f = self.B.dot(self.src_f)
 
         for i,j in self.Mminus:
             self.B_src_f[matrices.get_index(N,i,j)] = 0
-
-        self.setup_LU()
 
     # Construct the various grids used in the algorithm.
     def construct_grids(self):
@@ -106,35 +97,6 @@ class Solver:
             error.append(abs(u_exp[l] - u_act[l]))
 
         return max(error)
-
-
-    def setup_LU(self):
-        cache_filename = 'LU_cache/L{}_N={}_k={}'.format(
-            self.scheme_order, self.N, self.k)
-
-        if not self.enable_caching:
-            self.LU_factorization = scipy.sparse.linalg.splu(self.L)
-        elif os.path.isfile(cache_filename):
-            cache_file = open(cache_filename, 'rb')
-            pickle_bytes = zlib.decompress(cache_file.read())
-            self.LU_factorization = pickle.loads(pickle_bytes)
-
-            if self.verbose:
-                print('Loaded LU from cache.')
-        else:
-            self.LU_factorization = util.LU_Factorization(self.L)
-
-            if not os.path.isdir('LU_cache'):
-                os.mkdir('LU_cache')
-            
-            pickle_bytes = pickle.dumps(self.LU_factorization)
-            compressed = zlib.compress(pickle_bytes)
-
-            cache_file = open(cache_filename, 'wb')
-            cache_file.write(compressed)
-
-            if self.verbose:
-                print('Wrote LU to cache.')
 
 class SquareSolver(Solver):
 
