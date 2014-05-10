@@ -25,28 +25,6 @@ class Mountain(Problem):
             (3*sin(x/2)**2 - cos(x/2)**2)*cos(x/2)**2*cos(y/2)**4 +
             (3*sin(y/2)**2 - cos(y/2)**2)*cos(x/2)**4*cos(y/2)**2)
 
-class Ellipsoid(Problem):
-    k = 1
-    solver_class = CircleSolver
-
-    def eval_bc(self, th):
-        return self.eval_expected(self.R*np.cos(th), self.R*np.sin(th))
-
-    def eval_expected(self, x, y):
-        return x**2 + 3*y**2
-
-    def eval_f(self, x, y):
-        return self.k**2*(x**2 + 3*y**2) + 8
-
-    def eval_d_f_r(self, r, th):
-        return self.k**2*(6*r*sin(th)**2 + 2*r*cos(th)**2)
-
-    def eval_d2_f_r(self, r, th): 
-        return 2*self.k**2*(3*sin(th)**2 + cos(th)**2)
-
-    def eval_d2_f_th(self, r, th):
-        return 4*self.k**2*r**2*(-sin(th)**2 + cos(th)**2)
-
 class YCosine(Problem):
     k = 1
     solver_class = CircleSolver
