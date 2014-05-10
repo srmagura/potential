@@ -5,8 +5,13 @@ from potential.solver import SquareSolver
 from potential.circle_solver import CircleSolver
 
 class Problem:
+    homogeneous = False
+
     def get_solver(self, *args, **kwargs):
         return self.solver_class(self, *args, **kwargs)
+
+    def eval_bc(self, th):
+        return self.eval_expected(self.R*np.cos(th), self.R*np.sin(th))
 
 class Mountain(Problem):
     k = 1
@@ -20,40 +25,57 @@ class Mountain(Problem):
             (3*sin(x/2)**2 - cos(x/2)**2)*cos(x/2)**2*cos(y/2)**4 +
             (3*sin(y/2)**2 - cos(y/2)**2)*cos(x/2)**4*cos(y/2)**2)
 
-class MountainCircle(Mountain):
+class Ellipsoid(Problem):
+    k = 1
     solver_class = CircleSolver
 
     def eval_bc(self, th):
         return self.eval_expected(self.R*np.cos(th), self.R*np.sin(th))
 
-    def eval_expected_derivative(self, th):
-        R = self.R
-        return (-2*sin(th)*sin(R*sin(th)/2)*
-            cos(R*sin(th)/2)**3*cos(R*cos(th)/2)**4 -
-            2*sin(R*cos(th)/2)*cos(th)*
-            cos(R*sin(th)/2)**4*cos(R*cos(th)/2)**3)
+    def eval_expected(self, x, y):
+        return x**2 + 3*y**2
 
+    def eval_f(self, x, y):
+        return self.k**2*(x**2 + 3*y**2) + 8
+
+    def eval_d_f_r(self, r, th):
+        return self.k**2*(6*r*sin(th)**2 + 2*r*cos(th)**2)
+
+    def eval_d2_f_r(self, r, th): 
+        return 2*self.k**2*(3*sin(th)**2 + cos(th)**2)
+
+    def eval_d2_f_th(self, r, th):
+        return 4*self.k**2*r**2*(-sin(th)**2 + cos(th)**2)
+
+class YCosine(Problem):
+    k = 1
+    solver_class = CircleSolver
+
+    def eval_expected(self, x, y):
+        return y*cos(x)
+
+    def eval_f(self, x, y):
+        return self.k**2*y*cos(x) - y*cos(x)
+
+    def eval_d_f_r(self, r, th):
+        return -r*self.k**2*sin(th)*sin(r*cos(th))*cos(th) + r*sin(th)*sin(r*cos(th))*cos(th) + self.k**2*sin(th)*cos(r*cos(th)) - sin(th)*cos(r*cos(th))
+
+    def eval_d2_f_r(self, r, th):
+        return (-r*self.k**2*cos(th)*cos(r*cos(th)) + r*cos(th)*cos(r*cos(th)) - 2*self.k**2*sin(r*cos(th)) + 2*sin(r*cos(th)))*sin(th)*cos(th)
+
+    def eval_d2_f_th(self, r, th):
+        return r*(-r**2*self.k**2*sin(th)**2*cos(r*cos(th)) + r**2*sin(th)**2*cos(r*cos(th)) + 3*r*self.k**2*sin(r*cos(th))*cos(th) - 3*r*sin(r*cos(th))*cos(th) - self.k**2*cos(r*cos(th)) + cos(r*cos(th)))*sin(th)
 
 class ComplexWave(Problem):
-    # Wave number
     k = 1 
     kx = .8*k
     ky = .6*k
 
     solver_class = CircleSolver
-
-    # Boundary data
-    def eval_bc(self, th):
-        return self.eval_expected(self.R*np.cos(th), self.R*np.sin(th))
+    homogeneous = True
 
     def eval_f(self, x, y):
         return 0
 
-    # Expected solution
     def eval_expected(self, x, y):
         return np.exp(complex(0, self.kx*x + self.ky*y))
-
-    # Expected normal derivative on boundary
-    def eval_expected_derivative(self, th):
-        x = complex(0, self.kx*np.cos(th) + self.ky*np.sin(th))
-        return x*np.exp(self.R*x)

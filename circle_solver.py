@@ -10,7 +10,8 @@ import potential.matrices as matrices
 # Grid size for boundary. Should be divisible by 2
 fourier_N = 1024
 
-Q_ratio = 2
+Q_ratio_upper = 2
+Q_ratio_lower = 6
 
 class CircleSolver(Solver):
     # After performing FFT on boundary data, ignore Fourier series
@@ -98,9 +99,12 @@ class CircleSolver(Solver):
             Jplus = self.choose_n_basis(range(fourier_N // 2, 0, -1), c0_raw)
             Jmax = max(Jminus, Jplus)
 
-            if Jmax*2+1 < len(self.gamma) / Q_ratio:
+            if Jmax*2+1 < len(self.gamma) / Q_ratio_upper:
                 break
             self.fourier_lower_bound *= 10
+
+        if Jmax*2+1 < len(self.gamma) / Q_ratio_lower:
+            Jmax = min(15, int(len(self.gamma) / Q_ratio_lower))
 
         self.J_dict = collections.OrderedDict(((J, None) for J in 
             range(-Jmax, Jmax+1)))
@@ -124,20 +128,6 @@ class CircleSolver(Solver):
         c1 = np.linalg.lstsq(Q1, rhs)[0]
 
         return c0, c1
-
-    def fourier_test(self, c1):
-        step = .01
-        error = []
-
-        th_range = np.arange(0, 2*np.pi, step)
-        for th in th_range:
-            x = 0
-            for J, i in self.J_dict.items():
-                x += c1[i] * np.exp(complex(0, J*th))
-
-            error.append(abs(x - self.problem.eval_expected_derivative(th)))
-
-        print('Fourier error (c1):', max(error))
 
     def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
         R = self.R
@@ -178,9 +168,29 @@ class CircleSolver(Solver):
         return ext
 
     def extend_inhomogeneous(self, r, th):
-        x = self.R * np.cos(th)
-        y = self.R * np.sin(th)
-        return .5 * (r - self.R)**2 * self.problem.eval_f(x, y)
+        p = self.problem
+        if p.homogeneous:
+            return 0
+
+        R = self.R
+        k = self.k
+
+        x = R * np.cos(th)
+        y = R * np.sin(th)
+
+        derivs = [0, 0]
+        derivs.append(p.eval_f(x, y))
+        derivs.append(p.eval_d_f_r(R, th) - p.eval_f(x, y) / R)
+        derivs.append(p.eval_d2_f_r(R, th) - 
+            p.eval_d2_f_th(R, th) / R**2 - 
+            p.eval_d_f_r(R, th) / R + 
+            (3/R**2 - k**2) * p.eval_f(x, y))
+
+        v = 0
+        for l in range(len(derivs)):
+            v += derivs[l] / math.factorial(l) * (r - R)**l
+
+        return v
 
     def extend_inhomogeneous_f(self):
         ext = np.zeros(len(self.gamma), dtype=complex)
@@ -190,6 +200,29 @@ class CircleSolver(Solver):
             ext[l] = self.extend_inhomogeneous(r, th)
 
         return ext
+
+    def extend_src_f(self):
+        p = self.problem
+        if p.homogeneous:
+            return
+
+        for i,j in self.Kplus - self.Mplus:
+            R = self.R
+
+            r, th = self.get_polar(i, j)
+            x = R * np.cos(th)
+            y = R * np.sin(th)
+
+            derivs = [p.eval_f(x, y), p.eval_d_f_r(R, th),
+                p.eval_d2_f_r(R, th)]
+
+            v = 0
+            for l in range(len(derivs)):
+                v += derivs[l] / math.factorial(l) * (r - R)**l
+
+            self.src_f[matrices.get_index(self.N,i,j)] = v
+            #self.src_f[matrices.get_index(self.N,i,j)] =\
+            #    p.eval_f(*self.get_coord(i, j))
 
     # Construct the equation-based extension for the boundary data,
     # as approximated by the Fourier coefficients c0 and c1.
@@ -225,7 +258,6 @@ class CircleSolver(Solver):
     def run(self):
         c0, c1 = self.get_c()
         if self.verbose:
-            self.fourier_test(c1)
             print('Using {} basis functions.'.
                 format(len(self.J_dict)))
 
