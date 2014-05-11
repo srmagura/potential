@@ -4,8 +4,8 @@ import math
 import collections
 import numpy as np
 
-from potential.solver import Solver
-import potential.matrices as matrices
+from solver import Solver
+import matrices
 
 # Grid size for boundary. Should be divisible by 2
 fourier_N = 1024

@@ -2,10 +2,9 @@ import numpy as np
 import sys
 import argparse
 
-class Interface:
+import problems as problems
 
-    def __init__(self, problem):
-        self.problem = problem
+class Interface:
 
     def test_convergence(self):
         prev_error = None
@@ -27,10 +26,14 @@ class Interface:
 
     def run(self):
         parser = argparse.ArgumentParser()
+        parser.add_argument('-p', required=True, 
+            choices=problems.problem_dict.keys())
         parser.add_argument('N', type=int, nargs='?', default=16)
         parser.add_argument('-c', type=int, nargs='?', const=128)
         parser.add_argument('-o', type=int, default=4)
         self.args = parser.parse_args()
+
+        self.problem = problems.problem_dict[self.args.p]()
 
         if self.args.c is None:
             my_solver = self.problem.get_solver(self.args.N, 
@@ -39,3 +42,7 @@ class Interface:
             print('Error:', error)
         else:
             self.test_convergence()
+
+if __name__ == '__main__':
+    interface = Interface()
+    interface.run()

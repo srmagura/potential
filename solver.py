@@ -3,7 +3,7 @@ import itertools as it
 import numpy as np
 import scipy.sparse.linalg
 
-import potential.matrices as matrices
+import matrices
 
 class Solver:  
 
@@ -20,6 +20,7 @@ class Solver:
 
         self.construct_grids()
         if self.verbose:
+            print('Problem is `{}`.'.format(self.problem.__class__.__name__))
             print('Using scheme of order {}.'.format(self.scheme_order))
             print('Grid is {0} x {0}.'.format(self.N))
 

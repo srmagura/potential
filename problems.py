@@ -1,8 +1,8 @@
 import numpy as np
 from numpy import cos, sin
 
-from potential.solver import SquareSolver
-from potential.circle_solver import CircleSolver
+from solver import SquareSolver
+from circle_solver import CircleSolver
 
 class Problem:
     homogeneous = False
@@ -44,7 +44,7 @@ class YCosine(Problem):
     def eval_d2_f_th(self, r, th):
         return r*(-r**2*self.k**2*sin(th)**2*cos(r*cos(th)) + r**2*sin(th)**2*cos(r*cos(th)) + 3*r*self.k**2*sin(r*cos(th))*cos(th) - 3*r*sin(r*cos(th))*cos(th) - self.k**2*cos(r*cos(th)) + cos(r*cos(th)))*sin(th)
 
-class ComplexWave(Problem):
+class Wave(Problem):
     k = 1 
     kx = .8*k
     ky = .6*k
@@ -57,3 +57,10 @@ class ComplexWave(Problem):
 
     def eval_expected(self, x, y):
         return np.exp(complex(0, self.kx*x + self.ky*y))
+
+problem_dict = {
+    'mountain': Mountain,
+    'ycosine': YCosine,
+    'wave': Wave
+}
+
