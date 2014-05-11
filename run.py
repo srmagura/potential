@@ -28,7 +28,7 @@ class Interface:
         parser = argparse.ArgumentParser()
         parser.add_argument('-p', required=True, 
             choices=problems.problem_dict.keys())
-        parser.add_argument('N', type=int, nargs='?', default=16)
+        parser.add_argument('-N', type=int, default=16)
         parser.add_argument('-c', type=int, nargs='?', const=128)
         parser.add_argument('-o', type=int, default=4)
         self.args = parser.parse_args()
