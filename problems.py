@@ -3,6 +3,7 @@ from numpy import cos, sin
 
 from solver import SquareSolver
 from circle_solver import CircleSolver
+from pizza_solver import PizzaSolver
 
 class Problem:
     homogeneous = False
@@ -58,9 +59,30 @@ class Wave(Problem):
     def eval_expected(self, x, y):
         return np.exp(complex(0, self.kx*x + self.ky*y))
 
+class WavePizza(Wave):
+    sectorAngle = np.pi / 6
+    solver_class = PizzaSolver
+
+    def eval_bc(self, segment_id, arg):
+        if segment_id == 0:
+            r = self.R
+            th = arg
+        elif segment_id == 1:
+            r = arg
+            th = 0
+        elif segment_id == 2:
+            r = arg
+            th = self.sectorAngle
+
+        x = r * cos(th)
+        y = r * sin(th)
+        return self.eval_expected(x, y)
+
+
 problem_dict = {
     'mountain': Mountain,
     'ycosine': YCosine,
-    'wave': Wave
+    'wave': Wave,
+    'wave-pizza': WavePizza
 }
 
