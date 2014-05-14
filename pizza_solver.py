@@ -9,6 +9,8 @@ import matrices
 
 import matplotlib.pyplot as plt
 
+N_BASIS = 15
+
 def complex_quad(f, a, b):
     def real_func(x):
         return scipy.real(f(x))
@@ -18,6 +20,9 @@ def complex_quad(f, a, b):
     real_integral = quad(real_func, a, b)
     imag_integral = quad(imag_func, a, b)
     return real_integral[0] + 1j*imag_integral[0]
+
+def w(t):
+    return 1 / np.sqrt(1 - t**2)
 
 def eval_chebyshev(J, t):
     return np.cos(J * np.arccos(t))
@@ -45,40 +50,90 @@ class PizzaSolver(Solver):
         #FIXME
         return self.get_polar(i, j)[0] <= self.R
 
-    def run(self):
-        def w(t):
-            return 1 / np.sqrt(1 - t**2)
-
-        def g(t):
+    def g(self, segment_id, t):
+        if segment_id == 0:
             return np.pi*t + np.pi + .5*self.problem.sectorAngle
+        elif segment_id == 1 or segment_id == 2:
+            return 6/10*self.R*t + self.R/2
 
-        def ginv(th):
+    def g_inv(self, segment_id, arg):
+        if segment_id == 0:
+            th = arg
             return (th - np.pi - .5*self.problem.sectorAngle)/np.pi
+        elif segment_id == 1 or segment_id == 2:
+            r = arg
+            return 10/(6*self.R)*(r - self.R/2)
 
-        c0 = [[]]
-        for J in range(10):
+    def calc_c0(self, segment_id):
+        self.c0.append([])
+        for J in range(N_BASIS):
             def integrand(t):
-                return (w(t) * self.problem.eval_bc(0, g(t)) *    
+                return (w(t) * self.problem.eval_bc(segment_id, 
+                    self.g(segment_id, t)) *    
                     eval_chebyshev(J, t))
 
             I = complex_quad(integrand, -1, 1)
             if J == 0:
-                c0[0].append(I/np.pi)
+                self.c0[segment_id].append(I/np.pi)
             else:
-                c0[0].append(2*I/np.pi)
+                self.c0[segment_id].append(2*I/np.pi)
 
-        th_data = np.arange(0, 2*np.pi, .05)
-        act_data = np.zeros(len(th_data))
-        exp_data = np.zeros(len(th_data))
+    def run(self):
+        self.c0 = []
+        self.calc_c0(0)
+        self.calc_c0(1)
+        self.calc_c0(2)
+
+        a = self.problem.sectorAngle
+
+        th_data = np.arange(a, 2*np.pi, .05)
+        r_data = np.arange(0, self.R, .05)
+
+        s_data = np.zeros(len(th_data) + 2*len(r_data))
+        act_data = np.zeros(len(s_data), dtype=complex)
+        exp_data = np.zeros(len(s_data), dtype=complex)
+
+        j = 0
         for i in range(len(th_data)):
             th = th_data[i]
-            for J in range(len(c0[0])):
-                act_data[i] += c0[0][J]*eval_chebyshev(J, ginv(th)).real
+            s_data[j] = self.R * (th - a)
 
-            exp_data[i] = self.problem.eval_bc(0, th)
+            for J in range(len(self.c0[0])):
+                t = self.g_inv(0, th)
+                assert -1 <= t and t <= 1
+                act_data[j] += self.c0[0][J]*eval_chebyshev(J, t)
 
-        plt.plot(th_data, act_data, label='act')
-        plt.plot(th_data, exp_data, 'g^', label='exp')
+            exp_data[j] = self.problem.eval_bc(0, th)
+            j += 1
+
+        for i in range(len(r_data)-1, -1, -1):
+            r = r_data[i]
+            s_data[j] = self.R*(2*np.pi - a + 1) - r 
+
+            for J in range(len(self.c0[1])):
+                t = self.g_inv(1, r)
+                act_data[j] += self.c0[1][J]*eval_chebyshev(J, t)
+
+            exp_data[j] = self.problem.eval_bc(1, r)
+            j += 1
+
+        for i in range(len(r_data)):
+            r = r_data[i]
+            s_data[j] = self.R*(2*np.pi - a + 1) + r 
+
+            for J in range(len(self.c0[2])):
+                t = self.g_inv(1, r)
+                assert -1 <= t and t <= 1
+                act_data[j] += self.c0[2][J]*eval_chebyshev(J, t)
+
+            exp_data[j] = self.problem.eval_bc(2, r)
+            j += 1
+
+        plt.plot(s_data, np.real(exp_data), label='Exact',
+            color='#AAAAAA', linewidth=5)
+        plt.plot(s_data, np.real(act_data), label='Expansion')
+        plt.xlabel('s, arc length along boundary')
+        plt.ylabel('Real part of boundary data')
         plt.legend()
         plt.show()
         return np.max(np.abs(act_data-exp_data))
