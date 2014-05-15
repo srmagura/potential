@@ -27,11 +27,13 @@ def w(t):
 def eval_chebyshev(J, t):
     return np.cos(J * np.arccos(t))
 
+
 class PizzaSolver(Solver):
     AD_len = 2*np.pi
     R = 2.3
 
     def __init__(self, problem, N, scheme_order, **kwargs):
+        self.a = problem.sectorAngle
         super().__init__(problem, N, scheme_order, **kwargs)
         problem.R = self.R
 
@@ -47,8 +49,8 @@ class PizzaSolver(Solver):
         return x
 
     def is_interior(self, i, j):
-        #FIXME
-        return self.get_polar(i, j)[0] <= self.R
+        r, th = self.get_polar(i, j)
+        return r <= self.R and (th >= self.a or th <= 0) 
 
     def g(self, segment_id, t):
         if segment_id == 0:
@@ -87,11 +89,14 @@ class PizzaSolver(Solver):
         a = self.problem.sectorAngle
 
         th_data = np.arange(a, 2*np.pi, .05)
-        r_data = np.arange(0, self.R, .05)
+        r_data = np.linspace(0, self.R, 100)
 
         s_data = np.zeros(len(th_data) + 2*len(r_data))
         act_data = np.zeros(len(s_data), dtype=complex)
         exp_data = np.zeros(len(s_data), dtype=complex)
+
+        Gamma_x_data = np.zeros(len(s_data))
+        Gamma_y_data = np.zeros(len(s_data))
 
         j = 0
         for i in range(len(th_data)):
@@ -100,10 +105,11 @@ class PizzaSolver(Solver):
 
             for J in range(len(self.c0[0])):
                 t = self.g_inv(0, th)
-                assert -1 <= t and t <= 1
                 act_data[j] += self.c0[0][J]*eval_chebyshev(J, t)
 
             exp_data[j] = self.problem.eval_bc(0, th)
+            Gamma_x_data[j] = self.R * np.cos(th)
+            Gamma_y_data[j] = self.R * np.sin(th)
             j += 1
 
         for i in range(len(r_data)-1, -1, -1):
@@ -115,6 +121,7 @@ class PizzaSolver(Solver):
                 act_data[j] += self.c0[1][J]*eval_chebyshev(J, t)
 
             exp_data[j] = self.problem.eval_bc(1, r)
+            Gamma_x_data[j] = r 
             j += 1
 
         for i in range(len(r_data)):
@@ -127,6 +134,8 @@ class PizzaSolver(Solver):
                 act_data[j] += self.c0[2][J]*eval_chebyshev(J, t)
 
             exp_data[j] = self.problem.eval_bc(2, r)
+            Gamma_x_data[j] = r*np.cos(a)
+            Gamma_y_data[j] = r*np.sin(a)
             j += 1
 
         plt.plot(s_data, np.real(exp_data), label='Exact',
@@ -135,5 +144,23 @@ class PizzaSolver(Solver):
         plt.xlabel('s, arc length along boundary')
         plt.ylabel('Real part of boundary data')
         plt.legend()
+        #plt.show()
+        plt.clf()
+
+        plt.plot(Gamma_x_data, Gamma_y_data)
+
+        def convert(points):
+            x = []
+            y = []
+
+            for p in points:
+                x1, y1 = self.get_coord(*p)
+                x.append(x1)
+                y.append(y1)
+
+            return x, y
+
+        plt.plot(*convert(self.gamma), marker='o', linestyle='')
         plt.show()
+
         return np.max(np.abs(act_data-exp_data))
