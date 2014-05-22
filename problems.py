@@ -3,6 +3,7 @@ from numpy import cos, sin
 
 from solver import SquareSolver
 from circle_solver import CircleSolver
+from circle_solver2 import CircleSolver2
 from pizza_solver import PizzaSolver
 
 class Problem:
@@ -12,7 +13,7 @@ class Problem:
         return self.solver_class(self, *args, **kwargs)
 
     def eval_bc(self, th):
-        return self.eval_expected(self.R*np.cos(th), self.R*np.sin(th))
+        return self.eval_expected(self.R*cos(th), self.R*sin(th))
 
 class Mountain(Problem):
     k = 1
@@ -59,6 +60,9 @@ class Wave(Problem):
     def eval_expected(self, x, y):
         return np.exp(complex(0, self.kx*x + self.ky*y))
 
+class Wave2(Wave):
+    solver_class = CircleSolver2
+
 class WavePizza(Wave):
     sectorAngle = np.pi / 6
     solver_class = PizzaSolver
@@ -83,6 +87,6 @@ problem_dict = {
     'mountain': Mountain,
     'ycosine': YCosine,
     'wave': Wave,
+    'wave2': Wave2,
     'wave-pizza': WavePizza
 }
-

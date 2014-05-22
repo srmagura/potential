@@ -79,6 +79,20 @@ class PizzaSolver(Solver):
                 self.c0[segment_id].append(I/np.pi)
             else:
                 self.c0[segment_id].append(2*I/np.pi)
+    
+    def extend_basis(self, J, index):
+        ext = np.zeros(len(self.gamma), dtype=complex)
+        for l in range(len(self.gamma)):
+            i, j = self.gamma[l]
+            r, th = self.get_polar(i, j)
+            exp = np.exp(complex(0, J*th))
+
+            if index == 0:
+                ext[l] = self.extend(r, th, exp, 0, -J**2 * exp, 0, J**4 * exp)
+            else:
+                ext[l] = self.extend(r, th, 0, exp, 0, -J**2 * exp, 0)  
+
+        return ext
 
     def run(self):
         self.c0 = []
@@ -86,6 +100,10 @@ class PizzaSolver(Solver):
         self.calc_c0(1)
         self.calc_c0(2)
 
+        self.do_plots()
+
+
+    def do_plots(self):
         a = self.problem.sectorAngle
 
         th_data = np.arange(a, 2*np.pi, .05)
@@ -144,7 +162,7 @@ class PizzaSolver(Solver):
         plt.xlabel('s, arc length along boundary')
         plt.ylabel('Real part of boundary data')
         plt.legend()
-        #plt.show()
+        plt.show()
         plt.clf()
 
         plt.plot(Gamma_x_data, Gamma_y_data)

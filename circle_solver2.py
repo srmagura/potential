@@ -1,0 +1,297 @@
+import itertools as it
+import math
+import collections
+import numpy as np
+import scipy
+from scipy.integrate import quad
+
+from solver import Solver
+import matrices
+
+import matplotlib.pyplot as plt
+
+N_BASIS = 20
+DELTA = .05
+
+def complex_quad(f, a, b):
+    def real_func(x):
+        return scipy.real(f(x))
+    def imag_func(x):
+        return scipy.imag(f(x))
+
+    real_integral = quad(real_func, a, b)
+    imag_integral = quad(imag_func, a, b)
+    return real_integral[0] + 1j*imag_integral[0]
+
+def w(t):
+    return 1 / np.sqrt(1 - t**2)
+
+def eval_chebyshev(J, t):
+    return np.cos(J * np.arccos(t))
+
+class CircleSolver2(Solver):
+    # Side length of square domain on which AP is solved
+    AD_len = 2*np.pi
+
+    # Radius of circular region Omega
+    R = 2.3
+
+    def __init__(self, problem, N, scheme_order, **kwargs):
+        super().__init__(problem, N, scheme_order, **kwargs)
+        problem.R = self.R
+
+    # Get the polar coordinates of grid point (i,j)
+    def get_polar(self, i, j):
+        x, y = self.get_coord(i, j)
+        #FIXME
+        return math.hypot(x, y), math.atan2(y, x)
+
+    # Get the rectangular coordinates of grid point (i,j)
+    def get_coord(self, i, j):
+        x = (self.AD_len * i / self.N - self.AD_len/2, 
+            self.AD_len * j / self.N - self.AD_len/2)
+        return x
+
+    def is_interior(self, i, j):
+        return self.get_polar(i, j)[0] <= self.R
+
+    # Calculate the difference potential of a function xi 
+    # that is defined on gamma.
+    def get_potential(self, xi):
+        w = np.zeros([(self.N-1)**2], dtype=complex)
+
+        for l in range(len(self.gamma)):
+            w[matrices.get_index(self.N, *self.gamma[l])] = xi[l]
+
+        Lw = np.ravel(self.L.dot(w))
+
+        for i,j in self.Mminus:
+            Lw[matrices.get_index(self.N, i, j)] = 0
+
+        return w - self.LU_factorization.solve(Lw)
+
+    def get_trace(self, data):
+        projection = np.zeros(len(self.gamma), dtype=complex)
+
+        for l in range(len(self.gamma)):
+            index = matrices.get_index(self.N, *self.gamma[l])
+            projection[l] = data[index]
+
+        return projection
+
+    # Returns the matrix Q0 or Q1, depending on the value of `index`.
+    def get_Q(self, index):
+        columns = []
+
+        for J in self.J_dict:
+            ext = self.extend_basis(J, index)
+            potential = self.get_potential(ext)
+            projection = self.get_trace(potential)
+
+            columns.append(projection - ext)
+
+        return np.column_stack(columns)
+
+    #def get_c(self):
+        #Q0 = self.get_Q(0)
+        #Q1 = self.get_Q(1)
+
+        #self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+        #ext_f = self.extend_inhomogeneous_f()    
+        #proj_f = self.get_trace(self.get_potential(ext_f))
+
+        #rhs = -Q0.dot(c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
+        #c1 = np.linalg.lstsq(Q1, rhs)[0]
+
+        #return c0, c1
+
+    def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
+        R = self.R
+        k = self.k
+
+        derivs = []
+        derivs.append(xi0) 
+        derivs.append(xi1)
+        derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
+        derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
+            d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
+        derivs.append(-6 * xi1 / R**3 + 
+            (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
+            6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
+            (3*k**2 / R**2 - k**4) * xi0 +
+            2 * k**2 / R * xi1)
+
+        v = 0
+        for l in range(len(derivs)):
+            v += derivs[l] / math.factorial(l) * (r - R)**l
+
+        return v
+
+    # Construct the equation-based extension for the basis function
+    # $\psi_{index}^{(J)}$.
+    def extend_basis(self, J, index):
+        ext = np.zeros(len(self.gamma), dtype=complex)
+        for l in range(len(self.gamma)):
+            i, j = self.gamma[l]
+            r, th = self.get_polar(i, j)
+            exp = np.exp(complex(0, J*th))
+
+            if index == 0:
+                ext[l] = self.extend(r, th, exp, 0, -J**2 * exp, 0, J**4 * exp)
+            else:
+                ext[l] = self.extend(r, th, 0, exp, 0, -J**2 * exp, 0)  
+
+        return ext
+
+    def extend_inhomogeneous(self, r, th):
+        p = self.problem
+        if p.homogeneous:
+            return 0
+
+        R = self.R
+        k = self.k
+
+        x = R * np.cos(th)
+        y = R * np.sin(th)
+
+        derivs = [0, 0]
+        derivs.append(p.eval_f(x, y))
+        derivs.append(p.eval_d_f_r(R, th) - p.eval_f(x, y) / R)
+        derivs.append(p.eval_d2_f_r(R, th) - 
+            p.eval_d2_f_th(R, th) / R**2 - 
+            p.eval_d_f_r(R, th) / R + 
+            (3/R**2 - k**2) * p.eval_f(x, y))
+
+        v = 0
+        for l in range(len(derivs)):
+            v += derivs[l] / math.factorial(l) * (r - R)**l
+
+        return v
+
+    def extend_inhomogeneous_f(self):
+        ext = np.zeros(len(self.gamma), dtype=complex)
+        for l in range(len(self.gamma)):
+            i, j = self.gamma[l]
+            r, th = self.get_polar(i, j)
+            ext[l] = self.extend_inhomogeneous(r, th)
+
+        return ext
+
+    def extend_src_f(self):
+        p = self.problem
+        if p.homogeneous:
+            return
+
+        for i,j in self.Kplus - self.Mplus:
+            R = self.R
+
+            r, th = self.get_polar(i, j)
+            x = R * np.cos(th)
+            y = R * np.sin(th)
+
+            derivs = [p.eval_f(x, y), p.eval_d_f_r(R, th),
+                p.eval_d2_f_r(R, th)]
+
+            v = 0
+            for l in range(len(derivs)):
+                v += derivs[l] / math.factorial(l) * (r - R)**l
+
+            self.src_f[matrices.get_index(self.N,i,j)] = v
+            #self.src_f[matrices.get_index(self.N,i,j)] =\
+            #    p.eval_f(*self.get_coord(i, j))
+
+    # Construct the equation-based extension for the boundary data,
+    # as approximated by the Fourier coefficients c0 and c1.
+    def extend_boundary(self, c0, c1): 
+        R = self.R
+        k = self.problem.k
+
+        boundary = np.zeros(len(self.gamma), dtype=complex)
+
+        for l in range(len(self.gamma)):
+            i, j = self.gamma[l]
+            r, th = self.get_polar(i, j)
+
+            xi0 = xi1 = 0
+            d2_xi0_th = d2_xi1_th = 0 
+            d4_xi0_th = 0
+
+            for J, i in self.J_dict.items():
+                exp = cmath.exp(complex(0, J*th))
+                xi0 += c0[i] * exp 
+                d2_xi0_th += -J**2 * c0[i] * exp
+                d4_xi0_th += J**4 * c0[i] * exp
+
+                xi1 += c1[i] * exp
+                d2_xi1_th += -J**2 * c1[i] * exp
+
+            boundary[l] = self.extend(r, th, xi0, xi1, d2_xi0_th, d2_xi1_th,
+                d4_xi0_th)
+            boundary[l] += self.extend_inhomogeneous(r, th)
+
+        return boundary
+
+    def g(self, sid, t):
+        if sid == 0:
+            return (np.pi/2 + DELTA)*t + np.pi/2
+        else:
+            return 0
+
+    def g_inv(self, sid, th):
+        if sid == 0:
+            return (th - np.pi/2) / (np.pi/2 + DELTA)
+        else:
+            return 0
+
+    def get_sid(self, th):
+        #TODO
+        return 0 
+
+    def calc_c0(self):
+        self.c0 = []
+
+        for sid in (0, 1):
+            for J in range(N_BASIS):
+                def integrand(t):
+                    return (w(t) * 
+                        self.problem.eval_bc(self.g(sid, t)) *    
+                        eval_chebyshev(J, t))
+
+                I = complex_quad(integrand, -1, 1)
+                if J == 0:
+                    self.c0.append(I/np.pi)
+                else:
+                    self.c0.append(2*I/np.pi)
+
+    def run(self):
+        self.calc_c0()
+        
+        th_data = np.linspace(0, np.pi, 300)
+        expansion_data = np.zeros(len(th_data))
+        exact_data = np.zeros(len(th_data))
+        j = 0
+
+        for i in range(len(th_data)):
+            th = th_data[i]
+            sid = self.get_sid(th)
+
+            for J in range(len(self.c0)):
+                t = self.g_inv(sid, th)
+
+                if J < N_BASIS:
+                    expansion_data[j] += (self.c0[J]*eval_chebyshev(J, t)).real
+
+            exact_data[j] = self.problem.eval_bc(th).real
+            j += 1
+
+        plt.plot(th_data, exact_data, label='Exact', linewidth=9, color='#BBBBBB')
+        plt.plot(th_data, expansion_data, label='Expansion')
+        plt.legend()
+        plt.show()
+        return np.max(np.abs(expansion_data - exact_data))
+
+        #ext = self.extend_boundary(c0,c1)
+        #u_act = self.get_potential(ext) + self.ap_sol_f
+
+        #error = self.eval_error(u_act)
+        #return error
