@@ -29,6 +29,35 @@ def w(t):
 def eval_chebyshev(J, t):
     return np.cos(J * np.arccos(t))
 
+def eval_basis(J, sid, t):
+    if J < N_BASIS:
+        if sid == 0:
+            return eval_chebyshev(J, t)
+    else:
+        if sid == 1:
+            return eval_chebyshev(J - N_BASIS, t)
+
+    return 0
+
+def g(sid, t):
+    if sid == 0:
+        return (np.pi/2 + DELTA)*t + np.pi/2
+    else:
+        return (np.pi/2 + DELTA)*t + 3*np.pi/2
+
+def g_inv(sid, th):
+    if sid == 0:
+        return (th - np.pi/2) / (np.pi/2 + DELTA)
+    else:
+        return (th - 3*np.pi/2) / (np.pi/2 + DELTA)
+
+def get_sid(th):
+    if th <= np.pi:
+        return 0
+    else:
+        return 1
+
+
 class CircleSolver2(Solver):
     # Side length of square domain on which AP is solved
     AD_len = 2*np.pi
@@ -231,22 +260,6 @@ class CircleSolver2(Solver):
 
         return boundary
 
-    def g(self, sid, t):
-        if sid == 0:
-            return (np.pi/2 + DELTA)*t + np.pi/2
-        else:
-            return 0
-
-    def g_inv(self, sid, th):
-        if sid == 0:
-            return (th - np.pi/2) / (np.pi/2 + DELTA)
-        else:
-            return 0
-
-    def get_sid(self, th):
-        #TODO
-        return 0 
-
     def calc_c0(self):
         self.c0 = []
 
@@ -254,7 +267,7 @@ class CircleSolver2(Solver):
             for J in range(N_BASIS):
                 def integrand(t):
                     return (w(t) * 
-                        self.problem.eval_bc(self.g(sid, t)) *    
+                        self.problem.eval_bc(g(sid, t)) *    
                         eval_chebyshev(J, t))
 
                 I = complex_quad(integrand, -1, 1)
@@ -265,21 +278,25 @@ class CircleSolver2(Solver):
 
     def run(self):
         self.calc_c0()
-        
-        th_data = np.linspace(0, np.pi, 300)
+        #ext = self.extend_boundary(c0,c1)
+        #u_act = self.get_potential(ext) + self.ap_sol_f
+
+        #error = self.eval_error(u_act)
+        #return error
+
+    def c0_test(self):
+        th_data = np.linspace(0, 2*np.pi, 300)
         expansion_data = np.zeros(len(th_data))
         exact_data = np.zeros(len(th_data))
         j = 0
 
         for i in range(len(th_data)):
             th = th_data[i]
-            sid = self.get_sid(th)
+            sid = get_sid(th)
 
             for J in range(len(self.c0)):
-                t = self.g_inv(sid, th)
-
-                if J < N_BASIS:
-                    expansion_data[j] += (self.c0[J]*eval_chebyshev(J, t)).real
+                t = g_inv(sid, th)
+                expansion_data[j] += (self.c0[J]*eval_basis(J, sid, t)).real
 
             exact_data[j] = self.problem.eval_bc(th).real
             j += 1
@@ -288,10 +305,4 @@ class CircleSolver2(Solver):
         plt.plot(th_data, expansion_data, label='Expansion')
         plt.legend()
         plt.show()
-        return np.max(np.abs(expansion_data - exact_data))
 
-        #ext = self.extend_boundary(c0,c1)
-        #u_act = self.get_potential(ext) + self.ap_sol_f
-
-        #error = self.eval_error(u_act)
-        #return error
