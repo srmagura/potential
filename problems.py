@@ -60,6 +60,10 @@ class Wave(Problem):
     def eval_expected(self, x, y):
         return np.exp(complex(0, self.kx*x + self.ky*y))
 
+    def eval_du_dr(self, th):
+        a = self.kx*cos(th) + self.ky*sin(th)
+        return 1j*a*np.exp(1j*self.R*a)
+
 class Wave2(Wave):
     solver_class = CircleSolver2
 

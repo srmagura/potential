@@ -72,8 +72,12 @@ class CircleSolver2(Solver):
     # Get the polar coordinates of grid point (i,j)
     def get_polar(self, i, j):
         x, y = self.get_coord(i, j)
-        #FIXME
-        return math.hypot(x, y), math.atan2(y, x)
+        r, th = math.hypot(x, y), math.atan2(y, x)
+
+        if th < 0:
+            th += 2*np.pi
+
+        return r, th
 
     # Get the rectangular coordinates of grid point (i,j)
     def get_coord(self, i, j):
@@ -112,7 +116,7 @@ class CircleSolver2(Solver):
     def get_Q(self, index):
         columns = []
 
-        for J in self.J_dict:
+        for J in range(2*N_BASIS):
             ext = self.extend_basis(J, index)
             potential = self.get_potential(ext)
             projection = self.get_trace(potential)
@@ -121,34 +125,32 @@ class CircleSolver2(Solver):
 
         return np.column_stack(columns)
 
-    #def get_c(self):
-        #Q0 = self.get_Q(0)
-        #Q1 = self.get_Q(1)
+    def calc_c1(self):
+        Q0 = self.get_Q(0)
+        Q1 = self.get_Q(1)
 
         #self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
         #ext_f = self.extend_inhomogeneous_f()    
         #proj_f = self.get_trace(self.get_potential(ext_f))
 
-        #rhs = -Q0.dot(c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
-        #c1 = np.linalg.lstsq(Q1, rhs)[0]
+        rhs = -Q0.dot(self.c0) #- self.get_trace(self.ap_sol_f) - proj_f + ext_f
+        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
-        #return c0, c1
-
-    def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
+    def extend(self, r, th, xi0, xi1):#, d2_xi0_th, d2_xi1_th, d4_xi0_th):
         R = self.R
         k = self.k
 
         derivs = []
         derivs.append(xi0) 
         derivs.append(xi1)
-        derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
-        derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
-            d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
-        derivs.append(-6 * xi1 / R**3 + 
-            (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
-            6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
-            (3*k**2 / R**2 - k**4) * xi0 +
-            2 * k**2 / R * xi1)
+        #derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
+        #derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
+        #    d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
+        #derivs.append(-6 * xi1 / R**3 + 
+        #    (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
+        #    6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
+        #    (3*k**2 / R**2 - k**4) * xi0 +
+        #    2 * k**2 / R * xi1)
 
         v = 0
         for l in range(len(derivs)):
@@ -163,12 +165,15 @@ class CircleSolver2(Solver):
         for l in range(len(self.gamma)):
             i, j = self.gamma[l]
             r, th = self.get_polar(i, j)
-            exp = np.exp(complex(0, J*th))
+            sid = get_sid(th)
+
+            t = g_inv(sid, th)
+            val = eval_basis(J, sid, t)
 
             if index == 0:
-                ext[l] = self.extend(r, th, exp, 0, -J**2 * exp, 0, J**4 * exp)
+                ext[l] = self.extend(r, th, val, 0)
             else:
-                ext[l] = self.extend(r, th, 0, exp, 0, -J**2 * exp, 0)  
+                ext[l] = self.extend(r, th, 0, val)  
 
         return ext
 
@@ -278,16 +283,23 @@ class CircleSolver2(Solver):
 
     def run(self):
         self.calc_c0()
+        self.calc_c1()
+        self.c_test()
         #ext = self.extend_boundary(c0,c1)
         #u_act = self.get_potential(ext) + self.ap_sol_f
 
         #error = self.eval_error(u_act)
         #return error
 
-    def c0_test(self):
+    def c_test(self):
         th_data = np.linspace(0, 2*np.pi, 300)
-        expansion_data = np.zeros(len(th_data))
-        exact_data = np.zeros(len(th_data))
+
+        expansion_data0 = np.zeros(len(th_data))
+        exact_data0 = np.zeros(len(th_data))
+
+        expansion_data1 = np.zeros(len(th_data))
+        exact_data1 = np.zeros(len(th_data))
+
         j = 0
 
         for i in range(len(th_data)):
@@ -296,13 +308,23 @@ class CircleSolver2(Solver):
 
             for J in range(len(self.c0)):
                 t = g_inv(sid, th)
-                expansion_data[j] += (self.c0[J]*eval_basis(J, sid, t)).real
+                expansion_data0[j] += (self.c0[J]*eval_basis(J, sid, t)).real
+                expansion_data1[j] += (self.c1[J]*eval_basis(J, sid, t)).real
 
-            exact_data[j] = self.problem.eval_bc(th).real
+            exact_data0[j] = self.problem.eval_bc(th).real
+            exact_data1[j] = self.problem.eval_du_dr(th).real
             j += 1
 
-        plt.plot(th_data, exact_data, label='Exact', linewidth=9, color='#BBBBBB')
-        plt.plot(th_data, expansion_data, label='Expansion')
+        plt.plot(th_data, exact_data0, label='Exact', linewidth=9, color='#BBBBBB')
+        plt.plot(th_data, expansion_data0, label='Expansion')
+        plt.title('c0')
+        plt.legend()
+        plt.show()
+        plt.clf()
+
+        plt.plot(th_data, exact_data1, label='Exact', linewidth=9, color='#BBBBBB')
+        plt.plot(th_data, expansion_data1, label='Expansion')
+        plt.title('c1')
         plt.legend()
         plt.show()
 
