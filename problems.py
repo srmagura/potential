@@ -3,7 +3,6 @@ from numpy import cos, sin
 
 from solver import SquareSolver
 from circle_solver import CircleSolver
-from circle_solver2 import CircleSolver2
 from pizza_solver import PizzaSolver
 
 class Problem:
@@ -64,9 +63,6 @@ class Wave(Problem):
         a = self.kx*cos(th) + self.ky*sin(th)
         return 1j*a*np.exp(1j*self.R*a)
 
-class Wave2(Wave):
-    solver_class = CircleSolver2
-
 class WavePizza(Wave):
     sectorAngle = np.pi / 6
     solver_class = PizzaSolver
@@ -91,6 +87,5 @@ problem_dict = {
     'mountain': Mountain,
     'ycosine': YCosine,
     'wave': Wave,
-    'wave2': Wave2,
     'wave-pizza': WavePizza
 }

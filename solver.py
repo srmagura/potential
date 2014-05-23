@@ -115,3 +115,8 @@ class SquareSolver(Solver):
     def run(self):
         u_act = self.LU_factorization.solve(self.B_src_f)
         return self.eval_error(u_act)
+
+
+from circle_solver2 import CircleSolver2
+
+solver_dict = {'cs2': CircleSolver2} 

@@ -235,8 +235,8 @@ class CircleSolver2(Solver):
             #    p.eval_f(*self.get_coord(i, j))
 
     # Construct the equation-based extension for the boundary data,
-    # as approximated by the Fourier coefficients c0 and c1.
-    def extend_boundary(self, c0, c1): 
+    # as approximated by the coefficients c0 and c1.
+    def extend_boundary(self): 
         R = self.R
         k = self.problem.k
 
@@ -245,23 +245,24 @@ class CircleSolver2(Solver):
         for l in range(len(self.gamma)):
             i, j = self.gamma[l]
             r, th = self.get_polar(i, j)
+            sid = get_sid(th)
+            t = g_inv(sid, th)
 
             xi0 = xi1 = 0
-            d2_xi0_th = d2_xi1_th = 0 
-            d4_xi0_th = 0
+            #d2_xi0_th = d2_xi1_th = 0 
+            #d4_xi0_th = 0
 
-            for J, i in self.J_dict.items():
-                exp = cmath.exp(complex(0, J*th))
-                xi0 += c0[i] * exp 
-                d2_xi0_th += -J**2 * c0[i] * exp
-                d4_xi0_th += J**4 * c0[i] * exp
+            for J in range(2*N_BASIS):
+                val = eval_basis(J, sid, t)
+                xi0 += self.c0[J] * val
+                #d2_xi0_th += -J**2 * c0[i] * exp
+                #d4_xi0_th += J**4 * c0[i] * exp
 
-                xi1 += c1[i] * exp
-                d2_xi1_th += -J**2 * c1[i] * exp
+                xi1 += self.c1[J] * val
+                #d2_xi1_th += -J**2 * c1[i] * exp
 
-            boundary[l] = self.extend(r, th, xi0, xi1, d2_xi0_th, d2_xi1_th,
-                d4_xi0_th)
-            boundary[l] += self.extend_inhomogeneous(r, th)
+            boundary[l] = self.extend(r, th, xi0, xi1)
+            #boundary[l] += self.extend_inhomogeneous(r, th)
 
         return boundary
 
@@ -284,12 +285,11 @@ class CircleSolver2(Solver):
     def run(self):
         self.calc_c0()
         self.calc_c1()
-        self.c_test()
-        #ext = self.extend_boundary(c0,c1)
-        #u_act = self.get_potential(ext) + self.ap_sol_f
+        ext = self.extend_boundary()
+        u_act = self.get_potential(ext)# + self.ap_sol_f
 
-        #error = self.eval_error(u_act)
-        #return error
+        error = self.eval_error(u_act)
+        return error
 
     def c_test(self):
         th_data = np.linspace(0, 2*np.pi, 300)
@@ -305,9 +305,9 @@ class CircleSolver2(Solver):
         for i in range(len(th_data)):
             th = th_data[i]
             sid = get_sid(th)
+            t = g_inv(sid, th)
 
             for J in range(len(self.c0)):
-                t = g_inv(sid, th)
                 expansion_data0[j] += (self.c0[J]*eval_basis(J, sid, t)).real
                 expansion_data1[j] += (self.c1[J]*eval_basis(J, sid, t)).real
 
