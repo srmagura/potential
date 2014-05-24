@@ -4,11 +4,12 @@ import collections
 import numpy as np
 import scipy
 from scipy.integrate import quad
+import matplotlib.pyplot as plt
 
 from solver import Solver
 import matrices
+from chebyshev import *
 
-import matplotlib.pyplot as plt
 
 N_BASIS = 20
 DELTA = .05
@@ -23,19 +24,13 @@ def complex_quad(f, a, b):
     imag_integral = quad(imag_func, a, b)
     return real_integral[0] + 1j*imag_integral[0]
 
-def w(t):
-    return 1 / np.sqrt(1 - t**2)
-
-def eval_chebyshev(J, t):
-    return np.cos(J * np.arccos(t))
-
 def eval_basis(J, sid, t):
     if J < N_BASIS:
         if sid == 0:
-            return eval_chebyshev(J, t)
+            return eval_T(J, t)
     else:
         if sid == 1:
-            return eval_chebyshev(J - N_BASIS, t)
+            return eval_T(J - N_BASIS, t)
 
     return 0
 
@@ -129,21 +124,21 @@ class CircleSolver2(Solver):
         Q0 = self.get_Q(0)
         Q1 = self.get_Q(1)
 
-        #self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
-        #ext_f = self.extend_inhomogeneous_f()    
-        #proj_f = self.get_trace(self.get_potential(ext_f))
+        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+        ext_f = self.extend_inhomogeneous_f()    
+        proj_f = self.get_trace(self.get_potential(ext_f))
 
-        rhs = -Q0.dot(self.c0) #- self.get_trace(self.ap_sol_f) - proj_f + ext_f
+        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
-    def extend(self, r, th, xi0, xi1):#, d2_xi0_th, d2_xi1_th, d4_xi0_th):
+    def extend(self, r, th, xi0, xi1, d2_xi0_th):#, d2_xi1_th, d4_xi0_th):
         R = self.R
         k = self.k
 
         derivs = []
         derivs.append(xi0) 
         derivs.append(xi1)
-        #derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
+        derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
         #derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
         #    d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
         #derivs.append(-6 * xi1 / R**3 + 
@@ -223,7 +218,7 @@ class CircleSolver2(Solver):
             x = R * np.cos(th)
             y = R * np.sin(th)
 
-            derivs = [p.eval_f(x, y), p.eval_d_f_r(R, th),
+            derivs = [p.eval_f(x, y), p.eval_d_f_r(R, th), 
                 p.eval_d2_f_r(R, th)]
 
             v = 0
@@ -231,8 +226,6 @@ class CircleSolver2(Solver):
                 v += derivs[l] / math.factorial(l) * (r - R)**l
 
             self.src_f[matrices.get_index(self.N,i,j)] = v
-            #self.src_f[matrices.get_index(self.N,i,j)] =\
-            #    p.eval_f(*self.get_coord(i, j))
 
     # Construct the equation-based extension for the boundary data,
     # as approximated by the coefficients c0 and c1.
@@ -272,9 +265,9 @@ class CircleSolver2(Solver):
         for sid in (0, 1):
             for J in range(N_BASIS):
                 def integrand(t):
-                    return (w(t) * 
+                    return (eval_weight(t) * 
                         self.problem.eval_bc(g(sid, t)) *    
-                        eval_chebyshev(J, t))
+                        eval_T(J, t))
 
                 I = complex_quad(integrand, -1, 1)
                 if J == 0:
@@ -286,7 +279,7 @@ class CircleSolver2(Solver):
         self.calc_c0()
         self.calc_c1()
         ext = self.extend_boundary()
-        u_act = self.get_potential(ext)# + self.ap_sol_f
+        u_act = self.get_potential(ext) + self.ap_sol_f
 
         error = self.eval_error(u_act)
         return error
