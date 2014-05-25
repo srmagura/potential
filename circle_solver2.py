@@ -34,17 +34,39 @@ def eval_basis(J, sid, t):
 
     return 0
 
-def g(sid, t):
+def eval_g(sid, t):
     if sid == 0:
         return (np.pi/2 + DELTA)*t + np.pi/2
     else:
         return (np.pi/2 + DELTA)*t + 3*np.pi/2
 
-def g_inv(sid, th):
+def eval_g_inv(sid, th):
     if sid == 0:
         return (th - np.pi/2) / (np.pi/2 + DELTA)
     else:
         return (th - 3*np.pi/2) / (np.pi/2 + DELTA)
+
+def eval_d_g_inv_th(sid):
+    if sid == 0:
+        return 1 / (np.pi/2 + DELTA)
+    else:
+        return 1 / (np.pi/2 + DELTA)
+
+def eval_d2_basis_th(J, sid, t):
+    J1 = None
+    d_g_inv_th = eval_d_g_inv_th(sid)
+
+    if J < N_BASIS:
+        if sid == 0:
+            J1 = J
+    else:
+        if sid == 1:
+            J1 = J - N_BASIS
+
+    if J1 is not None:
+        return (d_g_inv_th)**2 * eval_d2_T_t(J1, t)
+    else:
+        return 0
 
 def get_sid(th):
     if th <= np.pi:
@@ -162,13 +184,14 @@ class CircleSolver2(Solver):
             r, th = self.get_polar(i, j)
             sid = get_sid(th)
 
-            t = g_inv(sid, th)
+            t = eval_g_inv(sid, th)
             val = eval_basis(J, sid, t)
 
             if index == 0:
-                ext[l] = self.extend(r, th, val, 0)
+                ext[l] = self.extend(r, th, val, 0, 
+                    eval_d2_basis_th(J, sid, t))
             else:
-                ext[l] = self.extend(r, th, 0, val)  
+                ext[l] = self.extend(r, th, 0, val, 0)  
 
         return ext
 
@@ -239,22 +262,25 @@ class CircleSolver2(Solver):
             i, j = self.gamma[l]
             r, th = self.get_polar(i, j)
             sid = get_sid(th)
-            t = g_inv(sid, th)
+            t = eval_g_inv(sid, th)
 
             xi0 = xi1 = 0
-            #d2_xi0_th = d2_xi1_th = 0 
+            d2_xi0_th = d2_xi1_th = 0 
             #d4_xi0_th = 0
 
             for J in range(2*N_BASIS):
-                val = eval_basis(J, sid, t)
-                xi0 += self.c0[J] * val
-                #d2_xi0_th += -J**2 * c0[i] * exp
+                basis = eval_basis(J, sid, t)
+                xi0 += self.c0[J] * basis
+
+                d2_basis_th = eval_d2_basis_th(J, sid, t)
+                d2_xi0_th += self.c0[J] * d2_basis_th
                 #d4_xi0_th += J**4 * c0[i] * exp
 
-                xi1 += self.c1[J] * val
+                xi1 += self.c1[J] * basis
                 #d2_xi1_th += -J**2 * c1[i] * exp
 
-            boundary[l] = self.extend(r, th, xi0, xi1)
+            boundary[l] = self.extend(r, th, xi0, xi1, 
+                d2_xi0_th)
             #boundary[l] += self.extend_inhomogeneous(r, th)
 
         return boundary
@@ -266,7 +292,7 @@ class CircleSolver2(Solver):
             for J in range(N_BASIS):
                 def integrand(t):
                     return (eval_weight(t) * 
-                        self.problem.eval_bc(g(sid, t)) *    
+                        self.problem.eval_bc(eval_g(sid, t)) *    
                         eval_T(J, t))
 
                 I = complex_quad(integrand, -1, 1)
