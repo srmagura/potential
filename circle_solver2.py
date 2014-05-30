@@ -10,9 +10,8 @@ from solver import Solver
 import matrices
 from chebyshev import *
 
-
 N_BASIS = 20
-DELTA = .05
+DELTA = .1
 
 def complex_quad(f, a, b):
     def real_func(x):
@@ -23,6 +22,12 @@ def complex_quad(f, a, b):
     real_integral = quad(real_func, a, b)
     imag_integral = quad(imag_func, a, b)
     return real_integral[0] + 1j*imag_integral[0]
+
+def get_sid(th):
+    if th <= np.pi:
+        return 0
+    else:
+        return 1
 
 def eval_basis(J, sid, t):
     if J < N_BASIS:
@@ -68,12 +73,21 @@ def eval_d2_basis_th(J, sid, t):
     else:
         return 0
 
-def get_sid(th):
-    if th <= np.pi:
-        return 0
-    else:
-        return 1
+def eval_d4_basis_th(J, sid, t):
+    J1 = None
+    d_g_inv_th = eval_d_g_inv_th(sid)
 
+    if J < N_BASIS:
+        if sid == 0:
+            J1 = J
+    else:
+        if sid == 1:
+            J1 = J - N_BASIS
+
+    if J1 is not None:
+        return (d_g_inv_th)**4 * eval_d4_T_t(J1, t)
+    else:
+        return 0
 
 class CircleSolver2(Solver):
     # Side length of square domain on which AP is solved
@@ -142,25 +156,27 @@ class CircleSolver2(Solver):
 
         return np.column_stack(columns)
 
-    def calc_c1(self):
-        Q0 = self.get_Q(0)
-        Q1 = self.get_Q(1)
+    #def calc_c1(self):
+        #Q0 = self.get_Q(0)
+        #Q1 = self.get_Q(1)
 
-        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
-        ext_f = self.extend_inhomogeneous_f()    
-        proj_f = self.get_trace(self.get_potential(ext_f))
+        #self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+        #ext_f = self.extend_inhomogeneous_f()    
+        #proj_f = self.get_trace(self.get_potential(ext_f))
 
-        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
-        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
+        #rhs = -Q0.dot(self.c0) #- self.get_trace(self.ap_sol_f) - proj_f + ext_f
+        #self.c1 = np.linalg.lstsq(Q1, rhs)[0]
+        #if self.verbose:
+        #    print('Q-system:', Q1.shape)
 
-    def extend(self, r, th, xi0, xi1, d2_xi0_th):#, d2_xi1_th, d4_xi0_th):
+    def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
         R = self.R
         k = self.k
 
         derivs = []
         derivs.append(xi0) 
         derivs.append(xi1)
-        derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
+        #derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
         #derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
         #    d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
         #derivs.append(-6 * xi1 / R**3 + 
@@ -185,13 +201,16 @@ class CircleSolver2(Solver):
             sid = get_sid(th)
 
             t = eval_g_inv(sid, th)
-            val = eval_basis(J, sid, t)
+            basis = eval_basis(J, sid, t)
+            d2_basis_th = eval_d2_basis_th(J, sid, t)
+            d4_basis_th = eval_d4_basis_th(J, sid, t)
 
             if index == 0:
-                ext[l] = self.extend(r, th, val, 0, 
-                    eval_d2_basis_th(J, sid, t))
+                ext[l] = self.extend(r, th, basis, 0, 
+                    d2_basis_th, 0, d4_basis_th)
             else:
-                ext[l] = self.extend(r, th, 0, val, 0)  
+                ext[l] = self.extend(r, th, 0, basis, 0,
+                    d2_basis_th, 0)  
 
         return ext
 
@@ -266,21 +285,22 @@ class CircleSolver2(Solver):
 
             xi0 = xi1 = 0
             d2_xi0_th = d2_xi1_th = 0 
-            #d4_xi0_th = 0
+            d4_xi0_th = 0
 
             for J in range(2*N_BASIS):
                 basis = eval_basis(J, sid, t)
-                xi0 += self.c0[J] * basis
-
                 d2_basis_th = eval_d2_basis_th(J, sid, t)
+                d4_basis_th = eval_d4_basis_th(J, sid, t)
+
+                xi0 += self.c0[J] * basis
                 d2_xi0_th += self.c0[J] * d2_basis_th
-                #d4_xi0_th += J**4 * c0[i] * exp
+                d4_xi0_th += self.c0[J] * d4_basis_th
 
                 xi1 += self.c1[J] * basis
-                #d2_xi1_th += -J**2 * c1[i] * exp
+                d2_xi1_th += self.c1[J] * d2_basis_th
 
             boundary[l] = self.extend(r, th, xi0, xi1, 
-                d2_xi0_th)
+                d2_xi0_th, d2_xi1_th, d4_xi0_th)
             #boundary[l] += self.extend_inhomogeneous(r, th)
 
         return boundary
@@ -301,17 +321,40 @@ class CircleSolver2(Solver):
                 else:
                     self.c0.append(2*I/np.pi)
 
+    def calc_c1(self):
+        self.c1 = []
+
+        for sid in (0, 1):
+            for J in range(N_BASIS):
+                def integrand(t):
+                    return (eval_weight(t) * 
+                        self.problem.eval_du_dr(eval_g(sid, t)) *    
+                        eval_T(J, t))
+
+                I = complex_quad(integrand, -1, 1)
+                if J == 0:
+                    self.c1.append(I/np.pi)
+                else:
+                    self.c1.append(2*I/np.pi)
+
     def run(self):
         self.calc_c0()
         self.calc_c1()
+        self.c_test()
+
         ext = self.extend_boundary()
-        u_act = self.get_potential(ext) + self.ap_sol_f
+        u_act = self.get_potential(ext) #+ self.ap_sol_f
 
         error = self.eval_error(u_act)
         return error
 
     def c_test(self):
-        th_data = np.linspace(0, 2*np.pi, 300)
+        nd = 2
+        print('c1')
+        print(np.around(self.c1[:N_BASIS], nd))
+        print(np.around(self.c1[N_BASIS:], nd))
+
+        th_data = np.linspace(0, 2*np.pi, 500)
 
         expansion_data0 = np.zeros(len(th_data))
         exact_data0 = np.zeros(len(th_data))
@@ -324,7 +367,7 @@ class CircleSolver2(Solver):
         for i in range(len(th_data)):
             th = th_data[i]
             sid = get_sid(th)
-            t = g_inv(sid, th)
+            t = eval_g_inv(sid, th)
 
             for J in range(len(self.c0)):
                 expansion_data0[j] += (self.c0[J]*eval_basis(J, sid, t)).real
@@ -338,11 +381,12 @@ class CircleSolver2(Solver):
         plt.plot(th_data, expansion_data0, label='Expansion')
         plt.title('c0')
         plt.legend()
-        plt.show()
+        #plt.show()
         plt.clf()
 
         plt.plot(th_data, exact_data1, label='Exact', linewidth=9, color='#BBBBBB')
         plt.plot(th_data, expansion_data1, label='Expansion')
+        plt.xlim(min(th_data)-.2,max(th_data)+.2)
         plt.title('c1')
         plt.legend()
         plt.show()
