@@ -119,6 +119,28 @@ class CircleSolver1(Solver):
 
         return ext
 
+    def extend_boundary(self): 
+        R = self.R
+        k = self.problem.k
+
+        boundary = np.zeros(len(self.gamma), dtype=complex)
+
+        for l in range(len(self.gamma)):
+            i, j = self.gamma[l]
+            r, th = self.get_polar(i, j)
+            t = eval_g_inv(th)
+
+            xi0 = xi1 = 0
+
+            for J in range(N_BASIS):
+                basis = eval_T(J, t)
+                xi0 += self.c0[J] * basis
+                xi1 += self.c1[J] * basis
+
+            boundary[l] = self.extend(r, th, xi0, xi1)
+
+        return boundary
+
     def calc_c0(self):
         t_data = np.arange(-1, 1, .005)
         boundary_data = [self.problem.eval_bc(eval_g(t)) for t in t_data] 
@@ -129,13 +151,18 @@ class CircleSolver1(Solver):
         self.calc_c1()
 
         #self.c0_test()
-        self.c1_test()
+        #self.c1_test()
+        ext = self.extend_boundary()
+        u_act = self.get_potential(ext) #+ self.ap_sol_f
+
+        error = self.eval_error(u_act)
+        return error
 
     def c0_test(self):
         print('c0')
         print(np.around(self.c0, 2))
 
-        th_data = np.linspace(0, 2*np.pi, 500)
+        th_data = np.arange(0, 2*np.pi, 500)
 
         expansion_data = np.zeros(len(th_data))
         exact_data = np.zeros(len(th_data))
@@ -161,7 +188,7 @@ class CircleSolver1(Solver):
 
     def c1_test(self):
         print('c1')
-        print(np.around(self.c1, 2))
+        print(np.around(self.c1, 5))
 
         th_data = np.linspace(0, 2*np.pi, 500)
 
