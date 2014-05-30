@@ -8,7 +8,7 @@ from solver import Solver
 import matrices
 from chebyshev import *
 
-N_BASIS = 20
+N_BASIS = 50
 
 def complex_quad(f, a, b):
     def real_func(x):
