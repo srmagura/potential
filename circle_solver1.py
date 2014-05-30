@@ -10,16 +10,6 @@ from chebyshev import *
 
 N_BASIS = 20
 
-def complex_quad(f, a, b):
-    def real_func(x):
-        return scipy.real(f(x))
-    def imag_func(x):
-        return scipy.imag(f(x))
-
-    real_integral = quad(real_func, a, b)
-    imag_integral = quad(imag_func, a, b)
-    return real_integral[0] + 1j*imag_integral[0]
-
 def eval_g(t):
     return np.pi*t + np.pi
 
@@ -130,25 +120,44 @@ class CircleSolver1(Solver):
         return ext
 
     def calc_c0(self):
-        self.c0 = []
-
-        for J in range(N_BASIS):
-            def integrand(t):
-                return (eval_weight(t) * 
-                    self.problem.eval_bc(eval_g(t)) *    
-                    eval_T(J, t))
-
-            I = complex_quad(integrand, -1, 1)
-            if J == 0:
-                self.c0.append(I/np.pi)
-            else:
-                self.c0.append(2*I/np.pi)
+        t_data = np.arange(-1, 1, .005)
+        boundary_data = [self.problem.eval_bc(eval_g(t)) for t in t_data] 
+        self.c0 = np.polynomial.chebyshev.chebfit(t_data, boundary_data, N_BASIS-1)
 
     def run(self):
         self.calc_c0()
         self.calc_c1()
 
+        #self.c0_test()
         self.c1_test()
+
+    def c0_test(self):
+        print('c0')
+        print(np.around(self.c0, 2))
+
+        th_data = np.linspace(0, 2*np.pi, 500)
+
+        expansion_data = np.zeros(len(th_data))
+        exact_data = np.zeros(len(th_data))
+
+        j = 0
+
+        for i in range(len(th_data)):
+            th = th_data[i]
+            t = eval_g_inv(th)
+
+            for J in range(len(self.c0)):
+                expansion_data[j] += (self.c0[J]*eval_T(J, t)).real
+
+            exact_data[j] = self.problem.eval_bc(th).real
+            j += 1
+
+        plt.plot(th_data, exact_data, label='Exact', linewidth=9, color='#BBBBBB')
+        plt.plot(th_data, expansion_data, label='Reconstructed from c0')
+        plt.xlim(min(th_data)-.2,max(th_data)+.2)
+        plt.title('Dirichlet data')
+        plt.legend()
+        plt.show()
 
     def c1_test(self):
         print('c1')
