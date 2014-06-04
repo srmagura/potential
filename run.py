@@ -11,10 +11,7 @@ import solver
 class Interface:
 
     def run_solver(self, solver):
-        with warnings.catch_warnings():
-            #warnings.simplefilter('ignore',
-                #category=IntegrationWarning)
-            return solver.run()
+        return solver.run()
 
     def test_convergence(self):
         prev_error = None
