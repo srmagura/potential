@@ -1,5 +1,4 @@
 import itertools as it
-import cmath
 import math
 import collections
 import numpy as np
@@ -28,43 +27,8 @@ class CircleSolver(Solver):
         super().__init__(problem, N, scheme_order, **kwargs)
         problem.R = self.R
 
-    # Get the polar coordinates of grid point (i,j)
-    def get_polar(self, i, j):
-        x, y = self.get_coord(i, j)
-        return math.hypot(x, y), math.atan2(y, x)
-
-    # Get the rectangular coordinates of grid point (i,j)
-    def get_coord(self, i, j):
-        x = (self.AD_len * i / self.N - self.AD_len/2, 
-            self.AD_len * j / self.N - self.AD_len/2)
-        return x
-
     def is_interior(self, i, j):
         return self.get_polar(i, j)[0] <= self.R
-
-    # Calculate the difference potential of a function xi 
-    # that is defined on gamma.
-    def get_potential(self, xi):
-        w = np.zeros([(self.N-1)**2], dtype=complex)
-
-        for l in range(len(self.gamma)):
-            w[matrices.get_index(self.N, *self.gamma[l])] = xi[l]
-
-        Lw = np.ravel(self.L.dot(w))
-
-        for i,j in self.Mminus:
-            Lw[matrices.get_index(self.N, i, j)] = 0
-
-        return w - self.LU_factorization.solve(Lw)
-
-    def get_trace(self, data):
-        projection = np.zeros(len(self.gamma), dtype=complex)
-
-        for l in range(len(self.gamma)):
-            index = matrices.get_index(self.N, *self.gamma[l])
-            projection[l] = data[index]
-
-        return projection
 
     # Returns the matrix Q0 or Q1, depending on the value of `index`.
     def get_Q(self, index):
@@ -241,7 +205,7 @@ class CircleSolver(Solver):
             d4_xi0_th = 0
 
             for J, i in self.J_dict.items():
-                exp = cmath.exp(complex(0, J*th))
+                exp = np.exp(complex(0, J*th))
                 xi0 += c0[i] * exp 
                 d2_xi0_th += -J**2 * c0[i] * exp
                 d4_xi0_th += J**4 * c0[i] * exp

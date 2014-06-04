@@ -1,22 +1,24 @@
-import math
 import numpy as np
+import math
 import scipy
 from scipy.integrate import quad
+from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
 from solver import Solver
 import matrices
 from chebyshev import *
 
-N_BASIS = 20
+DELTA = .1
 
 def eval_g(t):
-    return np.pi*t + np.pi
+    return (np.pi+DELTA)*t + np.pi
 
 def eval_g_inv(th):
-    return (th - np.pi) / np.pi
+    return (th - np.pi) / (np.pi+DELTA)
 
 class CircleSolver1(Solver):
+
     # Side length of square domain on which AP is solved
     AD_len = 2*np.pi
 
@@ -27,54 +29,26 @@ class CircleSolver1(Solver):
         super().__init__(problem, N, scheme_order, **kwargs)
         problem.R = self.R
 
-    # Get the polar coordinates of grid point (i,j)
-    def get_polar(self, i, j):
-        x, y = self.get_coord(i, j)
-        r, th = math.hypot(x, y), math.atan2(y, x)
-
-        if th < 0:
-            th += 2*np.pi
-
-        return r, th
-
-    # Get the rectangular coordinates of grid point (i,j)
-    def get_coord(self, i, j):
-        x = (self.AD_len * i / self.N - self.AD_len/2, 
-            self.AD_len * j / self.N - self.AD_len/2)
-        return x
-
     def is_interior(self, i, j):
         return self.get_polar(i, j)[0] <= self.R
 
-    # Calculate the difference potential of a function xi 
-    # that is defined on gamma.
-    def get_potential(self, xi):
-        w = np.zeros([(self.N-1)**2], dtype=complex)
+    def calc_n_basis(self):
+        if self.N < 128:
+            N_data = (16, 32, 64, 128) 
+            n_basis_data = (15, 22, 33, 45)
+            f = interp1d(N_data, n_basis_data)
+            self.n_basis = int(f(self.N))
+        else:
+            self.n_basis = 45
 
-        for l in range(len(self.gamma)):
-            w[matrices.get_index(self.N, *self.gamma[l])] = xi[l]
-
-        Lw = np.ravel(self.L.dot(w))
-
-        for i,j in self.Mminus:
-            Lw[matrices.get_index(self.N, i, j)] = 0
-
-        return w - self.LU_factorization.solve(Lw)
-
-    def get_trace(self, data):
-        projection = np.zeros(len(self.gamma), dtype=complex)
-
-        for l in range(len(self.gamma)):
-            index = matrices.get_index(self.N, *self.gamma[l])
-            projection[l] = data[index]
-
-        return projection
+        if self.verbose:
+            print('Using {} basis functions.'.format(self.n_basis))
 
     # Returns the matrix Q0 or Q1, depending on the value of `index`.
     def get_Q(self, index):
         columns = []
 
-        for J in range(N_BASIS):
+        for J in range(self.n_basis):
             ext = self.extend_basis(J, index)
             potential = self.get_potential(ext)
             projection = self.get_trace(potential)
@@ -132,7 +106,7 @@ class CircleSolver1(Solver):
 
             xi0 = xi1 = 0
 
-            for J in range(N_BASIS):
+            for J in range(self.n_basis):
                 basis = eval_T(J, t)
                 xi0 += self.c0[J] * basis
                 xi1 += self.c1[J] * basis
@@ -142,74 +116,40 @@ class CircleSolver1(Solver):
         return boundary
 
     def calc_c0(self):
-        t_data = np.arange(-1, 1, .005)
+        t_data = np.linspace(-1, 1, 1000)
         boundary_data = [self.problem.eval_bc(eval_g(t)) for t in t_data] 
-        self.c0 = np.polynomial.chebyshev.chebfit(t_data, boundary_data, N_BASIS-1)
-
+        self.c0 = np.polynomial.chebyshev.chebfit(
+            t_data, boundary_data, self.n_basis-1)
+    
     def run(self):
+        self.calc_n_basis()
         self.calc_c0()
         self.calc_c1()
 
-        #self.c0_test()
-        #self.c1_test()
         ext = self.extend_boundary()
-        u_act = self.get_potential(ext) #+ self.ap_sol_f
+        u_act = self.get_potential(ext)
 
         error = self.eval_error(u_act)
         return error
 
-    def c0_test(self):
-        print('c0')
-        print(np.around(self.c0, 2))
+    def n_basis_test(self):
+        self.n_basis = 100
+        self.calc_c0()
 
-        th_data = np.arange(0, 2*np.pi, 500)
+        Q0 = self.get_Q(0)
+        Q1 = self.get_Q(1)
 
-        expansion_data = np.zeros(len(th_data))
-        exact_data = np.zeros(len(th_data))
+        while self.n_basis > 3:
+            rhs = -Q0.dot(self.c0)
+            self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
-        j = 0
+            ext = self.extend_boundary()
+            u_act = self.get_potential(ext)
 
-        for i in range(len(th_data)):
-            th = th_data[i]
-            t = eval_g_inv(th)
+            error = self.eval_error(u_act)
+            print('n_basis={}   error={}'.format(self.n_basis, error))
 
-            for J in range(len(self.c0)):
-                expansion_data[j] += (self.c0[J]*eval_T(J, t)).real
-
-            exact_data[j] = self.problem.eval_bc(th).real
-            j += 1
-
-        plt.plot(th_data, exact_data, label='Exact', linewidth=9, color='#BBBBBB')
-        plt.plot(th_data, expansion_data, label='Reconstructed from c0')
-        plt.xlim(min(th_data)-.2,max(th_data)+.2)
-        plt.title('Dirichlet data')
-        plt.legend()
-        plt.show()
-
-    def c1_test(self):
-        print('c1')
-        print(np.around(self.c1, 5))
-
-        th_data = np.linspace(0, 2*np.pi, 500)
-
-        expansion_data = np.zeros(len(th_data))
-        exact_data = np.zeros(len(th_data))
-
-        j = 0
-
-        for i in range(len(th_data)):
-            th = th_data[i]
-            t = eval_g_inv(th)
-
-            for J in range(len(self.c1)):
-                expansion_data[j] += (self.c1[J]*eval_T(J, t)).real
-
-            exact_data[j] = self.problem.eval_du_dr(th).real
-            j += 1
-
-        plt.plot(th_data, exact_data, label='Exact', linewidth=9, color='#BBBBBB')
-        plt.plot(th_data, expansion_data, label='Reconstructed from c1')
-        plt.xlim(min(th_data)-.2,max(th_data)+.2)
-        plt.title('Neumann data')
-        plt.legend()
-        plt.show()
+            self.n_basis -= 1
+            Q0 = Q0[:,:-1]
+            Q1 = Q1[:,:-1]
+            self.c0 = self.c0[:-1]

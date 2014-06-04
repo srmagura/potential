@@ -63,6 +63,21 @@ class Wave(Problem):
         a = self.kx*cos(th) + self.ky*sin(th)
         return 1j*a*np.exp(1j*self.R*a)
 
+class Sine(Problem):
+    k = 1 
+
+    solver_class = CircleSolver
+    homogeneous = True
+
+    def eval_f(self, x, y):
+        return 0
+
+    def eval_expected(self, x, y):
+        return sin(x)
+
+    def eval_du_dr(self, th):
+        return cos(th) * cos(self.R*cos(th))
+
 class WavePizza(Wave):
     sectorAngle = np.pi / 6
     solver_class = PizzaSolver
@@ -87,5 +102,6 @@ problem_dict = {
     'mountain': Mountain,
     'ycosine': YCosine,
     'wave': Wave,
+    'sine': Sine,
     'wave-pizza': WavePizza
 }
