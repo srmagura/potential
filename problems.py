@@ -59,7 +59,7 @@ class Wave(Problem):
     def eval_expected(self, x, y):
         return np.exp(complex(0, self.kx*x + self.ky*y))
 
-    def eval_du_dr(self, th):
+    def eval_d_u_r(self, th):
         a = self.kx*cos(th) + self.ky*sin(th)
         return 1j*a*np.exp(1j*self.R*a)
 
@@ -75,7 +75,7 @@ class Sine(Problem):
     def eval_expected(self, x, y):
         return sin(x)
 
-    def eval_du_dr(self, th):
+    def eval_d_u_r(self, th):
         return cos(th) * cos(self.R*cos(th))
 
 class WavePizza(Wave):
