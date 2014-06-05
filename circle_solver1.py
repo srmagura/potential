@@ -74,13 +74,13 @@ class CircleSolver1(Solver):
         derivs.append(xi0) 
         derivs.append(xi1)
         derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
-        #derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
-        #    d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
-        #derivs.append(-6 * xi1 / R**3 + 
-        #    (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
-        #    6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
-        #    (3*k**2 / R**2 - k**4) * xi0 +
-        #    2 * k**2 / R * xi1)
+        derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
+            d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
+        derivs.append(-6 * xi1 / R**3 + 
+            (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
+            6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
+            (3*k**2 / R**2 - k**4) * xi0 +
+            2 * k**2 / R * xi1)
 
         v = 0
         for l in range(len(derivs)):
@@ -97,11 +97,12 @@ class CircleSolver1(Solver):
             t = eval_g_inv(th)
             basis = eval_T(J, t)
             d2_T_th = (d_g_inv_t)**2 * eval_d2_T_t(J, t)
+            d4_T_th = (d_g_inv_t)**4 * eval_d4_T_t(J, t)
 
             if index == 0:
-                ext[l] = self.extend(r, th, basis, 0, d2_T_th, 0, 0)
+                ext[l] = self.extend(r, th, basis, 0, d2_T_th, 0, d4_T_th)
             else:
-                ext[l] = self.extend(r, th, 0, basis, 0, 0, 0)  
+                ext[l] = self.extend(r, th, 0, basis, 0, d2_T_th, 0)  
 
         return ext
 
@@ -127,6 +128,10 @@ class CircleSolver1(Solver):
 
                 d2_T_th = (d_g_inv_t)**2 * eval_d2_T_t(J, t)
                 d2_xi0_th += self.c0[J] * d2_T_th
+                d2_xi1_th += self.c1[J] * d2_T_th
+
+                d4_T_th = (d_g_inv_t)**4 * eval_d4_T_t(J, t)
+                d4_xi0_th += self.c0[J] * d4_T_th
 
             boundary[l] = self.extend(r, th, xi0, xi1,
                 d2_xi0_th, d2_xi1_th, d4_xi0_th)
