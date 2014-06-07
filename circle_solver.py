@@ -11,7 +11,7 @@ import matrices
 fourier_N = 1024
 
 Q_ratio_upper = 2
-Q_ratio_lower = 6
+Q_ratio_lower = 2
 
 class CircleSolver(Solver):
     # After performing FFT on boundary data, ignore Fourier series
@@ -52,9 +52,7 @@ class CircleSolver(Solver):
             if abs(normalized) > self.fourier_lower_bound:
                 return abs(J)
 
-    # Applies FFT to the boundary data to get c0, then solves the 
-    # system Q1 * c1 = -Q0 * c0 by least squares to find c1. 
-    def calc_c(self):
+    def calc_c0(self):
         grid = np.arange(0, 2*np.pi, 2*np.pi / fourier_N)
         discrete_phi = [self.problem.eval_bc(th) for th in grid]
         c0_raw = np.fft.fft(discrete_phi)
@@ -68,8 +66,8 @@ class CircleSolver(Solver):
                 break
             self.fourier_lower_bound *= 10
 
-        if Jmax*2+1 < len(self.gamma) / Q_ratio_lower:
-            Jmax = min(15, int(len(self.gamma) / Q_ratio_lower))
+        # number of basis functions could theoretically be
+        # too small if boundary data is sin(x) or something...
 
         self.J_dict = collections.OrderedDict(((J, None) for J in 
             range(-Jmax, Jmax+1)))
@@ -82,6 +80,7 @@ class CircleSolver(Solver):
             self.c0[i] = c0_raw[J] / fourier_N
             i += 1
 
+    def calc_c1(self):
         Q0 = self.get_Q(0)
         Q1 = self.get_Q(1)
 
@@ -89,7 +88,7 @@ class CircleSolver(Solver):
         ext_f = self.extend_inhomogeneous_f()    
         proj_f = self.get_trace(self.get_potential(ext_f))
 
-        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
+        rhs = -Q0.dot(self.c0) #- self.get_trace(self.ap_sol_f) - proj_f + ext_f
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
@@ -100,8 +99,10 @@ class CircleSolver(Solver):
         derivs.append(xi0) 
         derivs.append(xi1)
         derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
+
         derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
             d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
+
         derivs.append(-6 * xi1 / R**3 + 
             (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
             6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
@@ -214,7 +215,8 @@ class CircleSolver(Solver):
         return boundary
 
     def run(self):
-        self.calc_c()
+        self.calc_c0()
+        self.calc_c1()
         if self.verbose:
             print('Using {} basis functions.'.
                 format(len(self.J_dict)))
@@ -268,3 +270,25 @@ class CircleSolver(Solver):
         plt.legend()
         plt.title('c1')
         plt.show()
+
+    def calc_c1_exact(self):
+        th_data = np.arange(0, 2*np.pi, 2*np.pi / fourier_N)
+        boundary_data = [self.problem.eval_d_u_r(th) 
+            for th in th_data] 
+        c1_raw = np.fft.fft(boundary_data)
+
+        self.c1 = np.zeros(len(self.c0), dtype=complex)
+        for J, i in self.J_dict.items():
+            self.c1[i] = c1_raw[J] / fourier_N
+
+    def extension_test(self):
+        self.calc_c0()
+        self.calc_c1_exact()
+
+        ext = self.extend_boundary()
+        error = np.zeros(len(self.gamma), dtype=complex)
+        for l in range(len(self.gamma)):
+            x, y = self.get_coord(*self.gamma[l])
+            error[l] = self.problem.eval_expected(x, y) - ext[l]
+
+        return np.max(np.abs(error))

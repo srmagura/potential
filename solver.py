@@ -19,12 +19,12 @@ class Solver:
         else:
             self.verbose = False
 
-        self.construct_grids()
         if self.verbose:
             print('Problem is `{}`.'.format(self.problem.__class__.__name__))
             print('Using scheme of order {}.'.format(self.scheme_order))
             print('Grid is {0} x {0}.'.format(self.N))
 
+        self.construct_grids()
         self.L = matrices.get_L(self.scheme_order, self.N, 
             self.AD_len, self.problem.k)
         self.LU_factorization = scipy.sparse.linalg.splu(self.L)
