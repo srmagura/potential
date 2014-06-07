@@ -139,7 +139,8 @@ class CircleSolver1(Solver):
         return boundary
 
     def calc_c0(self):
-        t_data = np.linspace(-1, 1, 1000)
+        n = 1000
+        t_data = [np.cos(np.pi/2* (2*l-1)/n) for l in range(1, n+1)]
         boundary_data = [self.problem.eval_bc(eval_g(t)) for t in t_data] 
         self.c0 = np.polynomial.chebyshev.chebfit(
             t_data, boundary_data, self.n_basis-1)
@@ -148,6 +149,9 @@ class CircleSolver1(Solver):
         self.calc_n_basis()
         self.calc_c0()
         self.calc_c1()
+
+        #self.c0_test()
+        #self.c1_test()
 
         ext = self.extend_boundary()
         u_act = self.get_potential(ext)
@@ -168,7 +172,6 @@ class CircleSolver1(Solver):
     def extension_test(self):
         self.calc_n_basis()
         self.calc_c0()
-        #print(self.c0)
         self.calc_c1_exact()
 
         ext = self.extend_boundary()
@@ -179,20 +182,41 @@ class CircleSolver1(Solver):
 
         return np.max(np.abs(error))
 
-    def c1_test(self):
-        th_data = np.zeros(len(self.gamma))
-        exact_data = np.zeros(len(self.gamma))
-        expansion_data = np.zeros(len(self.gamma))
+    def c0_test(self):
+        n = 200
+        eps = .01
+        th_data = np.linspace(eps, 2*np.pi-eps, n)
+        exact_data = np.zeros(n)
+        expansion_data = np.zeros(n)
 
-        for l in range(len(self.gamma)):
-            x, y = self.get_coord(*self.gamma[l])
-            r, th = self.get_polar(*self.gamma[l])
-            th_data[l] = th
+        for l in range(n):
+            th = th_data[l]
             t = eval_g_inv(th)
 
-            exact_data[l] = self.problem.eval_d_u_r(th)
+            exact_data[l] = self.problem.eval_bc(th).real
             for J in range(self.n_basis):
-                expansion_data[l] += self.c1[J] * eval_T(J, t)
+                expansion_data[l] += (self.c0[J] * eval_T(J, t)).real
+
+        plt.plot(th_data, exact_data, label='Exact')
+        plt.plot(th_data, expansion_data, 'o', label='Expansion')
+        plt.legend()
+        plt.title('c0')
+        plt.show()
+
+    def c1_test(self):
+        n = 200
+        eps = .5
+        th_data = np.linspace(eps, 2*np.pi-eps, n)
+        exact_data = np.zeros(n)
+        expansion_data = np.zeros(n)
+
+        for l in range(n):
+            th = th_data[l]
+            t = eval_g_inv(th)
+
+            exact_data[l] = self.problem.eval_d_u_r(th).real
+            for J in range(self.n_basis):
+                expansion_data[l] += (self.c1[J] * eval_T(J, t)).real
 
         plt.plot(th_data, exact_data, label='Exact')
         plt.plot(th_data, expansion_data, 'o', label='Expansion')

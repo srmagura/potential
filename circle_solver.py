@@ -2,6 +2,7 @@ import itertools as it
 import math
 import collections
 import numpy as np
+import matplotlib.pyplot as plt
 
 from solver import Solver
 import matrices
@@ -53,7 +54,7 @@ class CircleSolver(Solver):
 
     # Applies FFT to the boundary data to get c0, then solves the 
     # system Q1 * c1 = -Q0 * c0 by least squares to find c1. 
-    def get_c(self):
+    def calc_c(self):
         grid = np.arange(0, 2*np.pi, 2*np.pi / fourier_N)
         discrete_phi = [self.problem.eval_bc(th) for th in grid]
         c0_raw = np.fft.fft(discrete_phi)
@@ -74,11 +75,11 @@ class CircleSolver(Solver):
             range(-Jmax, Jmax+1)))
 
         i = 0
-        c0 = np.zeros(len(self.J_dict), dtype=complex)
+        self.c0 = np.zeros(len(self.J_dict), dtype=complex)
 
         for J in self.J_dict:
             self.J_dict[J] = i
-            c0[i] = c0_raw[J] / fourier_N
+            self.c0[i] = c0_raw[J] / fourier_N
             i += 1
 
         Q0 = self.get_Q(0)
@@ -88,10 +89,8 @@ class CircleSolver(Solver):
         ext_f = self.extend_inhomogeneous_f()    
         proj_f = self.get_trace(self.get_potential(ext_f))
 
-        rhs = -Q0.dot(c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
-        c1 = np.linalg.lstsq(Q1, rhs)[0]
-
-        return c0, c1
+        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
+        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
         R = self.R
@@ -185,15 +184,10 @@ class CircleSolver(Solver):
                 v += derivs[l] / math.factorial(l) * (r - R)**l
 
             self.src_f[matrices.get_index(self.N,i,j)] = v
-            #self.src_f[matrices.get_index(self.N,i,j)] =\
-            #    p.eval_f(*self.get_coord(i, j))
 
     # Construct the equation-based extension for the boundary data,
     # as approximated by the Fourier coefficients c0 and c1.
-    def extend_boundary(self, c0, c1): 
-        R = self.R
-        k = self.problem.k
-
+    def extend_boundary(self): 
         boundary = np.zeros(len(self.gamma), dtype=complex)
 
         for l in range(len(self.gamma)):
@@ -206,12 +200,12 @@ class CircleSolver(Solver):
 
             for J, i in self.J_dict.items():
                 exp = np.exp(complex(0, J*th))
-                xi0 += c0[i] * exp 
-                d2_xi0_th += -J**2 * c0[i] * exp
-                d4_xi0_th += J**4 * c0[i] * exp
+                xi0 += self.c0[i] * exp 
+                d2_xi0_th += -J**2 * self.c0[i] * exp
+                d4_xi0_th += J**4 * self.c0[i] * exp
 
-                xi1 += c1[i] * exp
-                d2_xi1_th += -J**2 * c1[i] * exp
+                xi1 += self.c1[i] * exp
+                d2_xi1_th += -J**2 * self.c1[i] * exp
 
             boundary[l] = self.extend(r, th, xi0, xi1, d2_xi0_th, d2_xi1_th,
                 d4_xi0_th)
@@ -220,13 +214,57 @@ class CircleSolver(Solver):
         return boundary
 
     def run(self):
-        c0, c1 = self.get_c()
+        self.calc_c()
         if self.verbose:
             print('Using {} basis functions.'.
                 format(len(self.J_dict)))
+            self.c1_test()
 
-        ext = self.extend_boundary(c0,c1)
+        ext = self.extend_boundary()
         u_act = self.get_potential(ext) + self.ap_sol_f
 
         error = self.eval_error(u_act)
         return error
+
+
+    ## DEBUGGING FUNCTIONS ##
+
+    def c0_test(self):
+        n = 200
+        th_data = np.linspace(0, 2*np.pi, n)
+        exact_data = np.zeros(n)
+        expansion_data = np.zeros(n)
+
+        for l in range(n):
+            th = th_data[l]
+
+            exact_data[l] = self.problem.eval_bc(th).real
+            for J, i in self.J_dict.items():
+                exp = np.exp(complex(0, J*th))
+                expansion_data[l] += (self.c0[i] * exp).real
+
+        plt.plot(th_data, exact_data, label='Exact')
+        plt.plot(th_data, expansion_data, 'o', label='Expansion')
+        plt.legend()
+        plt.title('c0')
+        plt.show()
+
+    def c1_test(self):
+        n = 200
+        th_data = np.linspace(0, 2*np.pi, n)
+        exact_data = np.zeros(n)
+        expansion_data = np.zeros(n)
+
+        for l in range(n):
+            th = th_data[l]
+
+            exact_data[l] = self.problem.eval_d_u_r(th).real
+            for J, i in self.J_dict.items():
+                exp = np.exp(complex(0, J*th))
+                expansion_data[l] += (self.c1[i] * exp).real
+
+        plt.plot(th_data, exact_data, label='Exact')
+        plt.plot(th_data, expansion_data, 'o', label='Expansion')
+        plt.legend()
+        plt.title('c1')
+        plt.show()

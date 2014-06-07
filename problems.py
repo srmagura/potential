@@ -15,7 +15,7 @@ class Problem:
         return self.eval_expected(self.R*cos(th), self.R*sin(th))
 
 class Mountain(Problem):
-    k = 1
+    k = 3
     solver_class = SquareSolver
 
     def eval_expected(self, x, y):
@@ -46,7 +46,7 @@ class YCosine(Problem):
         return r*(-r**2*self.k**2*sin(th)**2*cos(r*cos(th)) + r**2*sin(th)**2*cos(r*cos(th)) + 3*r*self.k**2*sin(r*cos(th))*cos(th) - 3*r*sin(r*cos(th))*cos(th) - self.k**2*cos(r*cos(th)) + cos(r*cos(th)))*sin(th)
 
 class Wave(Problem):
-    k = 1 
+    k = 3 
     kx = .8*k
     ky = .6*k
 
@@ -64,7 +64,7 @@ class Wave(Problem):
         return 1j*a*np.exp(1j*self.R*a)
 
 class Sine(Problem):
-    k = 1 
+    k = 3 
 
     solver_class = CircleSolver
     homogeneous = True
@@ -73,10 +73,10 @@ class Sine(Problem):
         return 0
 
     def eval_expected(self, x, y):
-        return sin(x)
+        return sin(self.k*x)
 
     def eval_d_u_r(self, th):
-        return cos(th) * cos(self.R*cos(th))
+        return self.k*cos(th) * cos(self.k*self.R*cos(th))
 
 class WavePizza(Wave):
     sectorAngle = np.pi / 6

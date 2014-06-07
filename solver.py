@@ -68,7 +68,7 @@ class Solver:
         self.gamma = []
 
         while len(gamma_set) > 0:
-            min_th = 10
+            min_th = float('inf')
             for i, j in gamma_set:
                 r, th = self.get_polar(i, j)
                 if th < min_th:
