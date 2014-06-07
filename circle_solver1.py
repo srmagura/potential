@@ -35,13 +35,7 @@ class CircleSolver1(Solver):
         return self.get_polar(i, j)[0] <= self.R
 
     def calc_n_basis(self):
-        if self.N < 128:
-            N_data = (16, 32, 64, 128) 
-            n_basis_data = (15, 22, 33, 45)
-            f = interp1d(N_data, n_basis_data)
-            self.n_basis = int(f(self.N))
-        else:
-            self.n_basis = 45
+        self.n_basis = 55
 
         if self.verbose:
             print('Using {} basis functions.'.format(self.n_basis))
@@ -139,8 +133,7 @@ class CircleSolver1(Solver):
         return boundary
 
     def calc_c0(self):
-        n = 1000
-        t_data = [np.cos(np.pi/2* (2*l-1)/n) for l in range(1, n+1)]
+        t_data = get_chebyshev_roots(1000)
         boundary_data = [self.problem.eval_bc(eval_g(t)) for t in t_data] 
         self.c0 = np.polynomial.chebyshev.chebfit(
             t_data, boundary_data, self.n_basis-1)
@@ -149,9 +142,6 @@ class CircleSolver1(Solver):
         self.calc_n_basis()
         self.calc_c0()
         self.calc_c1()
-
-        #self.c0_test()
-        #self.c1_test()
 
         ext = self.extend_boundary()
         u_act = self.get_potential(ext)
@@ -163,7 +153,7 @@ class CircleSolver1(Solver):
     ## DEBUGGING FUNCTIONS ##
 
     def calc_c1_exact(self):
-        t_data = np.linspace(-1, 1, 1000)
+        t_data = get_chebyshev_roots(1000)
         boundary_data = [self.problem.eval_d_u_r(eval_g(t)) 
             for t in t_data] 
         self.c1 = np.polynomial.chebyshev.chebfit(

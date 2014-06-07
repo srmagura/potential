@@ -64,7 +64,7 @@ class Wave(Problem):
         return 1j*a*np.exp(1j*self.R*a)
 
 class Sine(Problem):
-    k = 3 
+    k = 1 
 
     solver_class = CircleSolver
     homogeneous = True

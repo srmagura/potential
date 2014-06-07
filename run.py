@@ -16,7 +16,7 @@ class Interface:
     def test_convergence(self):
         prev_error = None
 
-        N = 16
+        N = self.args.N
         while N <= self.args.c:
             my_solver = self.problem.get_solver(N, self.args.o)
             error = self.run_solver(my_solver)
