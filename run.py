@@ -50,8 +50,6 @@ class Interface:
         if self.args.c is None:
             my_solver = self.problem.get_solver(self.args.N, 
                 self.args.o, verbose=True)
-            print('Using `{}`.'.format(
-                self.problem.solver_class.__name__))
             error = self.run_solver(my_solver)
             print('Error:', error)
         else:

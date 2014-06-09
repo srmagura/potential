@@ -5,7 +5,7 @@ from scipy.integrate import quad
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
-from solver import Solver
+from circle_solver import CircleSolver
 import matrices
 from chebyshev import *
 
@@ -19,20 +19,13 @@ def eval_g_inv(th):
 
 d_g_inv_t = 1 / (np.pi + DELTA)
 
-class CircleSolver1(Solver):
+class CircleSolverChebyshev1(CircleSolver):
 
     # Side length of square domain on which AP is solved
     AD_len = 2*np.pi
 
     # Radius of circular region Omega
     R = 2.3
-
-    def __init__(self, problem, N, scheme_order, **kwargs):
-        super().__init__(problem, N, scheme_order, **kwargs)
-        problem.R = self.R
-
-    def is_interior(self, i, j):
-        return self.get_polar(i, j)[0] <= self.R
 
     def calc_n_basis(self):
         self.n_basis = 55

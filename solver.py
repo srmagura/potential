@@ -21,6 +21,7 @@ class Solver:
 
         if self.verbose:
             print('Problem is `{}`.'.format(self.problem.__class__.__name__))
+            print('Using `{}`.'.format(self.__class__.__name__))
             print('Using scheme of order {}.'.format(self.scheme_order))
             print('Grid is {0} x {0}.'.format(self.N))
 
@@ -172,7 +173,10 @@ class SquareSolver(Solver):
         u_act = self.LU_factorization.solve(self.B_src_f)
         return self.eval_error(u_act)
 
-from circle_solver1 import CircleSolver1
-from circle_solver2 import CircleSolver2
+from circle_solver_fourier import CircleSolverFourier
+from circle_solver_chebyshev1 import CircleSolverChebyshev1
+#from circle_solver2 import CircleSolver2
 
-solver_dict = {'cs1': CircleSolver1, 'cs2': CircleSolver2} 
+solver_dict = {'csf': CircleSolverFourier,
+    'cs1': CircleSolverChebyshev1} 
+    #'cs2': CircleSolver2} 

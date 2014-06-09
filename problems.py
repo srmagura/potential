@@ -2,7 +2,7 @@ import numpy as np
 from numpy import cos, sin
 
 from solver import SquareSolver
-from circle_solver import CircleSolver
+from circle_solver_fourier import CircleSolverFourier
 from pizza_solver import PizzaSolver
 
 class Problem:
@@ -27,8 +27,8 @@ class Mountain(Problem):
             (3*sin(y/2)**2 - cos(y/2)**2)*cos(x/2)**4*cos(y/2)**2)
 
 class YCosine(Problem):
-    k = 1
-    solver_class = CircleSolver
+    k = 2/3
+    solver_class = CircleSolverFourier
 
     def eval_expected(self, x, y):
         return y*cos(x)
@@ -50,7 +50,7 @@ class Wave(Problem):
     kx = .8*k
     ky = .6*k
 
-    solver_class = CircleSolver
+    solver_class = CircleSolverFourier
     homogeneous = True
 
     def eval_f(self, x, y):
@@ -66,7 +66,7 @@ class Wave(Problem):
 class Sine(Problem):
     k = 1 
 
-    solver_class = CircleSolver
+    solver_class = CircleSolverFourier
     homogeneous = True
 
     def eval_f(self, x, y):
