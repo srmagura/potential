@@ -73,17 +73,6 @@ class CircleSolverFourier(CircleSolver):
             self.c0[i] = c0_raw[J] / fourier_N
             i += 1
 
-    def calc_c1(self):
-        Q0 = self.get_Q(0)
-        Q1 = self.get_Q(1)
-
-        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
-        ext_f = self.extend_inhomogeneous_f()    
-        proj_f = self.get_trace(self.get_potential(ext_f))
-
-        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
-        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
-
     # Construct the equation-based extension for the basis function
     # $\psi_{index}^{(J)}$.
     def extend_basis(self, J, index):

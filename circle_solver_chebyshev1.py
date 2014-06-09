@@ -46,13 +46,6 @@ class CircleSolverChebyshev1(CircleSolver):
 
         return np.column_stack(columns)
 
-    def calc_c1(self):
-        Q0 = self.get_Q(0)
-        Q1 = self.get_Q(1)
-
-        rhs = -Q0.dot(self.c0)
-        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
-
     def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
         R = self.R
         k = self.k
@@ -137,7 +130,7 @@ class CircleSolverChebyshev1(CircleSolver):
         self.calc_c1()
 
         ext = self.extend_boundary()
-        u_act = self.get_potential(ext)
+        u_act = self.get_potential(ext) + self.ap_sol_f
 
         error = self.eval_error(u_act)
         return error

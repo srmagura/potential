@@ -13,6 +13,18 @@ class CircleSolver(Solver):
     def is_interior(self, i, j):
         return self.get_polar(i, j)[0] <= self.R
 
+    def calc_c1(self):
+        Q0 = self.get_Q(0)
+        Q1 = self.get_Q(1)
+
+        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+        ext_f = self.extend_inhomogeneous_f()    
+        proj_f = self.get_trace(self.get_potential(ext_f))
+
+        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
+        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
+
+
     def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
         R = self.R
         k = self.k
