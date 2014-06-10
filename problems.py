@@ -2,7 +2,7 @@ import numpy as np
 from numpy import cos, sin
 
 from solver import SquareSolver, cart_to_polar
-from circle_solver_fourier import CircleSolverFourier
+from csf import CsFourier
 from pizza_solver import PizzaSolver
 
 class Problem:
@@ -34,7 +34,7 @@ class Mountain(Problem):
 
 class Ripple(Problem):
     k = 1
-    solver_class = CircleSolverFourier
+    solver_class = CsFourier
 
     def eval_expected_polar(self, r, th):
         return cos(r)
@@ -57,7 +57,7 @@ class Ripple(Problem):
 
 class YCosine(Problem):
     k = 2/3
-    solver_class = CircleSolverFourier
+    solver_class = CsFourier
 
     def eval_expected(self, x, y):
         return y*cos(x)
@@ -79,7 +79,7 @@ class Wave(Problem):
     kx = .8*k
     ky = .6*k
 
-    solver_class = CircleSolverFourier
+    solver_class = CsFourier
     homogeneous = True
 
     def eval_f(self, x, y):
@@ -95,7 +95,7 @@ class Wave(Problem):
 class Sine(Problem):
     k = 2/3 
 
-    solver_class = CircleSolverFourier
+    solver_class = CsFourier
     homogeneous = True
 
     def eval_f(self, x, y):

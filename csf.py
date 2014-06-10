@@ -4,7 +4,7 @@ import collections
 import numpy as np
 import matplotlib.pyplot as plt
 
-from circle_solver import CircleSolver
+from cs import CircleSolver
 import matrices
 
 # Grid size for boundary. Should be divisible by 2
@@ -12,7 +12,7 @@ fourier_N = 1024
 
 Q_ratio = 2
 
-class CircleSolverFourier(CircleSolver):
+class CsFourier(CircleSolver):
     # After performing FFT on boundary data, ignore Fourier series
     # coefficients lower than this number
     fourier_lower_bound = 5e-15

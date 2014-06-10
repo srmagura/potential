@@ -5,7 +5,7 @@ from scipy.integrate import quad
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
-from circle_solver import CircleSolver
+from cs import CircleSolver
 import matrices
 from chebyshev import *
 
@@ -19,7 +19,7 @@ def eval_g_inv(th):
 
 d_g_inv_t = 1 / (np.pi + DELTA)
 
-class CircleSolverChebyshev1(CircleSolver):
+class CsChebyshev1(CircleSolver):
 
     # Side length of square domain on which AP is solved
     AD_len = 2*np.pi
@@ -28,7 +28,7 @@ class CircleSolverChebyshev1(CircleSolver):
     R = 2.3
 
     def calc_n_basis(self):
-        self.n_basis = 55
+        self.n_basis = 10
 
         if self.verbose:
             print('Using {} basis functions.'.format(self.n_basis))

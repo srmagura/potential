@@ -47,6 +47,17 @@ class Solver:
         for i,j in self.Mminus:
             self.B_src_f[matrices.get_index(N,i,j)] = 0
 
+    # Get the rectangular coordinates of grid point (i,j)
+    def get_coord(self, i, j):
+        x = self.AD_len * (i / self.N - 1/2) 
+        y = self.AD_len * (j / self.N - 1/2) 
+        return x, y
+
+    # Get the polar coordinates of grid point (i,j)
+    def get_polar(self, i, j):
+        x, y = self.get_coord(i, j)
+        return cart_to_polar(x, y)
+
     # Construct the various grids used in the algorithm.
     def construct_grids(self):
         self.N0 = set(it.product(range(0, self.N+1), repeat=2))
@@ -122,17 +133,16 @@ class Solver:
 
         return projection
 
+    def calc_c1(self):
+        Q0 = self.get_Q(0)
+        Q1 = self.get_Q(1)
 
-    # Get the rectangular coordinates of grid point (i,j)
-    def get_coord(self, i, j):
-        x = self.AD_len * (i / self.N - 1/2) 
-        y = self.AD_len * (j / self.N - 1/2) 
-        return x, y
+        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+        ext_f = self.extend_inhomogeneous_f()    
+        proj_f = self.get_trace(self.get_potential(ext_f))
 
-    # Get the polar coordinates of grid point (i,j)
-    def get_polar(self, i, j):
-        x, y = self.get_coord(i, j)
-        return cart_to_polar(x, y)
+        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
+        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def setup_src_f(self):
         self.src_f = np.zeros((self.N-1)**2, dtype=complex)
@@ -176,10 +186,8 @@ class SquareSolver(Solver):
         u_act = self.LU_factorization.solve(self.B_src_f)
         return self.eval_error(u_act)
 
-from circle_solver_fourier import CircleSolverFourier
-from circle_solver_chebyshev1 import CircleSolverChebyshev1
-#from circle_solver2 import CircleSolver2
+from csf import CsFourier
+from cs1 import CsChebyshev1
 
-solver_dict = {'csf': CircleSolverFourier,
-    'cs1': CircleSolverChebyshev1} 
-    #'cs2': CircleSolver2} 
+solver_dict = {'csf': CsFourier,
+    'cs1': CsChebyshev1} 
