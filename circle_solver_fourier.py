@@ -45,6 +45,8 @@ class CircleSolverFourier(CircleSolver):
             if abs(normalized) > self.fourier_lower_bound:
                 return abs(J)
 
+        return 0
+
     def calc_c0(self):
         grid = np.arange(0, 2*np.pi, 2*np.pi / fourier_N)
         discrete_phi = [self.problem.eval_bc(th) for th in grid]
@@ -59,8 +61,8 @@ class CircleSolverFourier(CircleSolver):
                 break
             self.fourier_lower_bound *= 10
 
-        # number of basis functions could theoretically be
-        # too small if boundary data is sin(th) or something...
+        if Jmax < 5:
+            Jmax = 5
 
         self.J_dict = collections.OrderedDict(((J, None) for J in 
             range(-Jmax, Jmax+1)))

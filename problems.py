@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import cos, sin
 
-from solver import SquareSolver
+from solver import SquareSolver, cart_to_polar
 from circle_solver_fourier import CircleSolverFourier
 from pizza_solver import PizzaSolver
 
@@ -14,6 +14,12 @@ class Problem:
     def eval_bc(self, th):
         return self.eval_expected(self.R*cos(th), self.R*sin(th))
 
+    def eval_expected(self, x, y):
+        return self.eval_expected_polar(*cart_to_polar(x, y))
+
+    def eval_f(self, x, y):
+        return self.eval_f_polar(*cart_to_polar(x, y))
+
 class Mountain(Problem):
     k = 3
     solver_class = SquareSolver
@@ -25,6 +31,29 @@ class Mountain(Problem):
         return (self.k**2*cos(x/2)**4*cos(y/2)**4 + 
             (3*sin(x/2)**2 - cos(x/2)**2)*cos(x/2)**2*cos(y/2)**4 +
             (3*sin(y/2)**2 - cos(y/2)**2)*cos(x/2)**4*cos(y/2)**2)
+
+class Ripple(Problem):
+    k = 1
+    solver_class = CircleSolverFourier
+
+    def eval_expected_polar(self, r, th):
+        return cos(r)
+
+    def eval_f_polar(self, r, th):
+        if r != 0:
+            return self.k**2*cos(r) - cos(r) - sin(r)/r
+        else:
+            return self.k**2*cos(r) - cos(r) - 1
+
+    def eval_d_f_r(self, r, th):
+        return -self.k**2*sin(r) + sin(r) - cos(r)/r + sin(r)/r**2
+
+    def eval_d2_f_r(self, r, th):
+        return -self.k**2*cos(r) + cos(r) + sin(r)/r + 2*cos(r)/r**2 - 2*sin(r)/r**3
+
+    def eval_d2_f_th(self, r, th):
+        return 0
+
 
 class YCosine(Problem):
     k = 2/3
@@ -100,6 +129,7 @@ class WavePizza(Wave):
 
 problem_dict = {
     'mountain': Mountain,
+    'ripple': Ripple,
     'ycosine': YCosine,
     'wave': Wave,
     'sine': Sine,

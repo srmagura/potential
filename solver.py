@@ -6,6 +6,14 @@ import scipy.sparse.linalg
 
 import matrices
 
+def cart_to_polar(x, y):
+    r, th = math.hypot(x, y), math.atan2(y, x)
+
+    if th < 0:
+        th += 2*np.pi
+
+    return r, th
+
 class Solver:  
 
     def __init__(self, problem, N, scheme_order, **kwargs):
@@ -124,12 +132,7 @@ class Solver:
     # Get the polar coordinates of grid point (i,j)
     def get_polar(self, i, j):
         x, y = self.get_coord(i, j)
-        r, th = math.hypot(x, y), math.atan2(y, x)
-
-        if th < 0:
-            th += 2*np.pi
-
-        return r, th
+        return cart_to_polar(x, y)
 
     def setup_src_f(self):
         self.src_f = np.zeros((self.N-1)**2, dtype=complex)
