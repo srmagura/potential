@@ -28,7 +28,7 @@ class CsChebyshev1(CircleSolver):
     R = 2.3
 
     def calc_n_basis(self):
-        self.n_basis = 10
+        self.n_basis = 55
 
         if self.verbose:
             print('Using {} basis functions.'.format(self.n_basis))
@@ -45,28 +45,6 @@ class CsChebyshev1(CircleSolver):
             columns.append(projection - ext)
 
         return np.column_stack(columns)
-
-    def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
-        R = self.R
-        k = self.k
-
-        derivs = []
-        derivs.append(xi0) 
-        derivs.append(xi1)
-        derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
-        derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
-            d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
-        derivs.append(-6 * xi1 / R**3 + 
-            (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
-            6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
-            (3*k**2 / R**2 - k**4) * xi0 +
-            2 * k**2 / R * xi1)
-
-        v = 0
-        for l in range(len(derivs)):
-            v += derivs[l] / math.factorial(l) * (r - R)**l
-
-        return v
 
     def extend_basis(self, J, index):
         ext = np.zeros(len(self.gamma), dtype=complex)
@@ -115,6 +93,7 @@ class CsChebyshev1(CircleSolver):
 
             boundary[l] = self.extend(r, th, xi0, xi1,
                 d2_xi0_th, d2_xi1_th, d4_xi0_th)
+            boundary[l] += self.extend_inhomogeneous(r, th)
 
         return boundary
 
@@ -159,7 +138,7 @@ class CsChebyshev1(CircleSolver):
         return np.max(np.abs(error))
 
     def c0_test(self):
-        n = 200
+        n = 50
         eps = .01
         th_data = np.linspace(eps, 2*np.pi-eps, n)
         exact_data = np.zeros(n)
@@ -176,12 +155,13 @@ class CsChebyshev1(CircleSolver):
         plt.plot(th_data, exact_data, label='Exact')
         plt.plot(th_data, expansion_data, 'o', label='Expansion')
         plt.legend()
+        plt.ylim(-1, 1)
         plt.title('c0')
         plt.show()
 
     def c1_test(self):
-        n = 200
-        eps = .5
+        n = 50
+        eps = .01
         th_data = np.linspace(eps, 2*np.pi-eps, n)
         exact_data = np.zeros(n)
         expansion_data = np.zeros(n)
@@ -197,6 +177,7 @@ class CsChebyshev1(CircleSolver):
         plt.plot(th_data, exact_data, label='Exact')
         plt.plot(th_data, expansion_data, 'o', label='Expansion')
         plt.legend()
+        plt.ylim(-1, 1)
         plt.title('c1')
         plt.show()
 

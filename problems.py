@@ -39,6 +39,9 @@ class Ripple(Problem):
     def eval_expected_polar(self, r, th):
         return cos(r)
 
+    def eval_d_u_r(self, th):
+        return -sin(self.R)
+
     def eval_f_polar(self, r, th):
         if r != 0:
             return self.k**2*cos(r) - cos(r) - sin(r)/r
@@ -53,7 +56,6 @@ class Ripple(Problem):
 
     def eval_d2_f_th(self, r, th):
         return 0
-
 
 class YCosine(Problem):
     k = 2/3
@@ -75,7 +77,7 @@ class YCosine(Problem):
         return r*(-r**2*self.k**2*sin(th)**2*cos(r*cos(th)) + r**2*sin(th)**2*cos(r*cos(th)) + 3*r*self.k**2*sin(r*cos(th))*cos(th) - 3*r*sin(r*cos(th))*cos(th) - self.k**2*cos(r*cos(th)) + cos(r*cos(th)))*sin(th)
 
 class Wave(Problem):
-    k = 3 
+    k = 1 
     kx = .8*k
     ky = .6*k
 

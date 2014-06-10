@@ -13,8 +13,6 @@ fourier_N = 1024
 Q_ratio = 2
 
 class CsFourier(CircleSolver):
-    # After performing FFT on boundary data, ignore Fourier series
-    # coefficients lower than this number
     fourier_lower_bound = 5e-15
 
     # Side length of square domain on which AP is solved
@@ -22,7 +20,6 @@ class CsFourier(CircleSolver):
 
     # Radius of circular region Omega
     R = 2.3
-
 
     # Returns the matrix Q0 or Q1, depending on the value of `index`.
     def get_Q(self, index):
