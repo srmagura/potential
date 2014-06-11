@@ -188,6 +188,7 @@ class SquareSolver(Solver):
 
 from csf import CsFourier
 from cs1 import CsChebyshev1
+from cs3 import CsChebyshev3
 
 solver_dict = {'csf': CsFourier,
-    'cs1': CsChebyshev1} 
+    'cs1': CsChebyshev1, 'cs3': CsChebyshev3}

@@ -1,8 +1,5 @@
 import numpy as np
 import math
-import scipy
-from scipy.integrate import quad
-from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
 from cs import CircleSolver
