@@ -20,16 +20,16 @@ class CircleSolver(Solver):
         derivs = []
         derivs.append(xi0) 
         derivs.append(xi1)
-        derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
+        #derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
 
-        derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
-            d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
+        #derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
+        #    d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
 
-        derivs.append(-6 * xi1 / R**3 + 
-            (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
-            6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
-            (3*k**2 / R**2 - k**4) * xi0 +
-            2 * k**2 / R * xi1)
+        #derivs.append(-6 * xi1 / R**3 + 
+        #    (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
+        #    6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
+        #    (3*k**2 / R**2 - k**4) * xi0 +
+        #    2 * k**2 / R * xi1)
 
         v = 0
         for l in range(len(derivs)):

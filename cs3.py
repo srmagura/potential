@@ -68,8 +68,8 @@ class CsChebyshev3(CircleSolver):
     def get_Q(self, index):
         columns = []
 
-        for J in range(2*N_BASIS):
-            ext = self.extend_basis(J, index)
+        for JJ in range(len(B_desc)):
+            ext = self.extend_basis(JJ, index)
             potential = self.get_potential(ext)
             projection = self.get_trace(potential)
 
@@ -78,14 +78,47 @@ class CsChebyshev3(CircleSolver):
         return np.column_stack(columns)
 
 
-    def extend_basis(self, J, index):
+    def extend_basis(self, JJ, index):
         ext = np.zeros(len(self.gamma), dtype=complex)
         for l in range(len(self.gamma)):
             i, j = self.gamma[l]
             r, th = self.get_polar(i, j)
 
+            B = eval_B(JJ, th)
+            d2_B_th = 0
+            d4_B_th = 0
+
+            if index == 0:
+                ext[l] = self.extend(r, th, B, 0, d2_B_th, 0, d4_B_th)
+            else:
+                ext[l] = self.extend(r, th, 0, B, 0, d2_B_th, 0)  
+
         return ext
 
+    def extend_boundary(self): 
+        R = self.R
+        k = self.problem.k
+
+        boundary = np.zeros(len(self.gamma), dtype=complex)
+
+        for l in range(len(self.gamma)):
+            i, j = self.gamma[l]
+            r, th = self.get_polar(i, j)
+
+            xi0 = xi1 = 0
+            d2_xi0_th = d2_xi1_th = 0
+            d4_xi0_th = 0
+
+            for JJ in range(len(B_desc)):
+                B = eval_B(JJ, th)
+                xi0 += self.c0[JJ] * B
+                xi1 += self.c1[JJ] * B
+
+            boundary[l] = self.extend(r, th, xi0, xi1,
+                d2_xi0_th, d2_xi1_th, d4_xi0_th)
+            boundary[l] += self.extend_inhomogeneous(r, th)
+
+        return boundary
 
     def calc_c0(self):
         t_data = get_chebyshev_roots(1000)
@@ -101,10 +134,8 @@ class CsChebyshev3(CircleSolver):
                 t_data, boundary_data, n_basis-1))
 
     def run(self):
+        #return self.extension_test()
         self.calc_c0()
-        self.c0_test()
-        return
-
         self.calc_c1()
 
         ext = self.extend_boundary()
@@ -112,6 +143,34 @@ class CsChebyshev3(CircleSolver):
 
         error = self.eval_error(u_act)
         return error
+
+
+    ## DEBUGGING FUNCTIONS ##
+
+    def calc_c1_exact(self):
+        t_data = get_chebyshev_roots(1000)
+        self.c1 = []
+
+        for sid in range(N_SEGMENT):
+            th_data = [eval_g(sid, t) for t in t_data] 
+            boundary_data = [self.problem.eval_d_u_r(th)
+                for th in th_data] 
+
+            n_basis = segment_desc[sid]['n_basis']
+            self.c1.extend(np.polynomial.chebyshev.chebfit(
+                t_data, boundary_data, n_basis-1))
+
+    def extension_test(self):
+        self.calc_c0()
+        self.calc_c1_exact()
+
+        ext = self.extend_boundary()
+        error = np.zeros(len(self.gamma), dtype=complex)
+        for l in range(len(self.gamma)):
+            x, y = self.get_coord(*self.gamma[l])
+            error[l] = self.problem.eval_expected(x, y) - ext[l]
+
+        return np.max(np.abs(error))
 
     def c0_test(self):
         n = 50
@@ -133,4 +192,26 @@ class CsChebyshev3(CircleSolver):
         plt.legend()
         plt.ylim(-1, 1)
         plt.title('c0')
+        plt.show()
+
+    def c1_test(self):
+        n = 50
+        eps = .01
+        th_data = np.linspace(eps, 2*np.pi-eps, n)
+        exact_data = np.zeros(n)
+        expansion_data = np.zeros(n)
+
+        for l in range(n):
+            th = th_data[l]
+            exact_data[l] = self.problem.eval_d_u_r(th).real
+
+            for JJ in range(len(B_desc)):
+                expansion_data[l] +=\
+                    (self.c1[JJ] * eval_B(JJ, th)).real
+
+        plt.plot(th_data, exact_data, label='Exact')
+        plt.plot(th_data, expansion_data, 'o', label='Expansion')
+        plt.legend()
+        plt.ylim(-1, 1)
+        plt.title('c1')
         plt.show()
