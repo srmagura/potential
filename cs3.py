@@ -9,12 +9,21 @@ from chebyshev import *
 N_BASIS = 25
 DELTA = .1
 
+N_SEGMENT = 3
+
+segment_desc = []
 B_desc = []
-for JJ in range(3*N_BASIS):
-    desc = {}
-    desc['J'] = JJ % N_BASIS
-    desc['sid'] = JJ // N_BASIS
-    B_desc.append(desc)
+
+for sid in range(N_SEGMENT):
+    s_desc = {'n_basis': N_BASIS}
+    segment_desc.append(s_desc)
+
+    for J in range(s_desc['n_basis']):
+        b_desc = {} 
+        b_desc['J'] = J
+        b_desc['sid'] = sid
+        B_desc.append(b_desc)
+
 
 def get_sid(th):
     if th <= 2/3*np.pi:
@@ -39,10 +48,14 @@ d_g_inv_th = 1 / (np.pi/3 + DELTA)
 
 def eval_B(JJ, th):
     sid = get_sid(th)
-    t = eval_g_inv(sid, th)
-    J = B_desc[JJ]['J']
+    desc = B_desc[JJ]
 
-    return eval_T(J, t)
+    if desc['sid'] == sid:
+        t = eval_g_inv(sid, th)
+        J = B_desc[JJ]['J']
+        return eval_T(J, t)
+    else:
+        return 0
 
 class CsChebyshev3(CircleSolver):
     # Side length of square domain on which AP is solved
@@ -75,11 +88,17 @@ class CsChebyshev3(CircleSolver):
 
 
     def calc_c0(self):
+        t_data = get_chebyshev_roots(1000)
         self.c0 = []
 
-        for sid in (0, 1):
-            for J in range(N_BASIS):
+        for sid in range(N_SEGMENT):
+            th_data = [eval_g(sid, t) for t in t_data] 
+            boundary_data = [self.problem.eval_bc(th)
+                for th in th_data] 
 
+            n_basis = segment_desc[sid]['n_basis']
+            self.c0.extend(np.polynomial.chebyshev.chebfit(
+                t_data, boundary_data, n_basis-1))
 
     def run(self):
         self.calc_c0()
@@ -103,11 +122,11 @@ class CsChebyshev3(CircleSolver):
 
         for l in range(n):
             th = th_data[l]
-            t = eval_g_inv(th)
-
             exact_data[l] = self.problem.eval_bc(th).real
-            for J in range(self.n_basis):
-                expansion_data[l] += (self.c0[J] * eval_T(J, t)).real
+
+            for JJ in range(len(B_desc)):
+                expansion_data[l] +=\
+                    (self.c0[JJ] * eval_B(JJ, th)).real
 
         plt.plot(th_data, exact_data, label='Exact')
         plt.plot(th_data, expansion_data, 'o', label='Expansion')
