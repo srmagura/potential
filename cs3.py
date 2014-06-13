@@ -46,16 +46,25 @@ def eval_g_inv(sid, th):
 
 d_g_inv_th = 1 / (np.pi/3 + DELTA) 
 
-def eval_B(JJ, th):
+def _eval_dn_B_th(JJ, th, n, deriv):
     sid = get_sid(th)
     desc = B_desc[JJ]
 
     if desc['sid'] == sid:
         t = eval_g_inv(sid, th)
         J = B_desc[JJ]['J']
-        return eval_T(J, t)
+        return (d_g_inv_th)**n * deriv(J, t)
     else:
         return 0
+
+def eval_B(JJ, th):
+    return _eval_dn_B_th(JJ, th, 0, eval_T)
+
+def eval_d2_B_th(JJ, th):
+    return _eval_dn_B_th(JJ, th, 2, eval_d2_T_t)
+
+def eval_d4_B_th(JJ, th):
+    return _eval_dn_B_th(JJ, th, 4, eval_d4_T_t)
 
 class CsChebyshev3(CircleSolver):
     # Side length of square domain on which AP is solved
@@ -85,8 +94,8 @@ class CsChebyshev3(CircleSolver):
             r, th = self.get_polar(i, j)
 
             B = eval_B(JJ, th)
-            d2_B_th = 0
-            d4_B_th = 0
+            d2_B_th = eval_d2_B_th(JJ, th)
+            d4_B_th = eval_d4_B_th(JJ, th)
 
             if index == 0:
                 ext[l] = self.extend(r, th, B, 0, d2_B_th, 0, d4_B_th)
@@ -114,6 +123,13 @@ class CsChebyshev3(CircleSolver):
                 xi0 += self.c0[JJ] * B
                 xi1 += self.c1[JJ] * B
 
+                d2_B_th = eval_d2_B_th(JJ, th)
+                d2_xi0_th += self.c0[JJ] * d2_B_th
+                d2_xi1_th += self.c1[JJ] * d2_B_th
+
+                d4_B_th = eval_d4_B_th(JJ, th)
+                d4_xi0_th += self.c0[JJ] * d4_B_th
+
             boundary[l] = self.extend(r, th, xi0, xi1,
                 d2_xi0_th, d2_xi1_th, d4_xi0_th)
             boundary[l] += self.extend_inhomogeneous(r, th)
@@ -134,12 +150,11 @@ class CsChebyshev3(CircleSolver):
                 t_data, boundary_data, n_basis-1))
 
     def run(self):
-        #return self.extension_test()
         self.calc_c0()
         self.calc_c1()
 
         ext = self.extend_boundary()
-        u_act = self.get_potential(ext) #+ self.ap_sol_f
+        u_act = self.get_potential(ext) + self.ap_sol_f
 
         error = self.eval_error(u_act)
         return error

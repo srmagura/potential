@@ -14,7 +14,7 @@ def eval_g(t):
 def eval_g_inv(th):
     return (th - np.pi) / (np.pi+DELTA)
 
-d_g_inv_t = 1 / (np.pi + DELTA)
+d_g_inv_th = 1 / (np.pi + DELTA)
 
 class CsChebyshev1(CircleSolver):
 
@@ -51,8 +51,8 @@ class CsChebyshev1(CircleSolver):
 
             t = eval_g_inv(th)
             basis = eval_T(J, t)
-            d2_T_th = (d_g_inv_t)**2 * eval_d2_T_t(J, t)
-            d4_T_th = (d_g_inv_t)**4 * eval_d4_T_t(J, t)
+            d2_T_th = (d_g_inv_th)**2 * eval_d2_T_t(J, t)
+            d4_T_th = (d_g_inv_th)**4 * eval_d4_T_t(J, t)
 
             if index == 0:
                 ext[l] = self.extend(r, th, basis, 0, d2_T_th, 0, d4_T_th)
@@ -81,11 +81,11 @@ class CsChebyshev1(CircleSolver):
                 xi0 += self.c0[J] * basis
                 xi1 += self.c1[J] * basis
 
-                d2_T_th = (d_g_inv_t)**2 * eval_d2_T_t(J, t)
+                d2_T_th = (d_g_inv_th)**2 * eval_d2_T_t(J, t)
                 d2_xi0_th += self.c0[J] * d2_T_th
                 d2_xi1_th += self.c1[J] * d2_T_th
 
-                d4_T_th = (d_g_inv_t)**4 * eval_d4_T_t(J, t)
+                d4_T_th = (d_g_inv_th)**4 * eval_d4_T_t(J, t)
                 d4_xi0_th += self.c0[J] * d4_T_th
 
             boundary[l] = self.extend(r, th, xi0, xi1,
