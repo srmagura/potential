@@ -3,7 +3,7 @@ from numpy import cos, sin
 
 from solver import SquareSolver, cart_to_polar
 from csf import CsFourier
-from pizza_solver import PizzaSolver
+from ps import PizzaSolver
 
 class Problem:
     homogeneous = False
@@ -109,23 +109,11 @@ class Sine(Problem):
     def eval_d_u_r(self, th):
         return self.k*cos(th) * cos(self.k*self.R*cos(th))
 
-class WavePizza(Wave):
+class WaveSine(Sine):
     sectorAngle = np.pi / 6
     solver_class = PizzaSolver
 
-    def eval_bc(self, segment_id, arg):
-        if segment_id == 0:
-            r = self.R
-            th = arg
-        elif segment_id == 1:
-            r = arg
-            th = 0
-        elif segment_id == 2:
-            r = arg
-            th = self.sectorAngle
-
-        x = r * cos(th)
-        y = r * sin(th)
+    def eval_bc(self, x, y):
         return self.eval_expected(x, y)
 
 
@@ -135,5 +123,5 @@ problem_dict = {
     'ycosine': YCosine,
     'wave': Wave,
     'sine': Sine,
-    'wave-pizza': WavePizza
+    'wave-sine': WaveSine
 }
