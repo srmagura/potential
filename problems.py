@@ -110,7 +110,7 @@ class Sine(Problem):
         return self.k*cos(th) * cos(self.k*self.R*cos(th))
 
 class WaveSine(Sine):
-    sectorAngle = np.pi / 6
+    a = np.pi / 6
     solver_class = PizzaSolver
 
     def eval_bc(self, x, y):
