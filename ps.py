@@ -31,7 +31,9 @@ class PizzaSolver(Solver):
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
+        self.get_sid = problem.get_sid
         problem.R = self.R
+
         super().__init__(problem, N, scheme_order, **kwargs)
 
     def is_interior(self, i, j):
@@ -58,18 +60,6 @@ class PizzaSolver(Solver):
     def eval_g_inv(self, sid, arg):
         span, center = self.get_span_center(sid)
         return (arg - center) / span
-
-    def get_sid(self, th):
-        tol = 1e-12
-
-        if th > self.a:
-            return 0
-        elif abs(th) < tol:
-            return 1
-        elif abs(th - self.a) < tol:
-            return 2
-
-        assert False
 
     def eval_B(self, JJ, r, th):
         sid = self.get_sid(th)
@@ -158,8 +148,25 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
-        self.calc_c0()
-        self.c0_test()
+        self.calc_c1_exact()
+        self.c1_test()
+
+    def calc_c1_exact(self):
+        t_data = get_chebyshev_roots(1000)
+        self.c1 = []
+
+        for sid in range(N_SEGMENT):
+            arg_data = [self.eval_g(sid, t) for t in t_data] 
+            boundary_points = self.get_boundary_sample_by_sid(sid, arg_data)
+            boundary_data = np.zeros(len(arg_data), dtype=complex)
+            for l in range(len(boundary_points)):
+                p = boundary_points[l]
+                boundary_data[l] = self.problem.eval_d_u_r(
+                    p['x'], p['y'], sid=sid)
+
+            n_basis = segment_desc[sid]['n_basis']
+            self.c1.extend(np.polynomial.chebyshev.chebfit(
+                t_data, boundary_data, n_basis-1))
 
     def c0_test(self):
         sample = self.get_boundary_sample()
@@ -185,4 +192,26 @@ class PizzaSolver(Solver):
         plt.title('c0')
         plt.show()
 
+    def c1_test(self):
+        sample = self.get_boundary_sample()
 
+        s_data = np.zeros(len(sample))
+        exact_data = np.zeros(len(sample))
+        expansion_data = np.zeros(len(sample))
+
+        for l in range(len(sample)):
+            p = sample[l]
+            s_data[l] = p['s']
+            exact_data[l] = self.problem.eval_d_u_r(p['x'], p['y']).real
+
+            r, th = cart_to_polar(p['x'], p['y'])
+            for JJ in range(len(B_desc)):
+                expansion_data[l] +=\
+                    (self.c1[JJ] * self.eval_B(JJ, r, th)).real
+
+        plt.plot(s_data, exact_data, label='Exact')
+        plt.plot(s_data, expansion_data, 'o', label='Expansion')
+        plt.legend()
+        plt.ylim(-1, 1)
+        plt.title('c1')
+        plt.show()

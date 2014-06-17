@@ -109,12 +109,37 @@ class Sine(Problem):
     def eval_d_u_r(self, th):
         return self.k*cos(th) * cos(self.k*self.R*cos(th))
 
-class WaveSine(Sine):
+class SinePizza(Sine):
     a = np.pi / 6
     solver_class = PizzaSolver
 
     def eval_bc(self, x, y):
         return self.eval_expected(x, y)
+
+    def eval_d_u_r(self, x, y, **kwargs):
+        r, th = cart_to_polar(x, y)
+
+        if 'sid' in kwargs:
+            sid = kwargs['sid']
+        else:
+            sid = self.get_sid(th)
+
+        if sid == 0:
+            return super().eval_d_u_r(th)
+        elif sid == 1 or sid == 2:
+            return -r * sin(th) * sin(r * cos(th))
+
+    def get_sid(self, th):
+        tol = 1e-12
+
+        if th > self.a:
+            return 0
+        elif abs(th) < tol:
+            return 1
+        elif abs(th - self.a) < tol:
+            return 2
+
+        assert False
 
 
 problem_dict = {
@@ -123,5 +148,5 @@ problem_dict = {
     'ycosine': YCosine,
     'wave': Wave,
     'sine': Sine,
-    'wave-sine': WaveSine
+    'sine-pizza': SinePizza
 }
