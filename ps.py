@@ -8,6 +8,15 @@ import matplotlib.pyplot as plt
 
 from chebyshev import *
 
+EXTEND_CIRCLE = 0
+EXTEND_RADIUS1 = 1
+EXTEND_RADIUS2 = 2
+EXTEND_OUTER = 3
+EXTEND_INNER = 4
+
+ALL_ETYPES = range(5)
+ETYPE_NAMES = ('circle', 'radius1', 'radius2', 'outer', 'inner')
+
 n_basis_by_sid = (30, 15, 15)
 N_SEGMENT = 3
 
@@ -76,6 +85,39 @@ class PizzaSolver(Solver):
             return eval_T(J, t)
         else:
             return 0
+
+    def get_etype(self, i, j):
+        def dist_to_radius(m):
+            x1 = (1/(m + 1/m)) * (x/m + y)
+            y1 = m*x
+            return np.sqrt((x1-x)**2 + (y1-y)**2)
+
+        x, y = self.get_coord(i, j)
+        r, th = self.get_polar(i, j)
+
+        dist0 = abs(self.R - r)
+        dist1 = abs(y)
+        dist2 = dist_to_radius(np.tan(self.a))
+
+        if r > self.R:
+            if th < self.a:
+                return EXTEND_OUTER
+            else:
+                return EXTEND_CIRCLE
+        elif th > self.a + np.pi/2 and th < 3/2*np.pi:
+            if r < dist0:
+                raise Exception('EXTEND_INNER')
+                return EXTEND_INNER
+            else:
+                return EXTEND_CIRCLE
+        elif th > self.a and dist0 < min(dist1, dist2):
+            return EXTEND_CIRCLE
+        elif dist1 < dist2:
+            return EXTEND_RADIUS1
+        else:
+            return EXTEND_RADIUS2
+
+        raise Exception('Did not match any etype')
 
     def extend_basis(self, J, index):
         ext = np.zeros(len(self.gamma), dtype=complex)
@@ -148,8 +190,8 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
-        self.calc_c1_exact()
-        self.c1_test()
+        self.plot_gamma()
+        #return self.extension_test({EXTEND_CIRCLE})
 
     def calc_c1_exact(self):
         t_data = get_chebyshev_roots(1000)
@@ -167,6 +209,27 @@ class PizzaSolver(Solver):
             n_basis = segment_desc[sid]['n_basis']
             self.c1.extend(np.polynomial.chebyshev.chebfit(
                 t_data, boundary_data, n_basis-1))
+
+    def gamma_filter(self, nodes, etypes):
+        result = []
+        for i, j in nodes:
+            if self.get_etype(i, j) in etypes:
+                result.append((i, j))
+
+        return result
+
+    def extension_test(self, etypes=ALL_ETYPES):
+        self.calc_c0()
+        self.calc_c1_exact()
+        ext = self.extend_boundary()
+
+        nodes = self.gamma_filter(self.gamma, etypes)
+        error = np.zeros(len(nodes))
+        for l in range(len(nodes)):
+            x, y = self.get_coord(*nodes[l])
+            error[l] = self.problem.eval_expected(x, y) - ext[l]
+
+        return np.max(np.abs(error))
 
     def c0_test(self):
         sample = self.get_boundary_sample()
@@ -214,4 +277,42 @@ class PizzaSolver(Solver):
         plt.legend()
         plt.ylim(-1, 1)
         plt.title('c1')
+        plt.show()
+
+    def plot_Gamma(self):
+        sample = self.get_boundary_sample()
+
+        n = len(sample) + 1
+        Gamma_x_data = np.zeros(n)
+        Gamma_y_data = np.zeros(n)
+
+        for l in range(n):
+            p = sample[l % len(sample)]
+            Gamma_x_data[l] = p['x']
+            Gamma_y_data[l] = p['y']
+
+        plt.plot(Gamma_x_data, Gamma_y_data, color='black')
+
+    def nodes_to_plottable(self, nodes):
+        x_data = np.zeros(len(nodes))
+        y_data = np.zeros(len(nodes))
+
+        for l in range(len(nodes)):
+            x, y = self.get_coord(*nodes[l])
+            x_data[l] = x
+            y_data[l] = y
+
+        return x_data, y_data
+
+    def plot_gamma(self):
+        self.plot_Gamma()
+
+        for etype in ALL_ETYPES:
+            nodes = self.gamma_filter(self.gamma, {etype})
+            x_data, y_data = self.nodes_to_plottable(nodes)
+            plt.plot(x_data, y_data, 'o', label=ETYPE_NAMES[etype])
+
+        plt.xlim(-4,4)
+        plt.ylim(-4,4)
+        plt.legend(loc=3)
         plt.show()
