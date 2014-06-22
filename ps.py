@@ -6,6 +6,7 @@ import matrices
 
 import matplotlib.pyplot as plt
 
+from cs import extend_circle
 from chebyshev import *
 
 EXTEND_CIRCLE = 0
@@ -127,6 +128,40 @@ class PizzaSolver(Solver):
 
         return ext
 
+    def extend_boundary(self, nodes=None): 
+        if nodes is None:
+            nodes = self.gamma
+
+        R = self.R
+        k = self.problem.k
+
+        boundary = np.zeros(len(nodes), dtype=complex)
+
+        for l in range(len(nodes)):
+            i, j = nodes[l]
+            r, th = self.get_polar(i, j)
+            etype = self.get_etype(i, j)
+
+            xi0 = xi1 = 0
+            d2_xi0_th = d2_xi1_th = 0
+            d4_xi0_th = 0
+
+            for JJ in range(len(B_desc)):
+                if etype == EXTEND_CIRCLE:
+                    B = self.eval_B(JJ, R, th)
+                else:
+                    B = 0
+
+                xi0 += self.c0[JJ] * B
+                xi1 += self.c1[JJ] * B
+
+            if etype == EXTEND_CIRCLE:
+                boundary[l] = extend_circle(R, k, r, th, xi0, xi1,
+                    d2_xi0_th, d2_xi1_th, d4_xi0_th)
+            #boundary[l] += self.extend_inhomogeneous(r, th)
+
+        return boundary
+
     def calc_c0(self):
         t_data = get_chebyshev_roots(1000)
         self.c0 = []
@@ -190,8 +225,7 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
-        self.plot_gamma()
-        #return self.extension_test({EXTEND_CIRCLE})
+        return self.extension_test({EXTEND_CIRCLE})
 
     def calc_c1_exact(self):
         t_data = get_chebyshev_roots(1000)
@@ -210,9 +244,9 @@ class PizzaSolver(Solver):
             self.c1.extend(np.polynomial.chebyshev.chebfit(
                 t_data, boundary_data, n_basis-1))
 
-    def gamma_filter(self, nodes, etypes):
+    def gamma_filter(self, etypes):
         result = []
-        for i, j in nodes:
+        for i, j in self.gamma:
             if self.get_etype(i, j) in etypes:
                 result.append((i, j))
 
@@ -221,10 +255,11 @@ class PizzaSolver(Solver):
     def extension_test(self, etypes=ALL_ETYPES):
         self.calc_c0()
         self.calc_c1_exact()
-        ext = self.extend_boundary()
 
-        nodes = self.gamma_filter(self.gamma, etypes)
-        error = np.zeros(len(nodes))
+        nodes = self.gamma_filter(etypes)
+        ext = self.extend_boundary(nodes)
+
+        error = np.zeros(len(nodes), dtype=complex)
         for l in range(len(nodes)):
             x, y = self.get_coord(*nodes[l])
             error[l] = self.problem.eval_expected(x, y) - ext[l]
@@ -308,7 +343,7 @@ class PizzaSolver(Solver):
         self.plot_Gamma()
 
         for etype in ALL_ETYPES:
-            nodes = self.gamma_filter(self.gamma, {etype})
+            nodes = self.gamma_filter({etype})
             x_data, y_data = self.nodes_to_plottable(nodes)
             plt.plot(x_data, y_data, 'o', label=ETYPE_NAMES[etype])
 

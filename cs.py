@@ -4,18 +4,8 @@ import numpy as np
 from solver import Solver
 import matrices
 
-class CircleSolver(Solver):
-
-    def __init__(self, problem, N, scheme_order, **kwargs):
-        super().__init__(problem, N, scheme_order, **kwargs)
-        problem.R = self.R
-
-    def is_interior(self, i, j):
-        return self.get_polar(i, j)[0] <= self.R
-
-    def extend(self, r, th, xi0, xi1, d2_xi0_th, d2_xi1_th, d4_xi0_th):
-        R = self.R
-        k = self.k
+def extend_circle(R, k, r, th, xi0, xi1, 
+        d2_xi0_th, d2_xi1_th, d4_xi0_th):
 
         derivs = []
         derivs.append(xi0) 
@@ -36,6 +26,18 @@ class CircleSolver(Solver):
             v += derivs[l] / math.factorial(l) * (r - R)**l
 
         return v
+
+class CircleSolver(Solver):
+
+    def __init__(self, problem, N, scheme_order, **kwargs):
+        super().__init__(problem, N, scheme_order, **kwargs)
+        problem.R = self.R
+
+    def is_interior(self, i, j):
+        return self.get_polar(i, j)[0] <= self.R
+
+    def extend(self, *args):
+        return extend_circle(self.R, self.k, *args)
 
     def extend_inhomogeneous(self, r, th):
         p = self.problem
