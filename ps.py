@@ -71,7 +71,11 @@ class PizzaSolver(Solver):
         span, center = self.get_span_center(sid)
         return (arg - center) / span
 
-    def eval_B(self, JJ, r, th):
+    def eval_d_g_inv_arg(self, sid):
+        span, center = self.get_span_center(sid)
+        return 1 / span
+
+    def _eval_dn_B_arg(self, JJ, r, th, n, deriv):
         sid = self.get_sid(th)
         desc = B_desc[JJ]
 
@@ -82,10 +86,16 @@ class PizzaSolver(Solver):
                 arg = r
 
             t = self.eval_g_inv(sid, arg)
+
             J = B_desc[JJ]['J']
-            return eval_T(J, t)
+            d_g_inv_arg = self.eval_d_g_inv_arg(sid)
+
+            return (d_g_inv_arg)**n * deriv(J, t)
         else:
             return 0
+
+    def eval_B(self, JJ, r, th):
+        return self._eval_dn_B_arg(JJ, r, th, 0, eval_T)
 
     def get_etype(self, i, j):
         def dist_to_radius(m):
