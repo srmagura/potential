@@ -18,7 +18,7 @@ EXTEND_INNER = 4
 ALL_ETYPES = range(5)
 ETYPE_NAMES = ('circle', 'radius1', 'radius2', 'outer', 'inner')
 
-n_basis_by_sid = (30, 15, 15)
+n_basis_by_sid = (60, 30, 30)
 N_SEGMENT = 3
 
 segment_desc = []
@@ -75,7 +75,7 @@ class PizzaSolver(Solver):
         span, center = self.get_span_center(sid)
         return 1 / span
 
-    def _eval_dn_B_arg(self, JJ, r, th, n, deriv):
+    def eval_dn_B_arg(self, n, JJ, r, th):
         sid = self.get_sid(th)
         desc = B_desc[JJ]
 
@@ -90,12 +90,9 @@ class PizzaSolver(Solver):
             J = B_desc[JJ]['J']
             d_g_inv_arg = self.eval_d_g_inv_arg(sid)
 
-            return (d_g_inv_arg)**n * deriv(J, t)
+            return (d_g_inv_arg)**n * eval_dn_T_t(n, J, t)
         else:
             return 0
-
-    def eval_B(self, JJ, r, th):
-        return self._eval_dn_B_arg(JJ, r, th, 0, eval_T)
 
     def get_etype(self, i, j):
         def dist_to_radius(m):
@@ -158,16 +155,24 @@ class PizzaSolver(Solver):
 
             for JJ in range(len(B_desc)):
                 if etype == EXTEND_CIRCLE:
-                    B = self.eval_B(JJ, R, th)
+                    B = self.eval_dn_B_arg(0, JJ, R, th)
+                    d2_B_arg = self.eval_dn_B_arg(2, JJ, R, th)
+                    d4_B_arg = self.eval_dn_B_arg(4, JJ, R, th)
                 else:
                     B = 0
 
                 xi0 += self.c0[JJ] * B
                 xi1 += self.c1[JJ] * B
 
+                d2_xi0_th += self.c0[JJ] * d2_B_arg
+                d2_xi1_th += self.c1[JJ] * d2_B_arg
+
+                d4_xi0_th += self.c0[JJ] * d4_B_arg
+
             if etype == EXTEND_CIRCLE:
                 boundary[l] = extend_circle(R, k, r, th, xi0, xi1,
                     d2_xi0_th, d2_xi1_th, d4_xi0_th)
+
             #boundary[l] += self.extend_inhomogeneous(r, th)
 
         return boundary
