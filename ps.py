@@ -94,18 +94,27 @@ class PizzaSolver(Solver):
         else:
             return 0
 
-    def get_etype(self, i, j):
-        def dist_to_radius(m):
-            x1 = (1/(m + 1/m)) * (x/m + y)
-            y1 = m*x
-            return np.sqrt((x1-x)**2 + (y1-y)**2)
+    def get_radius_point(self, sid, x, y):
+        if sid != 2:
+            assert False
 
+        m = np.tan(self.a)
+        x1 = (x/m + y)/(m + 1/m)
+        y1 = m*x1
+
+        return (x1, y1) 
+
+    def dist_to_radius(self, sid, x, y):
+        x1, y1 = self.get_radius_point(sid, x, y)
+        return np.sqrt((x1-x)**2 + (y1-y)**2)
+
+    def get_etype(self, i, j):
         x, y = self.get_coord(i, j)
         r, th = self.get_polar(i, j)
 
         dist0 = abs(self.R - r)
         dist1 = abs(y)
-        dist2 = dist_to_radius(np.tan(self.a))
+        dist2 = self.dist_to_radius(2, x, y)
 
         if r > self.R:
             if th < self.a:
@@ -127,6 +136,17 @@ class PizzaSolver(Solver):
 
         raise Exception('Did not match any etype')
 
+    def extend_from_radius(self, Y1, xi0, xi1):
+        derivs = []
+        derivs.append(xi0)
+        derivs.append(xi1)
+
+        v = 0
+        for l in range(len(derivs)):
+            v += derivs[l] / math.factorial(l) * Y1**l
+
+        return v
+
     def extend_basis(self, J, index):
         ext = np.zeros(len(self.gamma), dtype=complex)
         for l in range(len(self.gamma)):
@@ -146,6 +166,7 @@ class PizzaSolver(Solver):
 
         for l in range(len(nodes)):
             i, j = nodes[l]
+            x, y = self.get_coord(i, j)
             r, th = self.get_polar(i, j)
             etype = self.get_etype(i, j)
 
@@ -155,11 +176,22 @@ class PizzaSolver(Solver):
 
             for JJ in range(len(B_desc)):
                 if etype == EXTEND_CIRCLE:
-                    B = self.eval_dn_B_arg(0, JJ, R, th)
-                    d2_B_arg = self.eval_dn_B_arg(2, JJ, R, th)
-                    d4_B_arg = self.eval_dn_B_arg(4, JJ, R, th)
-                else:
-                    B = 0
+                    param_r = R
+                    param_th = th
+                elif etype == EXTEND_RADIUS1:
+                    param_r = r
+                    param_th = 0
+                elif etype == EXTEND_RADIUS2:
+                    x0, y0 = self.get_radius_point(2, x, y)
+                    param_r = cart_to_polar(x0, y0)[0]
+                    param_th = self.a
+
+                B = self.eval_dn_B_arg(0, JJ,
+                    param_r, param_th)
+                d2_B_arg = self.eval_dn_B_arg(2, JJ,
+                    param_r, param_th)
+                d4_B_arg = self.eval_dn_B_arg(4, JJ,
+                    param_r, param_th)
 
                 xi0 += self.c0[JJ] * B
                 xi1 += self.c1[JJ] * B
@@ -172,6 +204,18 @@ class PizzaSolver(Solver):
             if etype == EXTEND_CIRCLE:
                 boundary[l] = extend_circle(R, k, r, th, xi0, xi1,
                     d2_xi0_th, d2_xi1_th, d4_xi0_th)
+
+            elif (etype == EXTEND_RADIUS1 or etype == EXTEND_RADIUS2):
+                if etype == EXTEND_RADIUS1:
+                    Y1 = y
+                else:
+                    Y1 = self.dist_to_radius(2, x, y)
+
+                    if self.is_interior(i, j):
+                        Y1 = -Y1
+
+                boundary[l] = self.extend_from_radius(Y1,
+                    xi0, xi1)
 
             #boundary[l] += self.extend_inhomogeneous(r, th)
 
@@ -240,7 +284,19 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
-        return self.extension_test({EXTEND_CIRCLE})
+        self.gamma = []
+        h = self.AD_len / self.N
+        a = self.a
+        
+        for r in np.arange(.1, self.R, .2):
+            #self.gamma.append(self.get_coord_inv(r, h))
+
+            x = r*cos(a) + h*sin(a)
+            y = r*sin(a) + h*cos(a)
+            self.gamma.append(self.get_coord_inv(x, y))
+
+        return self.extension_test({
+            EXTEND_RADIUS1, EXTEND_RADIUS2})
 
     def calc_c1_exact(self):
         t_data = get_chebyshev_roots(1000)
@@ -252,7 +308,7 @@ class PizzaSolver(Solver):
             boundary_data = np.zeros(len(arg_data), dtype=complex)
             for l in range(len(boundary_points)):
                 p = boundary_points[l]
-                boundary_data[l] = self.problem.eval_d_u_r(
+                boundary_data[l] = self.problem.eval_d_u_outwards(
                     p['x'], p['y'], sid=sid)
 
             n_basis = segment_desc[sid]['n_basis']
@@ -296,7 +352,8 @@ class PizzaSolver(Solver):
             r, th = cart_to_polar(p['x'], p['y'])
             for JJ in range(len(B_desc)):
                 expansion_data[l] +=\
-                    (self.c0[JJ] * self.eval_B(JJ, r, th)).real
+                    (self.c0[JJ] *
+                    self.eval_dn_B_arg(0, JJ, r, th)).real
 
         plt.plot(s_data, exact_data, label='Exact')
         plt.plot(s_data, expansion_data, 'o', label='Expansion')
@@ -315,12 +372,13 @@ class PizzaSolver(Solver):
         for l in range(len(sample)):
             p = sample[l]
             s_data[l] = p['s']
-            exact_data[l] = self.problem.eval_d_u_r(p['x'], p['y']).real
+            exact_data[l] = self.problem.eval_d_u_outwards(p['x'], p['y']).real
 
             r, th = cart_to_polar(p['x'], p['y'])
             for JJ in range(len(B_desc)):
                 expansion_data[l] +=\
-                    (self.c1[JJ] * self.eval_B(JJ, r, th)).real
+                    (self.c1[JJ] *
+                    self.eval_dn_B_arg(0, JJ, r, th)).real
 
         plt.plot(s_data, exact_data, label='Exact')
         plt.plot(s_data, expansion_data, 'o', label='Expansion')
@@ -354,13 +412,25 @@ class PizzaSolver(Solver):
 
         return x_data, y_data
 
-    def plot_gamma(self):
+    def plot_gamma(self, plot_rpoints=False):
         self.plot_Gamma()
 
         for etype in ALL_ETYPES:
             nodes = self.gamma_filter({etype})
             x_data, y_data = self.nodes_to_plottable(nodes)
             plt.plot(x_data, y_data, 'o', label=ETYPE_NAMES[etype])
+
+            if etype == EXTEND_RADIUS2:
+                x_data = np.zeros(len(nodes))
+                y_data = np.zeros(len(nodes))
+
+                for l in range(len(nodes)):
+                    x, y = self.get_coord(*nodes[l])
+                    x1, y1 = self.get_radius_point(2, x, y)
+                    x_data[l] = x1
+                    y_data[l] = y1
+
+                plt.plot(x_data, y_data, 'o', label='rpoints')
 
         plt.xlim(-4,4)
         plt.ylim(-4,4)

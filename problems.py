@@ -95,7 +95,7 @@ class Wave(Problem):
         return 1j*a*np.exp(1j*self.R*a)
 
 class Sine(Problem):
-    k = 2/3 
+    k = 1 
 
     solver_class = CsFourier
     homogeneous = True
@@ -116,7 +116,7 @@ class SinePizza(Sine):
     def eval_bc(self, x, y):
         return self.eval_expected(x, y)
 
-    def eval_d_u_r(self, x, y, **kwargs):
+    def eval_d_u_outwards(self, x, y, **kwargs):
         r, th = cart_to_polar(x, y)
 
         if 'sid' in kwargs:
@@ -126,8 +126,11 @@ class SinePizza(Sine):
 
         if sid == 0:
             return super().eval_d_u_r(th)
-        elif sid == 1 or sid == 2:
-            return -r * sin(th) * sin(r * cos(th))
+        elif sid == 1:
+            return 0
+        elif sid == 2:
+            k = self.k
+            return k*cos(k*x)*cos(self.a - np.pi/2)
 
     def get_sid(self, th):
         tol = 1e-12

@@ -53,6 +53,12 @@ class Solver:
         y = self.AD_len * (j / self.N - 1/2) 
         return x, y
 
+    # For testing
+    def get_coord_inv(self, x, y):
+        i = self.N * (x / self.AD_len + 1/2)
+        j = self.N * (y / self.AD_len + 1/2)
+        return i, j
+
     # Get the polar coordinates of grid point (i,j)
     def get_polar(self, i, j):
         x, y = self.get_coord(i, j)
