@@ -104,10 +104,13 @@ class Sine(Problem):
         return 0
 
     def eval_expected(self, x, y):
-        return sin(self.k*x)
+        return sin(self.k*x) #+ sin(self.k*y)
 
     def eval_d_u_r(self, th):
-        return self.k*cos(th) * cos(self.k*self.R*cos(th))
+        k = self.k
+        R = self.R
+        return k*cos(th) * cos(k*R*cos(th)) #+
+            #k*sin(th)*cos(k*R*sin(th)))
 
 class SinePizza(Sine):
     a = np.pi / 6
@@ -124,13 +127,16 @@ class SinePizza(Sine):
         else:
             sid = self.get_sid(th)
 
+        a = self.a
+        k = self.k
+
         if sid == 0:
             return super().eval_d_u_r(th)
         elif sid == 1:
-            return 0
+            return 0#k*cos(k*y)
         elif sid == 2:
-            k = self.k
-            return k*cos(k*x)*cos(self.a - np.pi/2)
+            return k*cos(k*x)*cos(a - np.pi/2) #-
+                #k*cos(k*y)*sin(a - np.pi/2))
 
     def get_sid(self, th):
         tol = 1e-12

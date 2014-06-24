@@ -119,6 +119,7 @@ class CsFourier(CircleSolver):
     def run(self):
         self.calc_c0()
         self.calc_c1()
+
         if self.verbose:
             print('Using {} basis functions.'.
                 format(len(self.J_dict)))
