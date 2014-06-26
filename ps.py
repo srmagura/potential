@@ -164,6 +164,51 @@ class PizzaSolver(Solver):
 
         return ext
 
+    def ext_calc_xi_derivs(self, i, j, param_r, param_th):
+        xi0 = xi1 = 0
+        d2_xi0_arg = d2_xi1_arg = 0
+        d4_xi0_arg = 0
+
+        for JJ in range(len(B_desc)):
+            B = self.eval_dn_B_arg(0, JJ, param_r, param_th)
+            d2_B_arg = self.eval_dn_B_arg(2, JJ, param_r, param_th)
+            d4_B_arg = self.eval_dn_B_arg(4, JJ, param_r, param_th)
+
+            xi0 += self.c0[JJ] * B
+            xi1 += self.c1[JJ] * B
+
+            d2_xi0_arg += self.c0[JJ] * d2_B_arg
+            d2_xi1_arg += self.c1[JJ] * d2_B_arg
+
+            d4_xi0_arg += self.c0[JJ] * d4_B_arg
+
+        return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
+
+    def ext_get_circle_params(self, i, j):
+        r, th = self.get_polar(i, j)
+        return self.ext_calc_xi_derivs(i, j, self.R, th)
+
+    def ext_get_radius1_params(self, i, j):
+        x, y = self.get_coord(i, j)
+        Y1 = y
+        derivs = self.ext_calc_xi_derivs(i, j, x, 0)
+
+        return (Y1,) + derivs
+
+    def ext_get_radius2_params(self, i, j):
+        x, y = self.get_coord(i, j)
+        x0, y0 = self.get_radius_point(2, x, y)
+
+        param_r = cart_to_polar(x0, y0)[0]
+        derivs = self.ext_calc_xi_derivs(i, j, param_r, self.a)
+
+        Y1 = self.dist_to_radius(2, x, y)
+
+        if self.is_interior(i, j):
+            Y1 = -Y1
+
+        return (Y1,) + derivs
+
     def extend_boundary(self, nodes=None): 
         if nodes is None:
             nodes = self.gamma
@@ -172,7 +217,6 @@ class PizzaSolver(Solver):
         k = self.problem.k
 
         boundary = np.zeros(len(nodes), dtype=complex)
-        error= []
 
         for l in range(len(nodes)):
             i, j = nodes[l]
@@ -180,54 +224,17 @@ class PizzaSolver(Solver):
             r, th = self.get_polar(i, j)
             etype = self.get_etype(i, j)
 
-            xi0 = xi1 = 0
-            d2_xi0_arg = d2_xi1_arg = 0
-            d4_xi0_arg = 0
-
-            for JJ in range(len(B_desc)):
-                if etype == EXTEND_CIRCLE:
-                    param_r = R
-                    param_th = th
-                elif etype == EXTEND_RADIUS1:
-                    param_r = x
-                    param_th = 0
-                elif etype == EXTEND_RADIUS2:
-                    x0, y0 = self.get_radius_point(2, x, y)
-                    param_r = cart_to_polar(x0, y0)[0]
-                    param_th = self.a
-
-                B = self.eval_dn_B_arg(0, JJ,
-                    param_r, param_th)
-                d2_B_arg = self.eval_dn_B_arg(2, JJ,
-                    param_r, param_th)
-                d4_B_arg = self.eval_dn_B_arg(4, JJ,
-                    param_r, param_th)
-
-                xi0 += self.c0[JJ] * B
-                xi1 += self.c1[JJ] * B
-
-                d2_xi0_arg += self.c0[JJ] * d2_B_arg
-                d2_xi1_arg += self.c1[JJ] * d2_B_arg
-
-                d4_xi0_arg += self.c0[JJ] * d4_B_arg
-
             if etype == EXTEND_CIRCLE:
-                boundary[l] = extend_circle(R, k, r, th, xi0, xi1,
-                    d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
+                params = self.ext_get_circle_params(i, j)
+                boundary[l] = extend_circle(R, k, r, th, *params)
 
-            elif (etype == EXTEND_RADIUS1 or etype == EXTEND_RADIUS2):
-                if etype == EXTEND_RADIUS1:
-                    Y1 = y
-                else:
-                    Y1 = self.dist_to_radius(2, x, y)
+            elif etype == EXTEND_RADIUS1:
+                params = self.ext_get_radius1_params(i, j)
+                boundary[l] = self.extend_from_radius(*params)
 
-                    if self.is_interior(i, j):
-                        Y1 = -Y1
-
-                boundary[l] = self.extend_from_radius(Y1,
-                    xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
-
-            #boundary[l] += self.extend_inhomogeneous(r, th)
+            elif etype == EXTEND_RADIUS2:
+                params = self.ext_get_radius2_params(i, j)
+                boundary[l] = self.extend_from_radius(*params)
 
         return boundary
 
@@ -294,7 +301,6 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
-        self.gen_fake_gamma()
         return self.extension_test({
             EXTEND_RADIUS1, EXTEND_RADIUS2,
             EXTEND_CIRCLE})
