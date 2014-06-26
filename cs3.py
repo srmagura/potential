@@ -98,9 +98,9 @@ class CsChebyshev3(CircleSolver):
             d4_B_th = eval_d4_B_th(JJ, th)
 
             if index == 0:
-                ext[l] = self.extend(r, th, B, 0, d2_B_th, 0, d4_B_th)
+                ext[l] = self.extend_circle(r, B, 0, d2_B_th, 0, d4_B_th)
             else:
-                ext[l] = self.extend(r, th, 0, B, 0, d2_B_th, 0)  
+                ext[l] = self.extend_circle(r, 0, B, 0, d2_B_th, 0)  
 
         return ext
 
@@ -130,7 +130,7 @@ class CsChebyshev3(CircleSolver):
                 d4_B_th = eval_d4_B_th(JJ, th)
                 d4_xi0_th += self.c0[JJ] * d4_B_th
 
-            boundary[l] = self.extend(r, th, xi0, xi1,
+            boundary[l] = self.extend_circle(r, xi0, xi1,
                 d2_xi0_th, d2_xi1_th, d4_xi0_th)
             boundary[l] += self.extend_inhomogeneous(r, th)
 

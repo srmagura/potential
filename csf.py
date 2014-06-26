@@ -82,9 +82,9 @@ class CsFourier(CircleSolver):
             exp = np.exp(complex(0, J*th))
 
             if index == 0:
-                ext[l] = self.extend(r, th, exp, 0, -J**2 * exp, 0, J**4 * exp)
+                ext[l] = self.extend_circle(r, exp, 0, -J**2 * exp, 0, J**4 * exp)
             else:
-                ext[l] = self.extend(r, th, 0, exp, 0, -J**2 * exp, 0)  
+                ext[l] = self.extend_circle(r, 0, exp, 0, -J**2 * exp, 0)  
 
         return ext
 
@@ -110,7 +110,7 @@ class CsFourier(CircleSolver):
                 xi1 += self.c1[i] * exp
                 d2_xi1_th += -J**2 * self.c1[i] * exp
 
-            boundary[l] = self.extend(r, th, xi0, xi1, d2_xi0_th, d2_xi1_th,
+            boundary[l] = self.extend_circle(r, xi0, xi1, d2_xi0_th, d2_xi1_th,
                 d4_xi0_th)
             boundary[l] += self.extend_inhomogeneous(r, th)
 

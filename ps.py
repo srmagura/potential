@@ -6,7 +6,6 @@ import matrices
 
 import matplotlib.pyplot as plt
 
-from cs import extend_circle
 from chebyshev import *
 
 EXTEND_CIRCLE = 0
@@ -75,8 +74,10 @@ class PizzaSolver(Solver):
         span, center = self.get_span_center(sid)
         return 1 / span
 
-    def eval_dn_B_arg(self, n, JJ, r, th):
-        sid = self.get_sid(th)
+    def eval_dn_B_arg(self, n, JJ, r, th, sid=None):
+        if sid is None:
+            sid = self.get_sid(th)
+
         desc = B_desc[JJ]
 
         if desc['sid'] == sid:
@@ -164,15 +165,15 @@ class PizzaSolver(Solver):
 
         return ext
 
-    def ext_calc_xi_derivs(self, i, j, param_r, param_th):
+    def ext_calc_xi_derivs(self, i, j, param_r, param_th, sid=None):
         xi0 = xi1 = 0
         d2_xi0_arg = d2_xi1_arg = 0
         d4_xi0_arg = 0
 
         for JJ in range(len(B_desc)):
-            B = self.eval_dn_B_arg(0, JJ, param_r, param_th)
-            d2_B_arg = self.eval_dn_B_arg(2, JJ, param_r, param_th)
-            d4_B_arg = self.eval_dn_B_arg(4, JJ, param_r, param_th)
+            B = self.eval_dn_B_arg(0, JJ, param_r, param_th, sid)
+            d2_B_arg = self.eval_dn_B_arg(2, JJ, param_r, param_th, sid)
+            d4_B_arg = self.eval_dn_B_arg(4, JJ, param_r, param_th, sid)
 
             xi0 += self.c0[JJ] * B
             xi1 += self.c1[JJ] * B
@@ -184,18 +185,19 @@ class PizzaSolver(Solver):
 
         return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
 
-    def ext_get_circle_params(self, i, j):
+    def do_extend_circle(self, i, j):
         r, th = self.get_polar(i, j)
-        return self.ext_calc_xi_derivs(i, j, self.R, th)
+        derivs = self.ext_calc_xi_derivs(i, j, self.R, th)
+        return self.extend_circle(r, *derivs)
 
-    def ext_get_radius1_params(self, i, j):
+    def do_extend_radius1(self, i, j):
         x, y = self.get_coord(i, j)
         Y1 = y
         derivs = self.ext_calc_xi_derivs(i, j, x, 0)
 
-        return (Y1,) + derivs
+        return self.extend_from_radius(Y1, *derivs)
 
-    def ext_get_radius2_params(self, i, j):
+    def do_extend_radius2(self, i, j):
         x, y = self.get_coord(i, j)
         x0, y0 = self.get_radius_point(2, x, y)
 
@@ -207,7 +209,47 @@ class PizzaSolver(Solver):
         if self.is_interior(i, j):
             Y1 = -Y1
 
-        return (Y1,) + derivs
+        return self.extend_from_radius(Y1, *derivs)
+
+    def ext_calc_all_xi_derivs(self, param_th, sid): 
+        param_r = self.R
+        xi0 = 0
+
+        for JJ in range(len(B_desc)):
+            B = self.eval_dn_B_arg(0, JJ, param_r, param_th, sid)
+
+            xi0 += self.c0[JJ] * B
+
+        return (xi0,)
+
+    def do_extend_outer(self, i, j):
+        x, y = self.get_coord(i, j)
+        x0 = self.R * np.cos(self.a)
+        y0 = self.R * np.sin(self.a)
+
+        direction_raw = np.array((x - x0, y - y0))
+        delta = np.linalg.norm(direction_raw)
+
+        direction = direction_raw / delta 
+
+        X_basis = np.array((np.cos(self.a), np.sin(self.a)))
+        dX = direction.dot(X_basis)
+
+        Y_basis = np.array((np.sin(self.a), -np.cos(self.a)))
+        dY = direction.dot(Y_basis)
+
+        direction_XY = np.array((dX, dY))
+
+        derivs_radius2 = self.ext_calc_all_xi_derivs(self.a, 2) 
+        derivs_circle = self.ext_calc_all_xi_derivs(self.a, 0) 
+
+        v = derivs_circle[0]
+        for l in range(1, len(derivs_radius2)):
+            gradient = np.array((derivs_radius2[l], derivs_circle[l]))
+            deriv = gradient.dot(direction_XY)
+            v += deriv * delta**l / math.factorial(l)
+
+        return v
 
     def extend_boundary(self, nodes=None): 
         if nodes is None:
@@ -225,16 +267,16 @@ class PizzaSolver(Solver):
             etype = self.get_etype(i, j)
 
             if etype == EXTEND_CIRCLE:
-                params = self.ext_get_circle_params(i, j)
-                boundary[l] = extend_circle(R, k, r, th, *params)
+                boundary[l] = self.do_extend_circle(i, j)
 
             elif etype == EXTEND_RADIUS1:
-                params = self.ext_get_radius1_params(i, j)
-                boundary[l] = self.extend_from_radius(*params)
+                boundary[l] = self.do_extend_radius1(i, j)
 
             elif etype == EXTEND_RADIUS2:
-                params = self.ext_get_radius2_params(i, j)
-                boundary[l] = self.extend_from_radius(*params)
+                boundary[l] = self.do_extend_radius2(i, j)
+
+            elif etype == EXTEND_OUTER:
+                boundary[l] = self.do_extend_outer(i, j)
 
         return boundary
 
@@ -301,9 +343,11 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
-        return self.extension_test({
-            EXTEND_RADIUS1, EXTEND_RADIUS2,
-            EXTEND_CIRCLE})
+        self.gen_fake_gamma()
+        #return self.extension_test({
+        #    EXTEND_RADIUS1, EXTEND_RADIUS2,
+        #    EXTEND_CIRCLE})
+        return self.extension_test({EXTEND_OUTER})
 
     def calc_c1_exact(self):
         t_data = get_chebyshev_roots(1000)
@@ -329,11 +373,20 @@ class PizzaSolver(Solver):
         
         for r in np.arange(.1, self.R, .2):
             self.gamma.append(self.get_coord_inv(r, h/5))
+            self.gamma.append(self.get_coord_inv(r, -h/5))
 
             x = r*cos(a) + h*sin(a)
             y = r*sin(a) + h*cos(a)
             self.gamma.append(self.get_coord_inv(x, y))
 
+            x = r*cos(a) - h*sin(a)/5
+            y = r*sin(a) - h*cos(a)/5
+            self.gamma.append(self.get_coord_inv(x, y))
+
+        x = self.R * cos(a) + h
+        y = self.R * sin(a)
+        self.gamma.append(self.get_coord_inv(x, y))
+        
 
     def gamma_filter(self, etypes):
         result = []
