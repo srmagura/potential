@@ -211,16 +211,22 @@ class PizzaSolver(Solver):
 
         return self.extend_from_radius(Y1, *derivs)
 
-    def ext_calc_all_xi_derivs(self, param_th, sid): 
+    def ext_calc_B_derivs(self, param_th, sid): 
         param_r = self.R
-        xi0 = 0
+        N_DERIVS = 2
 
-        for JJ in range(len(B_desc)):
-            B = self.eval_dn_B_arg(0, JJ, param_r, param_th, sid)
+        derivs = np.zeros(N_DERIVS, dtype=complex)
 
-            xi0 += self.c0[JJ] * B
+        for n in range(N_DERIVS):
+            for JJ in range(len(B_desc)):
+                dn_B_arg = self.eval_dn_B_arg(n, JJ, param_r, param_th, sid)
+                derivs[n] += self.c0[JJ] * dn_B_arg
 
-        return (xi0,)
+        if sid == 0:
+            for n in range(1, N_DERIVS):
+                derivs[n] = -derivs[n] / self.R**n
+
+        return derivs
 
     def do_extend_outer(self, i, j):
         x, y = self.get_coord(i, j)
@@ -240,10 +246,10 @@ class PizzaSolver(Solver):
 
         direction_XY = np.array((dX, dY))
 
-        derivs_radius2 = self.ext_calc_all_xi_derivs(self.a, 2) 
-        derivs_circle = self.ext_calc_all_xi_derivs(self.a, 0) 
+        derivs_radius2 = self.ext_calc_B_derivs(self.a, 2) 
+        derivs_circle = self.ext_calc_B_derivs(self.a, 0) 
 
-        v = derivs_circle[0]
+        v = derivs_radius2[0]
         for l in range(1, len(derivs_radius2)):
             gradient = np.array((derivs_radius2[l], derivs_circle[l]))
             deriv = gradient.dot(direction_XY)
@@ -348,6 +354,9 @@ class PizzaSolver(Solver):
         #    EXTEND_RADIUS1, EXTEND_RADIUS2,
         #    EXTEND_CIRCLE})
         return self.extension_test({EXTEND_OUTER})
+
+
+    ## DEBUGGING FUNCTIONS ##
 
     def calc_c1_exact(self):
         t_data = get_chebyshev_roots(1000)
