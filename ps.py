@@ -35,8 +35,8 @@ for sid in range(N_SEGMENT):
 
 
 class PizzaSolver(Solver):
-    AD_len = 2*np.pi
-    R = 2.3
+    AD_len = 2.5 #2*np.pi
+    R = 1 #NOTE
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
@@ -211,47 +211,70 @@ class PizzaSolver(Solver):
 
         return self.extend_from_radius(Y1, *derivs)
 
-    def ext_calc_B_derivs(self, param_th, sid): 
-        param_r = self.R
-        N_DERIVS = 2
+    def ext_calc_B_derivs(self, param_th, segment_sid, radius_sid): 
+        N_DERIVS = 5
 
         derivs = np.zeros(N_DERIVS, dtype=complex)
 
         for n in range(N_DERIVS):
             for JJ in range(len(B_desc)):
-                dn_B_arg = self.eval_dn_B_arg(n, JJ, param_r, param_th, sid)
+                dn_B_arg = self.eval_dn_B_arg(n, JJ, self.R, param_th, segment_sid)
                 derivs[n] += self.c0[JJ] * dn_B_arg
 
-        if sid == 0:
+        if segment_sid == 0:
             for n in range(1, N_DERIVS):
-                derivs[n] = -derivs[n] / self.R**n
+                derivs[n] /= self.R**n
+
+                if radius_sid == 2:
+                    derivs[n] *= -1
+
 
         return derivs
 
-    def do_extend_outer(self, i, j):
-        x, y = self.get_coord(i, j)
-        x0 = self.R * np.cos(self.a)
-        y0 = self.R * np.sin(self.a)
+    def do_extend_outer(self, i, j, sid):
+        if sid == 1:
+            x0 = self.R
+            y0 = 0
 
+            X_basis = np.array((1, 0))
+            Y_basis = np.array((0, 1))
+
+            param_th = 2*np.pi
+
+        elif sid == 2:
+            x0 = self.R * np.cos(self.a)
+            y0 = self.R * np.sin(self.a)
+
+            X_basis = np.array((np.cos(self.a), np.sin(self.a)))
+            Y_basis = np.array((np.sin(self.a), -np.cos(self.a)))
+
+            param_th = self.a
+
+        x, y = self.get_coord(i, j)
         direction_raw = np.array((x - x0, y - y0))
         delta = np.linalg.norm(direction_raw)
 
         direction = direction_raw / delta 
 
-        X_basis = np.array((np.cos(self.a), np.sin(self.a)))
         dX = direction.dot(X_basis)
-
-        Y_basis = np.array((np.sin(self.a), -np.cos(self.a)))
         dY = direction.dot(Y_basis)
-
         direction_XY = np.array((dX, dY))
 
-        derivs_radius2 = self.ext_calc_B_derivs(self.a, 2) 
-        derivs_circle = self.ext_calc_B_derivs(self.a, 0) 
+        derivs_radius = self.ext_calc_B_derivs(param_th, sid, sid) 
+        derivs_circle = self.ext_calc_B_derivs(param_th, 0, sid) 
 
-        v = derivs_radius2[0]
-        for l in range(1, len(derivs_radius2)):
-            gradient = np.array((derivs_radius2[l], derivs_circle[l]))
+        exp_dx = [cos(x0), -sin(x0), -cos(x0), sin(x0)]
+
+        v = derivs_radius[0]
+        for l in range(1, len(derivs_radius)):
+            gradient = np.array((derivs_radius[l], derivs_circle[l]))
+            print('l = {}'.format(l))
+            print('Actual:', gradient)
+            b = 0
+            exp_gradient = np.array((exp_dx[l-1]*cos(b), exp_dx[l-1]*cos(-np.pi/2+b)))
+            print('Expected:', exp_gradient)
+            print()
+
             deriv = gradient.dot(direction_XY)
             v += deriv * delta**l / math.factorial(l)
 
@@ -282,7 +305,12 @@ class PizzaSolver(Solver):
                 boundary[l] = self.do_extend_radius2(i, j)
 
             elif etype == EXTEND_OUTER:
-                boundary[l] = self.do_extend_outer(i, j)
+                if th > self.a/2:
+                    sid = 2
+                else:
+                    sid = 1
+
+                boundary[l] = self.do_extend_outer(i, j, sid)
 
         return boundary
 
@@ -303,7 +331,7 @@ class PizzaSolver(Solver):
                 t_data, boundary_data, n_basis-1))
 
     def get_boundary_sample(self):
-        th_data = np.arange(self.a+.1, 2*np.pi, .1)
+        th_data = np.arange(self.a, 2*np.pi, .1)
         r_data = np.linspace(0, self.R, 25)
 
         points = []
@@ -376,26 +404,45 @@ class PizzaSolver(Solver):
                 t_data, boundary_data, n_basis-1))
 
     def gen_fake_gamma(self):
+        def ap():
+            self.gamma.append(self.get_coord_inv(x, y))
+
         self.gamma = []
         h = self.AD_len / self.N
         a = self.a
         
         for r in np.arange(.1, self.R, .2):
-            self.gamma.append(self.get_coord_inv(r, h/5))
-            self.gamma.append(self.get_coord_inv(r, -h/5))
+            x = r
+            y = h/5
+            ap()
+
+            y = -h/5
+            ap()
 
             x = r*cos(a) + h*sin(a)
             y = r*sin(a) + h*cos(a)
-            self.gamma.append(self.get_coord_inv(x, y))
+            ap()
 
             x = r*cos(a) - h*sin(a)/5
             y = r*sin(a) - h*cos(a)/5
-            self.gamma.append(self.get_coord_inv(x, y))
+            ap()
 
         x = self.R * cos(a) + h
         y = self.R * sin(a)
-        self.gamma.append(self.get_coord_inv(x, y))
+        #ap()
+
+        b = np.pi/6
+        x = self.R * cos(a) + h * cos(b)
+        y = self.R * sin(a) - h * sin(b)
+        #ap()
+
+        x = self.R + h
+        y = 0
+        ap()
         
+        #x = self.R + h*cos(a)
+        #y = h*sin(a)
+        #ap()
 
     def gamma_filter(self, etypes):
         result = []
@@ -439,7 +486,7 @@ class PizzaSolver(Solver):
 
         plt.plot(s_data, exact_data, label='Exact')
         plt.plot(s_data, expansion_data, 'o', label='Expansion')
-        plt.legend()
+        plt.legend(loc=0)
         plt.ylim(-1, 1)
         plt.title('c0')
         plt.show()
