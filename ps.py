@@ -35,8 +35,8 @@ for sid in range(N_SEGMENT):
 
 
 class PizzaSolver(Solver):
-    AD_len = 2.5 #2*np.pi
-    R = 1 #NOTE
+    AD_len = 2*np.pi
+    R = 2.3
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
@@ -165,7 +165,7 @@ class PizzaSolver(Solver):
 
         return ext
 
-    def ext_calc_xi_derivs(self, i, j, param_r, param_th, sid=None):
+    def ext_calc_certain_xi_derivs(self, i, j, param_r, param_th, sid=None):
         xi0 = xi1 = 0
         d2_xi0_arg = d2_xi1_arg = 0
         d4_xi0_arg = 0
@@ -187,13 +187,13 @@ class PizzaSolver(Solver):
 
     def do_extend_circle(self, i, j):
         r, th = self.get_polar(i, j)
-        derivs = self.ext_calc_xi_derivs(i, j, self.R, th)
+        derivs = self.ext_calc_certain_xi_derivs(i, j, self.R, th)
         return self.extend_circle(r, *derivs)
 
     def do_extend_radius1(self, i, j):
         x, y = self.get_coord(i, j)
         Y1 = y
-        derivs = self.ext_calc_xi_derivs(i, j, x, 0)
+        derivs = self.ext_calc_certain_xi_derivs(i, j, x, 0)
 
         return self.extend_from_radius(Y1, *derivs)
 
@@ -202,7 +202,7 @@ class PizzaSolver(Solver):
         x0, y0 = self.get_radius_point(2, x, y)
 
         param_r = cart_to_polar(x0, y0)[0]
-        derivs = self.ext_calc_xi_derivs(i, j, param_r, self.a)
+        derivs = self.ext_calc_certain_xi_derivs(i, j, param_r, self.a)
 
         Y1 = self.dist_to_radius(2, x, y)
 
@@ -211,72 +211,74 @@ class PizzaSolver(Solver):
 
         return self.extend_from_radius(Y1, *derivs)
 
-    def ext_calc_B_derivs(self, param_th, segment_sid, radius_sid): 
+    def ext_calc_xi_derivs(self, param_th, segment_sid, radius_sid, index): 
         N_DERIVS = 5
 
         derivs = np.zeros(N_DERIVS, dtype=complex)
 
+        if index == 0:
+            c = self.c0
+        elif index == 1:
+            c = self.c1
+
         for n in range(N_DERIVS):
             for JJ in range(len(B_desc)):
                 dn_B_arg = self.eval_dn_B_arg(n, JJ, self.R, param_th, segment_sid)
-                derivs[n] += self.c0[JJ] * dn_B_arg
+                derivs[n] += c[JJ] * dn_B_arg
 
-        if segment_sid == 0:
+        if segment_sid == 0 and radius_sid == 2:
             for n in range(1, N_DERIVS):
-                derivs[n] /= self.R**n
-
-                if radius_sid == 2:
-                    derivs[n] *= -1
-
+                derivs[n] = -derivs[n]
 
         return derivs
 
-    def do_extend_outer(self, i, j, sid):
-        if sid == 1:
-            x0 = self.R
-            y0 = 0
-
-            X_basis = np.array((1, 0))
-            Y_basis = np.array((0, 1))
-
-            param_th = 2*np.pi
-
-        elif sid == 2:
-            x0 = self.R * np.cos(self.a)
-            y0 = self.R * np.sin(self.a)
-
-            X_basis = np.array((np.cos(self.a), np.sin(self.a)))
-            Y_basis = np.array((np.sin(self.a), -np.cos(self.a)))
-
-            param_th = self.a
-
+    def do_extend_outer(self, i, j, radius_sid):
         x, y = self.get_coord(i, j)
-        direction_raw = np.array((x - x0, y - y0))
-        delta = np.linalg.norm(direction_raw)
+        r, th = self.get_polar(i, j)
 
-        direction = direction_raw / delta 
+        dist0 = r - self.R
+        dist1 = y
 
-        dX = direction.dot(X_basis)
-        dY = direction.dot(Y_basis)
-        direction_XY = np.array((dX, dY))
+        if dist0 < dist1:
+            extend_sid = 0
+            delta_arg = th
+            param_th = 2*np.pi
+        else:
+            extend_sid = radius_sid
+            delta_arg = x - self.R
+            param_th = 0
 
-        derivs_radius = self.ext_calc_B_derivs(param_th, sid, sid) 
-        derivs_circle = self.ext_calc_B_derivs(param_th, 0, sid) 
+        print('extend_sid = {}'.format(extend_sid))
 
-        exp_dx = [cos(x0), -sin(x0), -cos(x0), sin(x0)]
+        derivs0 = self.ext_calc_xi_derivs(param_th, extend_sid, radius_sid, 0) 
+        derivs1 = self.ext_calc_xi_derivs(param_th, extend_sid, radius_sid, 1) 
 
-        v = derivs_radius[0]
-        for l in range(1, len(derivs_radius)):
-            gradient = np.array((derivs_radius[l], derivs_circle[l]))
-            print('l = {}'.format(l))
-            print('Actual:', gradient)
-            b = 0
-            exp_gradient = np.array((exp_dx[l-1]*cos(b), exp_dx[l-1]*cos(-np.pi/2+b)))
-            print('Expected:', exp_gradient)
-            print()
+        xi0 = xi1 = 0
+        d2_xi0_arg = d2_xi1_arg = 0
+        d4_xi0_arg = 0
 
-            deriv = gradient.dot(direction_XY)
-            v += deriv * delta**l / math.factorial(l)
+        for l in range(len(derivs0)):
+            f = delta_arg**l / math.factorial(l)
+            xi0 += derivs0[l] * f 
+            xi1 += derivs1[l] * f
+
+            ll = l - 2
+            if ll >= 0:
+                f = delta_arg**ll / math.factorial(ll)
+                d2_xi0_arg += derivs0[l] * f
+                d2_xi1_arg += derivs1[l] * f
+
+            ll = l - 4
+            if ll >= 0:
+                f = delta_arg**ll / math.factorial(ll)
+                d4_xi0_arg += derivs0[l] * f
+
+        ext_params = (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
+
+        if extend_sid == 0:
+            v = self.extend_circle(r, *ext_params)
+        elif extend_sid == 1:
+            v = self.extend_from_radius(y, *ext_params)
 
         return v
 
@@ -381,6 +383,7 @@ class PizzaSolver(Solver):
         #return self.extension_test({
         #    EXTEND_RADIUS1, EXTEND_RADIUS2,
         #    EXTEND_CIRCLE})
+        #self.plot_gamma()
         return self.extension_test({EXTEND_OUTER})
 
 
@@ -438,11 +441,19 @@ class PizzaSolver(Solver):
 
         x = self.R + h
         y = 0
-        ap()
-        
-        #x = self.R + h*cos(a)
-        #y = h*sin(a)
         #ap()
+        
+        r = self.R + h
+        b = np.pi*h/10
+        x = r*cos(b)
+        y = r*sin(b)
+        ap()
+
+        r = self.R + h/2
+        b = np.pi*h/5
+        x = r*cos(b)
+        y = r*sin(b)
+        ap()
 
     def gamma_filter(self, etypes):
         result = []
