@@ -237,21 +237,34 @@ class PizzaSolver(Solver):
         r, th = self.get_polar(i, j)
 
         dist0 = r - self.R
-        dist1 = y
+
+        if radius_sid == 1:
+            dist1 = y
+        elif radius_sid == 2:
+            dist1 = self.dist_to_radius(radius_sid, x, y)
 
         if dist0 < dist1:
-            extend_sid = 0
-            delta_arg = th
-            param_th = 2*np.pi
+            taylor_sid = 0
+
+            if radius_sid == 1:
+                delta_arg = th
+                param_th = 2*np.pi
+            elif radius_sid == 2:
+                delta_arg = self.a - th
+                param_th = self.a
         else:
-            extend_sid = radius_sid
-            delta_arg = x - self.R
-            param_th = 0
+            taylor_sid = radius_sid
+            delta_arg = dist0
 
-        print('extend_sid = {}'.format(extend_sid))
+            if radius_sid == 1:
+                param_th = 0
+            elif radius_sid == 2:
+                param_th = self.a
 
-        derivs0 = self.ext_calc_xi_derivs(param_th, extend_sid, radius_sid, 0) 
-        derivs1 = self.ext_calc_xi_derivs(param_th, extend_sid, radius_sid, 1) 
+        print('taylor_sid = {}    radius_sid = {}'.format(taylor_sid,radius_sid))
+
+        derivs0 = self.ext_calc_xi_derivs(param_th, taylor_sid, radius_sid, 0) 
+        derivs1 = self.ext_calc_xi_derivs(param_th, taylor_sid, radius_sid, 1) 
 
         xi0 = xi1 = 0
         d2_xi0_arg = d2_xi1_arg = 0
@@ -275,9 +288,9 @@ class PizzaSolver(Solver):
 
         ext_params = (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
 
-        if extend_sid == 0:
+        if taylor_sid == 0:
             v = self.extend_circle(r, *ext_params)
-        elif extend_sid == 1:
+        elif taylor_sid == 1:
             v = self.extend_from_radius(y, *ext_params)
 
         return v
@@ -429,31 +442,25 @@ class PizzaSolver(Solver):
             x = r*cos(a) - h*sin(a)/5
             y = r*sin(a) - h*cos(a)/5
             ap()
-
-        x = self.R * cos(a) + h
-        y = self.R * sin(a)
-        #ap()
-
-        b = np.pi/6
-        x = self.R * cos(a) + h * cos(b)
-        y = self.R * sin(a) - h * sin(b)
-        #ap()
-
-        x = self.R + h
-        y = 0
-        #ap()
         
-        r = self.R + h
-        b = np.pi*h/10
-        x = r*cos(b)
-        y = r*sin(b)
-        ap()
+        for t in (True, False):
+            t = False #FIXME
+            r = self.R + h
+            b = np.pi*h/10
+            if t:
+                b = self.a - b 
+            x = r*cos(b)
+            y = r*sin(b)
+            ap()
 
-        r = self.R + h/2
-        b = np.pi*h/5
-        x = r*cos(b)
-        y = r*sin(b)
-        ap()
+            r = self.R + h/2
+            b = np.pi*h/5
+            if t:
+                b = self.a - b 
+            x = r*cos(b)
+            y = r*sin(b)
+            #ap()
+            break #FIXME
 
     def gamma_filter(self, etypes):
         result = []
