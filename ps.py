@@ -47,7 +47,7 @@ class PizzaSolver(Solver):
 
     def is_interior(self, i, j):
         r, th = self.get_polar(i, j)
-        return r <= self.R and (th >= self.a or th <= 0) 
+        return r <= self.R and (th >= self.a or th == 0) 
 
     def get_span_center(self, sid):
         if sid == 0:
@@ -212,7 +212,7 @@ class PizzaSolver(Solver):
         return self.extend_from_radius(Y1, *derivs)
 
     def ext_calc_xi_derivs(self, param_th, segment_sid, radius_sid, index): 
-        N_DERIVS = 5
+        N_DERIVS = 6
 
         derivs = np.zeros(N_DERIVS, dtype=complex)
 
@@ -225,10 +225,6 @@ class PizzaSolver(Solver):
             for JJ in range(len(B_desc)):
                 dn_B_arg = self.eval_dn_B_arg(n, JJ, self.R, param_th, segment_sid)
                 derivs[n] += c[JJ] * dn_B_arg
-
-        if segment_sid == 0 and radius_sid == 2:
-            for n in range(1, N_DERIVS):
-                derivs[n] = -derivs[n]
 
         return derivs
 
@@ -250,18 +246,24 @@ class PizzaSolver(Solver):
                 delta_arg = th
                 param_th = 2*np.pi
             elif radius_sid == 2:
-                delta_arg = self.a - th
+                delta_arg = th - self.a
                 param_th = self.a
         else:
             taylor_sid = radius_sid
-            delta_arg = dist0
 
             if radius_sid == 1:
+                delta_arg = x - self.R
                 param_th = 0
+                Y = y
             elif radius_sid == 2:
+                x0 = self.R * cos(self.a)
+                y0 = self.R * sin(self.a)
+                x1, y1 = self.get_radius_point(radius_sid, x, y)
+                delta_arg = np.sqrt((x1 - x0)**2 + (y1 - y0)**2)
                 param_th = self.a
+                Y = dist1
 
-        print('taylor_sid = {}    radius_sid = {}'.format(taylor_sid,radius_sid))
+        #print('taylor_sid = {}    radius_sid = {}'.format(taylor_sid,radius_sid))
 
         derivs0 = self.ext_calc_xi_derivs(param_th, taylor_sid, radius_sid, 0) 
         derivs1 = self.ext_calc_xi_derivs(param_th, taylor_sid, radius_sid, 1) 
@@ -290,8 +292,8 @@ class PizzaSolver(Solver):
 
         if taylor_sid == 0:
             v = self.extend_circle(r, *ext_params)
-        elif taylor_sid == 1:
-            v = self.extend_from_radius(y, *ext_params)
+        elif taylor_sid in {1, 2}:
+            v = self.extend_from_radius(Y, *ext_params)
 
         return v
 
@@ -321,11 +323,11 @@ class PizzaSolver(Solver):
 
             elif etype == EXTEND_OUTER:
                 if th > self.a/2:
-                    sid = 2
+                    radius_sid = 2
                 else:
-                    sid = 1
+                    radius_sid = 1
 
-                boundary[l] = self.do_extend_outer(i, j, sid)
+                boundary[l] = self.do_extend_outer(i, j, radius_sid)
 
         return boundary
 
@@ -392,12 +394,9 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
-        self.gen_fake_gamma()
-        #return self.extension_test({
-        #    EXTEND_RADIUS1, EXTEND_RADIUS2,
-        #    EXTEND_CIRCLE})
+        #self.gen_fake_gamma()
         #self.plot_gamma()
-        return self.extension_test({EXTEND_OUTER})
+        return self.extension_test()
 
 
     ## DEBUGGING FUNCTIONS ##
@@ -418,49 +417,6 @@ class PizzaSolver(Solver):
             n_basis = segment_desc[sid]['n_basis']
             self.c1.extend(np.polynomial.chebyshev.chebfit(
                 t_data, boundary_data, n_basis-1))
-
-    def gen_fake_gamma(self):
-        def ap():
-            self.gamma.append(self.get_coord_inv(x, y))
-
-        self.gamma = []
-        h = self.AD_len / self.N
-        a = self.a
-        
-        for r in np.arange(.1, self.R, .2):
-            x = r
-            y = h/5
-            ap()
-
-            y = -h/5
-            ap()
-
-            x = r*cos(a) + h*sin(a)
-            y = r*sin(a) + h*cos(a)
-            ap()
-
-            x = r*cos(a) - h*sin(a)/5
-            y = r*sin(a) - h*cos(a)/5
-            ap()
-        
-        for t in (True, False):
-            t = False #FIXME
-            r = self.R + h
-            b = np.pi*h/10
-            if t:
-                b = self.a - b 
-            x = r*cos(b)
-            y = r*sin(b)
-            ap()
-
-            r = self.R + h/2
-            b = np.pi*h/5
-            if t:
-                b = self.a - b 
-            x = r*cos(b)
-            y = r*sin(b)
-            #ap()
-            break #FIXME
 
     def gamma_filter(self, etypes):
         result = []
@@ -583,3 +539,45 @@ class PizzaSolver(Solver):
         plt.ylim(-4,4)
         plt.legend(loc=3)
         plt.show()
+
+    def gen_fake_gamma(self):
+        def ap():
+            self.gamma.append(self.get_coord_inv(x, y))
+
+        self.gamma = []
+        h = self.AD_len / self.N
+        a = self.a
+        
+        for r in np.arange(.1, self.R, .2):
+            x = r
+            y = h/5
+            ap()
+
+            y = -h/5
+            ap()
+
+            x = r*cos(a) + h*sin(a)
+            y = r*sin(a) + h*cos(a)
+            ap()
+
+            x = r*cos(a) - h*sin(a)/5
+            y = r*sin(a) - h*cos(a)/5
+            ap()
+        
+        for t in (True, False):
+            r = self.R + h
+            b = np.pi*h/10
+            if t:
+                b = self.a - b 
+            x = r*cos(b)
+            y = r*sin(b)
+            ap()
+
+            r = self.R + h
+            b = np.pi*h/5
+            if t:
+                b = self.a - b 
+            x = r*cos(b)
+            y = r*sin(b)
+            ap()
+
