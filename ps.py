@@ -11,11 +11,15 @@ from chebyshev import *
 EXTEND_CIRCLE = 0
 EXTEND_RADIUS1 = 1
 EXTEND_RADIUS2 = 2
-EXTEND_OUTER = 3
-EXTEND_INNER = 4
+EXTEND_OUTER1 = 3
+EXTEND_OUTER2 = 4
+EXTEND_INNER = 5
 
-ALL_ETYPES = range(5)
-ETYPE_NAMES = ('circle', 'radius1', 'radius2', 'outer', 'inner')
+ETYPE_NAMES = ('circle', 'radius1', 'radius2', 
+    'outer1', 'outer2', 'inner')
+ALL_ETYPES = range(len(ETYPE_NAMES))
+
+TAYLOR_N_DERIVS = 6
 
 n_basis_by_sid = (60, 30, 30)
 N_SEGMENT = 3
@@ -95,6 +99,53 @@ class PizzaSolver(Solver):
         else:
             return 0
 
+    def get_Q(self, index):
+        columns = []
+
+        for JJ in range(len(B_desc)):
+            ext = self.extend_basis(JJ, index)
+            potential = self.get_potential(ext)
+            projection = self.get_trace(potential)
+
+            columns.append(projection - ext)
+
+        return np.column_stack(columns)
+
+    def extend_basis(self, JJ, index):
+        ext = np.zeros(len(self.gamma), dtype=complex)
+        for l in range(len(self.gamma)):
+            i, j = self.gamma[l]
+            r, th = self.get_polar(i, j)
+            x, y = self.get_coord(i, j)
+            etype = self.get_etype(i, j)
+
+            B = self.eval_dn_B_arg(0, JJ, r, th)
+            d2_B_arg = self.eval_dn_B_arg(2, JJ, r, th)
+            d4_B_arg = self.eval_dn_B_arg(4, JJ, r, th)
+
+            params = (
+                (B, 0, d2_B_arg, 0, d4_B_arg),
+                (0, B, 0, d2_B_arg, 0)
+            )
+
+            if etype == EXTEND_CIRCLE:
+                ext[l] = self.extend_circle(r, *params[index])
+
+            elif etype == EXTEND_RADIUS1:
+                ext[l] = self.extend_from_radius(y, *params[index])
+
+            elif etype == EXTEND_RADIUS2:
+                Y = self.dist_to_radius(2, x, y)
+                ext[l] = self.extend_from_radius(Y, *params[index])
+
+            elif etype == EXTEND_OUTER1:
+                ext[l] = self.do_extend_outer(i, j, 1, JJ, index) 
+
+            elif etype == EXTEND_OUTER2:
+                ext[l] = self.do_extend_outer(i, j, 2, JJ, index) 
+
+        return ext
+
     def get_radius_point(self, sid, x, y):
         if sid != 2:
             assert False
@@ -118,8 +169,10 @@ class PizzaSolver(Solver):
         dist2 = self.dist_to_radius(2, x, y)
 
         if r > self.R:
-            if th < self.a:
-                return EXTEND_OUTER
+            if th < self.a/2:
+                return EXTEND_OUTER1
+            elif th < self.a:
+                return EXTEND_OUTER2
             else:
                 return EXTEND_CIRCLE
         elif th > self.a + np.pi/2 and th < 3/2*np.pi:
@@ -156,14 +209,6 @@ class PizzaSolver(Solver):
             v += derivs[l] / math.factorial(l) * Y1**l
 
         return v
-
-    def extend_basis(self, J, index):
-        ext = np.zeros(len(self.gamma), dtype=complex)
-        for l in range(len(self.gamma)):
-            i, j = self.gamma[l]
-            r, th = self.get_polar(i, j)
-
-        return ext
 
     def ext_calc_certain_xi_derivs(self, i, j, param_r, param_th, sid=None):
         xi0 = xi1 = 0
@@ -211,24 +256,30 @@ class PizzaSolver(Solver):
 
         return self.extend_from_radius(Y1, *derivs)
 
-    def ext_calc_xi_derivs(self, param_th, segment_sid, radius_sid, index): 
-        N_DERIVS = 6
+    def ext_calc_B_derivs(self, JJ, param_th, segment_sid, index):
+        derivs = np.zeros(TAYLOR_N_DERIVS, dtype=complex)
 
-        derivs = np.zeros(N_DERIVS, dtype=complex)
+        for n in range(TAYLOR_N_DERIVS):
+            derivs[n] = self.eval_dn_B_arg(n, JJ, self.R, param_th, segment_sid)
+
+        return derivs
+
+    def ext_calc_xi_derivs(self, param_th, segment_sid, index): 
+        derivs = np.zeros(TAYLOR_N_DERIVS, dtype=complex)
 
         if index == 0:
             c = self.c0
         elif index == 1:
             c = self.c1
 
-        for n in range(N_DERIVS):
+        for n in range(TAYLOR_N_DERIVS):
             for JJ in range(len(B_desc)):
                 dn_B_arg = self.eval_dn_B_arg(n, JJ, self.R, param_th, segment_sid)
                 derivs[n] += c[JJ] * dn_B_arg
 
         return derivs
 
-    def do_extend_outer(self, i, j, radius_sid):
+    def do_extend_outer(self, i, j, radius_sid, JJ=None, index=None):
         x, y = self.get_coord(i, j)
         r, th = self.get_polar(i, j)
 
@@ -265,8 +316,16 @@ class PizzaSolver(Solver):
 
         #print('taylor_sid = {}    radius_sid = {}'.format(taylor_sid,radius_sid))
 
-        derivs0 = self.ext_calc_xi_derivs(param_th, taylor_sid, radius_sid, 0) 
-        derivs1 = self.ext_calc_xi_derivs(param_th, taylor_sid, radius_sid, 1) 
+        derivs0 = np.zeros(TAYLOR_N_DERIVS)
+        derivs1 = np.zeros(TAYLOR_N_DERIVS)
+
+        if JJ is None:
+            derivs0 = self.ext_calc_xi_derivs(param_th, taylor_sid, 0) 
+            derivs1 = self.ext_calc_xi_derivs(param_th, taylor_sid, 1) 
+        elif index == 0:
+            derivs0 = self.ext_calc_B_derivs(JJ, param_th, taylor_sid, 0) 
+        elif index == 1:
+            derivs1 = self.ext_calc_B_derivs(JJ, param_th, taylor_sid, 1) 
 
         xi0 = xi1 = 0
         d2_xi0_arg = d2_xi1_arg = 0
@@ -321,15 +380,17 @@ class PizzaSolver(Solver):
             elif etype == EXTEND_RADIUS2:
                 boundary[l] = self.do_extend_radius2(i, j)
 
-            elif etype == EXTEND_OUTER:
-                if th > self.a/2:
-                    radius_sid = 2
-                else:
-                    radius_sid = 1
+            elif etype == EXTEND_OUTER1:
+                boundary[l] = self.do_extend_outer(i, j, 1)
 
-                boundary[l] = self.do_extend_outer(i, j, radius_sid)
+            elif etype == EXTEND_OUTER2:
+                boundary[l] = self.do_extend_outer(i, j, 2)
 
         return boundary
+
+    def extend_inhomogeneous_f(self, *args):
+        #TODO
+        return 0
 
     def calc_c0(self):
         t_data = get_chebyshev_roots(1000)
@@ -394,9 +455,14 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
-        #self.gen_fake_gamma()
-        #self.plot_gamma()
-        return self.extension_test()
+        self.calc_c0()
+        self.calc_c1()
+
+        ext = self.extend_boundary()
+        u_act = self.get_potential(ext) #+ self.ap_sol_f
+
+        error = self.eval_error(u_act)
+        return error
 
 
     ## DEBUGGING FUNCTIONS ##
