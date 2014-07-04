@@ -21,7 +21,7 @@ ALL_ETYPES = range(len(ETYPE_NAMES))
 
 TAYLOR_N_DERIVS = 6
 
-n_basis_by_sid = (60, 30, 30)
+n_basis_by_sid = (30, 15, 15)
 N_SEGMENT = 3
 
 segment_desc = []
@@ -119,24 +119,38 @@ class PizzaSolver(Solver):
             x, y = self.get_coord(i, j)
             etype = self.get_etype(i, j)
 
-            B = self.eval_dn_B_arg(0, JJ, r, th)
-            d2_B_arg = self.eval_dn_B_arg(2, JJ, r, th)
-            d4_B_arg = self.eval_dn_B_arg(4, JJ, r, th)
-
-            params = (
-                (B, 0, d2_B_arg, 0, d4_B_arg),
-                (0, B, 0, d2_B_arg, 0)
-            )
+            param_r = None
 
             if etype == EXTEND_CIRCLE:
-                ext[l] = self.extend_circle(r, *params[index])
+                param_r = self.R
+                param_th = th
+            elif etype == EXTEND_RADIUS1:
+                param_r = x
+                param_th = 0 
+            elif etype == EXTEND_RADIUS2:
+                param_r = r
+                param_th = self.a
+
+            if param_r is not None:
+                B_args = (JJ, param_r, param_th)
+                B = self.eval_dn_B_arg(0, *B_args)
+                d2_B_arg = self.eval_dn_B_arg(2, *B_args)
+                d4_B_arg = self.eval_dn_B_arg(4, *B_args)
+
+                args = (
+                    (B, 0, d2_B_arg, 0, d4_B_arg),
+                    (0, B, 0, d2_B_arg, 0)
+                )
+
+            if etype == EXTEND_CIRCLE:
+                ext[l] = self.extend_circle(r, *args[index])
 
             elif etype == EXTEND_RADIUS1:
-                ext[l] = self.extend_from_radius(y, *params[index])
+                ext[l] = self.extend_from_radius(y, *args[index])
 
             elif etype == EXTEND_RADIUS2:
                 Y = self.dist_to_radius(2, x, y)
-                ext[l] = self.extend_from_radius(Y, *params[index])
+                ext[l] = self.extend_from_radius(Y, *args[index])
 
             elif etype == EXTEND_OUTER1:
                 ext[l] = self.do_extend_outer(i, j, 1, JJ, index) 
@@ -389,8 +403,8 @@ class PizzaSolver(Solver):
         return boundary
 
     def extend_inhomogeneous_f(self, *args):
-        #TODO
-        return 0
+        ext = np.zeros(len(self.gamma), dtype=complex)
+        return ext
 
     def calc_c0(self):
         t_data = get_chebyshev_roots(1000)
@@ -457,6 +471,7 @@ class PizzaSolver(Solver):
     def run(self):
         self.calc_c0()
         self.calc_c1()
+        self.c1_test()
 
         ext = self.extend_boundary()
         u_act = self.get_potential(ext) #+ self.ap_sol_f
