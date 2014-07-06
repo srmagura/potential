@@ -21,7 +21,7 @@ ALL_ETYPES = range(len(ETYPE_NAMES))
 
 TAYLOR_N_DERIVS = 6
 
-n_basis_by_sid = (30, 15, 15)
+n_basis_by_sid = (60, 30, 30)
 N_SEGMENT = 3
 
 segment_desc = []
@@ -149,7 +149,7 @@ class PizzaSolver(Solver):
                 ext[l] = self.extend_from_radius(y, *args[index])
 
             elif etype == EXTEND_RADIUS2:
-                Y = self.dist_to_radius(2, x, y)
+                Y = self.signed_dist_to_radius(2, x, y)
                 ext[l] = self.extend_from_radius(Y, *args[index])
 
             elif etype == EXTEND_OUTER1:
@@ -161,8 +161,7 @@ class PizzaSolver(Solver):
         return ext
 
     def get_radius_point(self, sid, x, y):
-        if sid != 2:
-            assert False
+        assert sid == 2
 
         m = np.tan(self.a)
         x1 = (x/m + y)/(m + 1/m)
@@ -171,8 +170,18 @@ class PizzaSolver(Solver):
         return (x1, y1) 
 
     def dist_to_radius(self, sid, x, y):
+        assert sid == 2
         x1, y1 = self.get_radius_point(sid, x, y)
         return np.sqrt((x1-x)**2 + (y1-y)**2)
+
+    def signed_dist_to_radius(self, sid, x, y):
+        unsigned = self.dist_to_radius(sid, x, y)
+
+        m = np.tan(self.a)
+        if y > m*x:
+            return -unsigned
+        else:
+            return unsigned
 
     def get_etype(self, i, j):
         x, y = self.get_coord(i, j)
@@ -263,12 +272,8 @@ class PizzaSolver(Solver):
         param_r = cart_to_polar(x0, y0)[0]
         derivs = self.ext_calc_certain_xi_derivs(i, j, param_r, self.a)
 
-        Y1 = self.dist_to_radius(2, x, y)
-
-        if self.is_interior(i, j):
-            Y1 = -Y1
-
-        return self.extend_from_radius(Y1, *derivs)
+        Y = self.signed_dist_to_radius(2, x, y)
+        return self.extend_from_radius(Y, *derivs)
 
     def ext_calc_B_derivs(self, JJ, param_th, segment_sid, index):
         derivs = np.zeros(TAYLOR_N_DERIVS, dtype=complex)
@@ -471,7 +476,6 @@ class PizzaSolver(Solver):
     def run(self):
         self.calc_c0()
         self.calc_c1()
-        self.c1_test()
 
         ext = self.extend_boundary()
         u_act = self.get_potential(ext) #+ self.ap_sol_f
@@ -643,6 +647,17 @@ class PizzaSolver(Solver):
 
             x = r*cos(a) - h*sin(a)/5
             y = r*sin(a) - h*cos(a)/5
+            ap()
+
+        for th in np.arange(self.a+.001, 2*np.pi, .1):
+            r = self.R + h/2
+            x = r*cos(th)
+            y = r*sin(th)
+            ap()
+
+            r = self.R - h/2
+            x = r*cos(th)
+            y = r*sin(th)
             ap()
         
         for t in (True, False):
