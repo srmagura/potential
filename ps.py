@@ -128,7 +128,8 @@ class PizzaSolver(Solver):
                 param_r = x
                 param_th = 0 
             elif etype == EXTEND_RADIUS2:
-                param_r = r
+                x0, y0 = self.get_radius_point(2, x, y)
+                param_r = cart_to_polar(x0, y0)[0]
                 param_th = self.a
 
             if param_r is not None:
@@ -213,7 +214,7 @@ class PizzaSolver(Solver):
 
         raise Exception('Did not match any etype')
 
-    def extend_from_radius(self, Y1, xi0, xi1, d2_xi0_X,
+    def extend_from_radius(self, Y, xi0, xi1, d2_xi0_X,
         d2_xi1_X, d4_xi0_X):
 
         k = self.k
@@ -229,7 +230,7 @@ class PizzaSolver(Solver):
 
         v = 0
         for l in range(len(derivs)):
-            v += derivs[l] / math.factorial(l) * Y1**l
+            v += derivs[l] / math.factorial(l) * Y**l
 
         return v
 
@@ -473,7 +474,6 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
-        return self.test_extend_basis()
         self.calc_c0()
         self.calc_c1()
 
