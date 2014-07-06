@@ -260,10 +260,9 @@ class PizzaSolver(Solver):
 
     def do_extend_radius1(self, i, j):
         x, y = self.get_coord(i, j)
-        Y1 = y
         derivs = self.ext_calc_certain_xi_derivs(i, j, x, 0)
 
-        return self.extend_from_radius(Y1, *derivs)
+        return self.extend_from_radius(y, *derivs)
 
     def do_extend_radius2(self, i, j):
         x, y = self.get_coord(i, j)
@@ -474,6 +473,7 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
+        return self.test_extend_basis()
         self.calc_c0()
         self.calc_c1()
 
@@ -523,6 +523,27 @@ class PizzaSolver(Solver):
             x, y = self.get_coord(*nodes[l])
             error[l] = self.problem.eval_expected(x, y) - ext[l]
 
+        return np.max(np.abs(error))
+
+    def test_extend_basis(self):
+        error = []
+        for index in (0, 1):
+            for JJ in range(len(B_desc)):
+                ext1 = self.extend_basis(JJ, index)
+
+                self.c0 = np.zeros(len(B_desc))
+                self.c1 = np.zeros(len(B_desc))
+
+                if index == 0:
+                    self.c0[JJ] = 1
+                elif index == 1:
+                    self.c1[JJ] = 1
+
+                ext2 = self.extend_boundary()
+                error.append(np.max(np.abs(ext1-ext2)))
+                print('index={}  JJ={}  error={}'.format(index, JJ, error[-1]))
+
+        error = np.array(error)
         return np.max(np.abs(error))
 
     def c0_test(self):
