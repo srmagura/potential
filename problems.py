@@ -109,15 +109,30 @@ class Sine(Problem):
     def eval_d_u_r(self, th):
         k = self.k
         R = self.R
-        return k*cos(th) * cos(k*R*cos(th)) #+
-            #k*sin(th)*cos(k*R*sin(th)))
+        return k*cos(th) * cos(k*R*cos(th))
 
-class SinePizza(Sine):
+
+class Pizza:
     a = np.pi / 6
     solver_class = PizzaSolver
 
     def eval_bc(self, x, y):
         return self.eval_expected(x, y)
+
+    def get_sid(self, th):
+        tol = 1e-12
+
+        if th > self.a:
+            return 0
+        elif abs(th) < tol:
+            return 1
+        elif abs(th - self.a) < tol:
+            return 2
+
+        assert False
+
+
+class SinePizza(Pizza, Sine):
 
     def eval_d_u_outwards(self, x, y, **kwargs):
         r, th = cart_to_polar(x, y)
@@ -133,29 +148,38 @@ class SinePizza(Sine):
         if sid == 0:
             return super().eval_d_u_r(th)
         elif sid == 1:
-            return 0#k*cos(k*y)
-        elif sid == 2:
-            return k*cos(k*x)*cos(a - np.pi/2) #-
-                #k*cos(k*y)*sin(a - np.pi/2))
-
-    def get_sid(self, th):
-        tol = 1e-12
-
-        if th > self.a:
             return 0
-        elif abs(th) < tol:
-            return 1
-        elif abs(th - self.a) < tol:
-            return 2
+        elif sid == 2:
+            return k*cos(k*x)*cos(a - np.pi/2)
 
-        assert False
+class WavePizza(Pizza, Wave):
+    pass
 
+class RipplePizza(Pizza, Ripple):
+
+    def eval_d_u_outwards(self, x, y, **kwargs):
+        r, th = cart_to_polar(x, y)
+
+        if 'sid' in kwargs:
+            sid = kwargs['sid']
+        else:
+            sid = self.get_sid(th)
+
+        a = self.a
+        k = self.k
+
+        if sid == 0:
+            return super().eval_d_u_r(th)
+        elif sid == 1 or sid == 2:
+            return 0
 
 problem_dict = {
     'mountain': Mountain,
     'ripple': Ripple,
+    'ripple-pizza': RipplePizza,
     'ycosine': YCosine,
     'wave': Wave,
+    'wave-pizza': WavePizza,
     'sine': Sine,
     'sine-pizza': SinePizza
 }

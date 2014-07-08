@@ -21,7 +21,7 @@ ALL_ETYPES = range(len(ETYPE_NAMES))
 
 TAYLOR_N_DERIVS = 6
 
-n_basis_by_sid = (60, 30, 30)
+n_basis_by_sid = (30, 30, 30)
 N_SEGMENT = 3
 
 segment_desc = []
@@ -474,6 +474,7 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
+        return self.test_extend_src_f()
         self.calc_c0()
         self.calc_c1()
 
@@ -482,6 +483,9 @@ class PizzaSolver(Solver):
 
         error = self.eval_error(u_act)
         return error
+
+    ## INHOMOGENEOUS ##
+
 
 
     ## DEBUGGING FUNCTIONS ##
@@ -545,6 +549,16 @@ class PizzaSolver(Solver):
 
         error = np.array(error)
         return np.max(np.abs(error))
+
+    def test_extend_src_f(self):
+        exp_src_f = np.zeros((self.N-1)**2, dtype=complex)
+        Kplus_list = list(self.Kplus)
+
+        for l in range(len(Kplus_list)):
+            r, th = self.get_polar(*Kplus_list[l])
+            exp_src_f[l] = self.problem.eval_f_polar(r, th)
+            
+        return np.max(np.abs(exp_src_f - self.src_f)) 
 
     def c0_test(self):
         sample = self.get_boundary_sample()
