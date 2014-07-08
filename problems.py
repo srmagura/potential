@@ -3,7 +3,7 @@ from numpy import cos, sin
 
 from solver import SquareSolver, cart_to_polar
 from cs.csf import CsFourier
-from ps import PizzaSolver
+from ps.ps import PizzaSolver
 
 class Problem:
     homogeneous = False
