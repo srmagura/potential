@@ -486,6 +486,26 @@ class PizzaSolver(Solver):
 
     ## INHOMOGENEOUS ##
 
+    def extend_src_f(self):
+        #FIXME
+        return 
+        p = self.problem
+        if p.homogeneous:
+            return
+
+        for i,j in self.Kplus - self.Mplus:
+            R = self.R
+
+            r, th = self.get_polar(i, j)
+            x, y = self.get_coord(i, j)
+
+            derivs = [p.eval_f(x, y), 0, 0]
+
+            v = 0
+            for l in range(len(derivs)):
+                v += derivs[l] / math.factorial(l) * (r - R)**l
+
+            self.src_f[matrices.get_index(self.N,i,j)] = v
 
 
     ## DEBUGGING FUNCTIONS ##
@@ -552,10 +572,11 @@ class PizzaSolver(Solver):
 
     def test_extend_src_f(self):
         exp_src_f = np.zeros((self.N-1)**2, dtype=complex)
-        Kplus_list = list(self.Kplus)
 
-        for l in range(len(Kplus_list)):
-            r, th = self.get_polar(*Kplus_list[l])
+        for i, j in self.Kplus:
+            r, th = self.get_polar(i, j)
+
+            l = matrices.get_index(self.N, i, j)
             exp_src_f[l] = self.problem.eval_f_polar(r, th)
             
         return np.max(np.abs(exp_src_f - self.src_f)) 
