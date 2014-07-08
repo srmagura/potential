@@ -2,7 +2,7 @@ import numpy as np
 from numpy import cos, sin
 
 from solver import SquareSolver, cart_to_polar
-from csf import CsFourier
+from cs.csf import CsFourier
 from ps import PizzaSolver
 
 class Problem:
