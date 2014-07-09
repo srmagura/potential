@@ -5,27 +5,20 @@ from numpy import cos, sin
 from solver import Solver, cart_to_polar
 import matrices
 
-from chebyshev import get_chebyshev_roots
 from ps.basis import PsBasis
+from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
-
-EXTEND_CIRCLE = 0
-EXTEND_RADIUS1 = 1
-EXTEND_RADIUS2 = 2
-EXTEND_OUTER1 = 3
-EXTEND_OUTER2 = 4
-EXTEND_INNER = 5
 
 ETYPE_NAMES = ('circle', 'radius1', 'radius2', 
     'outer1', 'outer2', 'inner')
 
 TAYLOR_N_DERIVS = 6
 
-class PizzaSolver(Solver, PsBasis, PsDebug):
+class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
     AD_len = 2*np.pi
     R = 2.3
 
-    ALL_ETYPES = range(len(ETYPE_NAMES))
+    etypes = dict(zip(ETYPE_NAMES, range(len(ETYPE_NAMES))))
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
@@ -37,7 +30,6 @@ class PizzaSolver(Solver, PsBasis, PsDebug):
     def is_interior(self, i, j):
         r, th = self.get_polar(i, j)
         return r <= self.R and (th >= self.a or th == 0) 
-
 
     def get_Q(self, index):
         columns = []
@@ -51,55 +43,6 @@ class PizzaSolver(Solver, PsBasis, PsDebug):
 
         return np.column_stack(columns)
 
-    def extend_basis(self, JJ, index):
-        ext = np.zeros(len(self.gamma), dtype=complex)
-        for l in range(len(self.gamma)):
-            i, j = self.gamma[l]
-            r, th = self.get_polar(i, j)
-            x, y = self.get_coord(i, j)
-            etype = self.get_etype(i, j)
-
-            param_r = None
-
-            if etype == EXTEND_CIRCLE:
-                param_r = self.R
-                param_th = th
-            elif etype == EXTEND_RADIUS1:
-                param_r = x
-                param_th = 0 
-            elif etype == EXTEND_RADIUS2:
-                x0, y0 = self.get_radius_point(2, x, y)
-                param_r = cart_to_polar(x0, y0)[0]
-                param_th = self.a
-
-            if param_r is not None:
-                B_args = (JJ, param_r, param_th)
-                B = self.eval_dn_B_arg(0, *B_args)
-                d2_B_arg = self.eval_dn_B_arg(2, *B_args)
-                d4_B_arg = self.eval_dn_B_arg(4, *B_args)
-
-                args = (
-                    (B, 0, d2_B_arg, 0, d4_B_arg),
-                    (0, B, 0, d2_B_arg, 0)
-                )
-
-            if etype == EXTEND_CIRCLE:
-                ext[l] = self.extend_circle(r, *args[index])
-
-            elif etype == EXTEND_RADIUS1:
-                ext[l] = self.extend_from_radius(y, *args[index])
-
-            elif etype == EXTEND_RADIUS2:
-                Y = self.signed_dist_to_radius(2, x, y)
-                ext[l] = self.extend_from_radius(Y, *args[index])
-
-            elif etype == EXTEND_OUTER1:
-                ext[l] = self.do_extend_outer(i, j, 1, JJ, index) 
-
-            elif etype == EXTEND_OUTER2:
-                ext[l] = self.do_extend_outer(i, j, 2, JJ, index) 
-
-        return ext
 
     def get_radius_point(self, sid, x, y):
         assert sid == 2
@@ -134,23 +77,23 @@ class PizzaSolver(Solver, PsBasis, PsDebug):
 
         if r > self.R:
             if th < self.a/2:
-                return EXTEND_OUTER1
+                return self.etypes['outer1']
             elif th < self.a:
-                return EXTEND_OUTER2
+                return self.etypes['outer2']
             else:
-                return EXTEND_CIRCLE
+                return self.etypes['circle']
         elif th > self.a + np.pi/2 and th < 3/2*np.pi:
             if r < dist0:
                 raise Exception('EXTEND_INNER')
                 return EXTEND_INNER
             else:
-                return EXTEND_CIRCLE
+                return self.etypes['circle']
         elif th > self.a and dist0 < min(dist1, dist2):
-            return EXTEND_CIRCLE
+            return self.etypes['circle']
         elif dist1 < dist2:
-            return EXTEND_RADIUS1
+            return self.etypes['radius1']
         else:
-            return EXTEND_RADIUS2
+            return self.etypes['radius2']
 
         raise Exception('Did not match any etype')
 
@@ -328,88 +271,23 @@ class PizzaSolver(Solver, PsBasis, PsDebug):
             r, th = self.get_polar(i, j)
             etype = self.get_etype(i, j)
 
-            if etype == EXTEND_CIRCLE:
+            if etype == self.etypes['circle']:
                 boundary[l] = self.do_extend_circle(i, j)
 
-            elif etype == EXTEND_RADIUS1:
+            elif etype == self.etypes['radius1']:
                 boundary[l] = self.do_extend_radius1(i, j)
 
-            elif etype == EXTEND_RADIUS2:
+            elif etype == self.etypes['radius2']:
                 boundary[l] = self.do_extend_radius2(i, j)
 
-            elif etype == EXTEND_OUTER1:
+            elif etype == self.etypes['outer1']:
                 boundary[l] = self.do_extend_outer(i, j, 1)
 
-            elif etype == EXTEND_OUTER2:
+            elif etype == self.etypes['outer2']:
                 boundary[l] = self.do_extend_outer(i, j, 2)
 
         return boundary
 
-    def extend_inhomogeneous_f(self, *args):
-        ext = np.zeros(len(self.gamma), dtype=complex)
-        return ext
-
-    def calc_c0(self):
-        t_data = get_chebyshev_roots(1000)
-        self.c0 = []
-
-        for sid in range(self.N_SEGMENT):
-            arg_data = [self.eval_g(sid, t) for t in t_data] 
-            boundary_points = self.get_boundary_sample_by_sid(sid, arg_data)
-            boundary_data = np.zeros(len(arg_data), dtype=complex)
-            for l in range(len(boundary_points)):
-                p = boundary_points[l]
-                boundary_data[l] = self.problem.eval_bc(p['x'], p['y'])
-
-            n_basis = self.segment_desc[sid]['n_basis']
-            self.c0.extend(np.polynomial.chebyshev.chebfit(
-                t_data, boundary_data, n_basis-1))
-
-    def get_boundary_sample(self):
-        th_data = np.arange(self.a, 2*np.pi, .1)
-        r_data = np.linspace(0, self.R, 25)
-
-        points = []
-        arg_datas = (th_data, r_data[::-1], r_data)
-
-        for sid in range(self.N_SEGMENT):
-            points.extend(
-                self.get_boundary_sample_by_sid(sid, arg_datas[sid]))
-
-        return points
-
-    def get_boundary_sample_by_sid(self, sid, arg_data):
-        points = []
-        a = self.a
-
-        if sid == 0:
-            for i in range(len(arg_data)):
-                th = arg_data[i]
-
-                points.append({'x': self.R * np.cos(th),
-                    'y': self.R * np.sin(th),
-                    's': self.R * (th - a),
-                    'sid': 0})
-
-        elif sid == 1:
-            for i in range(len(arg_data)):
-                r = arg_data[i]
-
-                points.append({'x': r,
-                    'y': 0,
-                    's': self.R*(2*np.pi - a + 1) - r,
-                    'sid': 1})
-
-        elif sid == 2:
-            for i in range(len(arg_data)):
-                r = arg_data[i]
-
-                points.append({'x': r*np.cos(a),
-                    'y': r*np.sin(a),
-                    's': self.R*(2*np.pi - a + 1) + r,
-                    'sid': 2})
-
-        return points
 
     def run(self):
         #return self.test_extend_src_f()
@@ -421,26 +299,3 @@ class PizzaSolver(Solver, PsBasis, PsDebug):
 
         error = self.eval_error(u_act)
         return error
-
-    ## INHOMOGENEOUS ##
-
-    def extend_src_f(self):
-        #FIXME
-        return 
-        p = self.problem
-        if p.homogeneous:
-            return
-
-        for i,j in self.Kplus - self.Mplus:
-            R = self.R
-
-            r, th = self.get_polar(i, j)
-            x, y = self.get_coord(i, j)
-
-            derivs = [p.eval_f(x, y), 0, 0]
-
-            v = 0
-            for l in range(len(derivs)):
-                v += derivs[l] / math.factorial(l) * (r - R)**l
-
-            self.src_f[matrices.get_index(self.N,i,j)] = v

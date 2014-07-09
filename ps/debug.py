@@ -34,7 +34,7 @@ class PsDebug:
 
     def extension_test(self, etypes=None):
         if etypes is None:
-            etypes = self.ALL_ETYPES
+            etypes = self.etype.values()
 
         self.calc_c0()
         self.calc_c1_exact()
