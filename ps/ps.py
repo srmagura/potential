@@ -1,12 +1,13 @@
 import math
 import numpy as np
+from numpy import cos, sin
+import matplotlib.pyplot as plt
 
 from solver import Solver, cart_to_polar
 import matrices
 
-import matplotlib.pyplot as plt
-
-from chebyshev import *
+from chebyshev import get_chebyshev_roots
+from ps.basis import PsBasis
 
 EXTEND_CIRCLE = 0
 EXTEND_RADIUS1 = 1
@@ -21,24 +22,7 @@ ALL_ETYPES = range(len(ETYPE_NAMES))
 
 TAYLOR_N_DERIVS = 6
 
-n_basis_by_sid = (30, 30, 30)
-N_SEGMENT = 3
-
-segment_desc = []
-B_desc = []
-
-for sid in range(N_SEGMENT):
-    s_desc = {'n_basis': n_basis_by_sid[sid]}
-    segment_desc.append(s_desc)
-
-    for J in range(s_desc['n_basis']):
-        b_desc = {} 
-        b_desc['J'] = J
-        b_desc['sid'] = sid
-        B_desc.append(b_desc)
-
-
-class PizzaSolver(Solver):
+class PizzaSolver(Solver, PsBasis):
     AD_len = 2*np.pi
     R = 2.3
 
@@ -53,56 +37,11 @@ class PizzaSolver(Solver):
         r, th = self.get_polar(i, j)
         return r <= self.R and (th >= self.a or th == 0) 
 
-    def get_span_center(self, sid):
-        if sid == 0:
-            span = np.pi
-            center = np.pi + .5*self.a
-        elif sid == 1 or sid == 2:
-            span = 6/10*self.R
-            center = self.R/2
-
-        if sid == 1:
-            span = -span
-
-        return span, center
-
-    def eval_g(self, sid, t):
-        span, center = self.get_span_center(sid)
-        return span*t + center
-
-    def eval_g_inv(self, sid, arg):
-        span, center = self.get_span_center(sid)
-        return (arg - center) / span
-
-    def eval_d_g_inv_arg(self, sid):
-        span, center = self.get_span_center(sid)
-        return 1 / span
-
-    def eval_dn_B_arg(self, n, JJ, r, th, sid=None):
-        if sid is None:
-            sid = self.get_sid(th)
-
-        desc = B_desc[JJ]
-
-        if desc['sid'] == sid:
-            if sid == 0:
-                arg = th
-            elif sid == 1 or sid == 2:
-                arg = r
-
-            t = self.eval_g_inv(sid, arg)
-
-            J = B_desc[JJ]['J']
-            d_g_inv_arg = self.eval_d_g_inv_arg(sid)
-
-            return (d_g_inv_arg)**n * eval_dn_T_t(n, J, t)
-        else:
-            return 0
 
     def get_Q(self, index):
         columns = []
 
-        for JJ in range(len(B_desc)):
+        for JJ in range(len(self.B_desc)):
             ext = self.extend_basis(JJ, index)
             potential = self.get_potential(ext)
             projection = self.get_trace(potential)
@@ -239,7 +178,7 @@ class PizzaSolver(Solver):
         d2_xi0_arg = d2_xi1_arg = 0
         d4_xi0_arg = 0
 
-        for JJ in range(len(B_desc)):
+        for JJ in range(len(self.B_desc)):
             B = self.eval_dn_B_arg(0, JJ, param_r, param_th, sid)
             d2_B_arg = self.eval_dn_B_arg(2, JJ, param_r, param_th, sid)
             d4_B_arg = self.eval_dn_B_arg(4, JJ, param_r, param_th, sid)
@@ -292,7 +231,7 @@ class PizzaSolver(Solver):
             c = self.c1
 
         for n in range(TAYLOR_N_DERIVS):
-            for JJ in range(len(B_desc)):
+            for JJ in range(len(self.B_desc)):
                 dn_B_arg = self.eval_dn_B_arg(n, JJ, self.R, param_th, segment_sid)
                 derivs[n] += c[JJ] * dn_B_arg
 
@@ -415,7 +354,7 @@ class PizzaSolver(Solver):
         t_data = get_chebyshev_roots(1000)
         self.c0 = []
 
-        for sid in range(N_SEGMENT):
+        for sid in range(self.N_SEGMENT):
             arg_data = [self.eval_g(sid, t) for t in t_data] 
             boundary_points = self.get_boundary_sample_by_sid(sid, arg_data)
             boundary_data = np.zeros(len(arg_data), dtype=complex)
@@ -423,7 +362,7 @@ class PizzaSolver(Solver):
                 p = boundary_points[l]
                 boundary_data[l] = self.problem.eval_bc(p['x'], p['y'])
 
-            n_basis = segment_desc[sid]['n_basis']
+            n_basis = self.segment_desc[sid]['n_basis']
             self.c0.extend(np.polynomial.chebyshev.chebfit(
                 t_data, boundary_data, n_basis-1))
 
@@ -434,7 +373,7 @@ class PizzaSolver(Solver):
         points = []
         arg_datas = (th_data, r_data[::-1], r_data)
 
-        for sid in range(N_SEGMENT):
+        for sid in range(self.N_SEGMENT):
             points.extend(
                 self.get_boundary_sample_by_sid(sid, arg_datas[sid]))
 
@@ -474,7 +413,7 @@ class PizzaSolver(Solver):
         return points
 
     def run(self):
-        return self.test_extend_src_f()
+        #return self.test_extend_src_f()
         self.calc_c0()
         self.calc_c1()
 
@@ -514,7 +453,7 @@ class PizzaSolver(Solver):
         t_data = get_chebyshev_roots(1000)
         self.c1 = []
 
-        for sid in range(N_SEGMENT):
+        for sid in range(self.N_SEGMENT):
             arg_data = [self.eval_g(sid, t) for t in t_data] 
             boundary_points = self.get_boundary_sample_by_sid(sid, arg_data)
             boundary_data = np.zeros(len(arg_data), dtype=complex)
@@ -523,7 +462,7 @@ class PizzaSolver(Solver):
                 boundary_data[l] = self.problem.eval_d_u_outwards(
                     p['x'], p['y'], sid=sid)
 
-            n_basis = segment_desc[sid]['n_basis']
+            n_basis = self.segment_desc[sid]['n_basis']
             self.c1.extend(np.polynomial.chebyshev.chebfit(
                 t_data, boundary_data, n_basis-1))
 
@@ -552,11 +491,11 @@ class PizzaSolver(Solver):
     def test_extend_basis(self):
         error = []
         for index in (0, 1):
-            for JJ in range(len(B_desc)):
+            for JJ in range(len(self.B_desc)):
                 ext1 = self.extend_basis(JJ, index)
 
-                self.c0 = np.zeros(len(B_desc))
-                self.c1 = np.zeros(len(B_desc))
+                self.c0 = np.zeros(len(self.B_desc))
+                self.c1 = np.zeros(len(self.B_desc))
 
                 if index == 0:
                     self.c0[JJ] = 1
@@ -594,7 +533,7 @@ class PizzaSolver(Solver):
             exact_data[l] = self.problem.eval_bc(p['x'], p['y']).real
 
             r, th = cart_to_polar(p['x'], p['y'])
-            for JJ in range(len(B_desc)):
+            for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\
                     (self.c0[JJ] *
                     self.eval_dn_B_arg(0, JJ, r, th)).real
@@ -619,7 +558,7 @@ class PizzaSolver(Solver):
             exact_data[l] = self.problem.eval_d_u_outwards(p['x'], p['y']).real
 
             r, th = cart_to_polar(p['x'], p['y'])
-            for JJ in range(len(B_desc)):
+            for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\
                     (self.c1[JJ] *
                     self.eval_dn_B_arg(0, JJ, r, th)).real

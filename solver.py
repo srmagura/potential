@@ -17,6 +17,7 @@ def cart_to_polar(x, y):
 class Solver:  
 
     def __init__(self, problem, N, scheme_order, **kwargs):
+        super().__init__()
         self.problem = problem
         self.k = self.problem.k
         self.N = N
