@@ -5,6 +5,7 @@ import numpy as np
 import scipy.sparse.linalg
 
 import matrices
+from debug import SolverDebug
 
 def cart_to_polar(x, y):
     r, th = math.hypot(x, y), math.atan2(y, x)
@@ -14,7 +15,7 @@ def cart_to_polar(x, y):
 
     return r, th
 
-class Solver:  
+class Solver(SolverDebug):  
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         super().__init__()

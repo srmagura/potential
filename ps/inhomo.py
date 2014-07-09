@@ -1,6 +1,8 @@
 import numpy as np
 import math
 
+import matrices
+
 class PsInhomo:
 
     def extend_inhomogeneous_f(self, *args):
@@ -8,22 +10,20 @@ class PsInhomo:
         return ext
 
     def extend_src_f(self):
-        #FIXME
-        return 
+        #NOTE
+        return
         p = self.problem
         if p.homogeneous:
             return
 
         for i,j in self.Kplus - self.Mplus:
-            R = self.R
-
-            r, th = self.get_polar(i, j)
             x, y = self.get_coord(i, j)
+            delta = 0
 
-            derivs = [p.eval_f(x, y), 0, 0]
+            derivs = (0, 0)
 
-            v = 0
-            for l in range(len(derivs)):
-                v += derivs[l] / math.factorial(l) * (r - R)**l
+            v = p.eval_f(x, y)
+            #for l in range(1, len(derivs)+1):
+            #    v += derivs[l-1] / math.factorial(l) * delta**l
 
             self.src_f[matrices.get_index(self.N,i,j)] = v

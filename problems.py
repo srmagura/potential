@@ -37,25 +37,30 @@ class Ripple(Problem):
     solver_class = CsFourier
 
     def eval_expected_polar(self, r, th):
-        return cos(r)
+        return cos(self.k*r)
 
     def eval_d_u_r(self, th):
-        return -sin(self.R)
+        return -self.k*sin(self.k*self.R)
 
     def eval_f_polar(self, r, th):
         if r != 0:
-            return self.k**2*cos(r) - cos(r) - sin(r)/r
+            return -self.k * sin(self.k*r)/r
         else:
-            return self.k**2*cos(r) - cos(r) - 1
+            return -self.k**2
 
     def eval_d_f_r(self, r, th):
-        return -self.k**2*sin(r) + sin(r) - cos(r)/r + sin(r)/r**2
+        k = self.k
+        return -k**2 * cos(k*r)/r + k*sin(k*r)/r**2
 
     def eval_d2_f_r(self, r, th):
-        return -self.k**2*cos(r) + cos(r) + sin(r)/r + 2*cos(r)/r**2 - 2*sin(r)/r**3
+        k = self.k
+        return k*(k**2*sin(k*r) + 2*k*cos(k*r)/r - 2*sin(k*r)/r**2)/r
 
     def eval_d2_f_th(self, r, th):
         return 0
+
+    def eval_grad_f(self, x, y):
+        pass
 
 class YCosine(Problem):
     k = 2/3

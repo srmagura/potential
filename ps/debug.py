@@ -4,6 +4,7 @@ from numpy import cos, sin
 import matplotlib.pyplot as plt
 
 from chebyshev import get_chebyshev_roots
+import matrices
 
 class PsDebug:
 
@@ -69,17 +70,6 @@ class PsDebug:
 
         error = np.array(error)
         return np.max(np.abs(error))
-
-    def test_extend_src_f(self):
-        exp_src_f = np.zeros((self.N-1)**2, dtype=complex)
-
-        for i, j in self.Kplus:
-            r, th = self.get_polar(i, j)
-
-            l = matrices.get_index(self.N, i, j)
-            exp_src_f[l] = self.problem.eval_f_polar(r, th)
-            
-        return np.max(np.abs(exp_src_f - self.src_f)) 
 
     def c0_test(self):
         sample = self.get_boundary_sample()
