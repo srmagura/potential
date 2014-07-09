@@ -1,13 +1,13 @@
 import math
 import numpy as np
 from numpy import cos, sin
-import matplotlib.pyplot as plt
 
 from solver import Solver, cart_to_polar
 import matrices
 
 from chebyshev import get_chebyshev_roots
 from ps.basis import PsBasis
+from ps.debug import PsDebug
 
 EXTEND_CIRCLE = 0
 EXTEND_RADIUS1 = 1
@@ -18,13 +18,14 @@ EXTEND_INNER = 5
 
 ETYPE_NAMES = ('circle', 'radius1', 'radius2', 
     'outer1', 'outer2', 'inner')
-ALL_ETYPES = range(len(ETYPE_NAMES))
 
 TAYLOR_N_DERIVS = 6
 
-class PizzaSolver(Solver, PsBasis):
+class PizzaSolver(Solver, PsBasis, PsDebug):
     AD_len = 2*np.pi
     R = 2.3
+
+    ALL_ETYPES = range(len(ETYPE_NAMES))
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
@@ -272,8 +273,6 @@ class PizzaSolver(Solver, PsBasis):
                 param_th = self.a
                 Y = dist1
 
-        #print('taylor_sid = {}    radius_sid = {}'.format(taylor_sid,radius_sid))
-
         derivs0 = np.zeros(TAYLOR_N_DERIVS)
         derivs1 = np.zeros(TAYLOR_N_DERIVS)
 
@@ -445,230 +444,3 @@ class PizzaSolver(Solver, PsBasis):
                 v += derivs[l] / math.factorial(l) * (r - R)**l
 
             self.src_f[matrices.get_index(self.N,i,j)] = v
-
-
-    ## DEBUGGING FUNCTIONS ##
-
-    def calc_c1_exact(self):
-        t_data = get_chebyshev_roots(1000)
-        self.c1 = []
-
-        for sid in range(self.N_SEGMENT):
-            arg_data = [self.eval_g(sid, t) for t in t_data] 
-            boundary_points = self.get_boundary_sample_by_sid(sid, arg_data)
-            boundary_data = np.zeros(len(arg_data), dtype=complex)
-            for l in range(len(boundary_points)):
-                p = boundary_points[l]
-                boundary_data[l] = self.problem.eval_d_u_outwards(
-                    p['x'], p['y'], sid=sid)
-
-            n_basis = self.segment_desc[sid]['n_basis']
-            self.c1.extend(np.polynomial.chebyshev.chebfit(
-                t_data, boundary_data, n_basis-1))
-
-    def gamma_filter(self, etypes):
-        result = []
-        for i, j in self.gamma:
-            if self.get_etype(i, j) in etypes:
-                result.append((i, j))
-
-        return result
-
-    def extension_test(self, etypes=ALL_ETYPES):
-        self.calc_c0()
-        self.calc_c1_exact()
-
-        nodes = self.gamma_filter(etypes)
-        ext = self.extend_boundary(nodes)
-
-        error = np.zeros(len(nodes), dtype=complex)
-        for l in range(len(nodes)):
-            x, y = self.get_coord(*nodes[l])
-            error[l] = self.problem.eval_expected(x, y) - ext[l]
-
-        return np.max(np.abs(error))
-
-    def test_extend_basis(self):
-        error = []
-        for index in (0, 1):
-            for JJ in range(len(self.B_desc)):
-                ext1 = self.extend_basis(JJ, index)
-
-                self.c0 = np.zeros(len(self.B_desc))
-                self.c1 = np.zeros(len(self.B_desc))
-
-                if index == 0:
-                    self.c0[JJ] = 1
-                elif index == 1:
-                    self.c1[JJ] = 1
-
-                ext2 = self.extend_boundary()
-                error.append(np.max(np.abs(ext1-ext2)))
-                print('index={}  JJ={}  error={}'.format(index, JJ, error[-1]))
-
-        error = np.array(error)
-        return np.max(np.abs(error))
-
-    def test_extend_src_f(self):
-        exp_src_f = np.zeros((self.N-1)**2, dtype=complex)
-
-        for i, j in self.Kplus:
-            r, th = self.get_polar(i, j)
-
-            l = matrices.get_index(self.N, i, j)
-            exp_src_f[l] = self.problem.eval_f_polar(r, th)
-            
-        return np.max(np.abs(exp_src_f - self.src_f)) 
-
-    def c0_test(self):
-        sample = self.get_boundary_sample()
-
-        s_data = np.zeros(len(sample))
-        exact_data = np.zeros(len(sample))
-        expansion_data = np.zeros(len(sample))
-
-        for l in range(len(sample)):
-            p = sample[l]
-            s_data[l] = p['s']
-            exact_data[l] = self.problem.eval_bc(p['x'], p['y']).real
-
-            r, th = cart_to_polar(p['x'], p['y'])
-            for JJ in range(len(self.B_desc)):
-                expansion_data[l] +=\
-                    (self.c0[JJ] *
-                    self.eval_dn_B_arg(0, JJ, r, th)).real
-
-        plt.plot(s_data, exact_data, label='Exact')
-        plt.plot(s_data, expansion_data, 'o', label='Expansion')
-        plt.legend(loc=0)
-        plt.ylim(-1, 1)
-        plt.title('c0')
-        plt.show()
-
-    def c1_test(self):
-        sample = self.get_boundary_sample()
-
-        s_data = np.zeros(len(sample))
-        exact_data = np.zeros(len(sample))
-        expansion_data = np.zeros(len(sample))
-
-        for l in range(len(sample)):
-            p = sample[l]
-            s_data[l] = p['s']
-            exact_data[l] = self.problem.eval_d_u_outwards(p['x'], p['y']).real
-
-            r, th = cart_to_polar(p['x'], p['y'])
-            for JJ in range(len(self.B_desc)):
-                expansion_data[l] +=\
-                    (self.c1[JJ] *
-                    self.eval_dn_B_arg(0, JJ, r, th)).real
-
-        plt.plot(s_data, exact_data, label='Exact')
-        plt.plot(s_data, expansion_data, 'o', label='Expansion')
-        plt.legend(loc=4)
-        plt.ylim(-1.5, 1.5)
-        plt.title('c1')
-        plt.show()
-
-    def plot_Gamma(self):
-        sample = self.get_boundary_sample()
-
-        n = len(sample) + 1
-        Gamma_x_data = np.zeros(n)
-        Gamma_y_data = np.zeros(n)
-
-        for l in range(n):
-            p = sample[l % len(sample)]
-            Gamma_x_data[l] = p['x']
-            Gamma_y_data[l] = p['y']
-
-        plt.plot(Gamma_x_data, Gamma_y_data, color='black')
-
-    def nodes_to_plottable(self, nodes):
-        x_data = np.zeros(len(nodes))
-        y_data = np.zeros(len(nodes))
-
-        for l in range(len(nodes)):
-            x, y = self.get_coord(*nodes[l])
-            x_data[l] = x
-            y_data[l] = y
-
-        return x_data, y_data
-
-    def plot_gamma(self, plot_rpoints=False):
-        self.plot_Gamma()
-
-        for etype in ALL_ETYPES:
-            nodes = self.gamma_filter({etype})
-            x_data, y_data = self.nodes_to_plottable(nodes)
-            plt.plot(x_data, y_data, 'o', label=ETYPE_NAMES[etype])
-
-            if plot_rpoints and etype == EXTEND_RADIUS2:
-                x_data = np.zeros(len(nodes))
-                y_data = np.zeros(len(nodes))
-
-                for l in range(len(nodes)):
-                    x, y = self.get_coord(*nodes[l])
-                    x1, y1 = self.get_radius_point(2, x, y)
-                    x_data[l] = x1
-                    y_data[l] = y1
-
-                plt.plot(x_data, y_data, 'o', label='rpoints')
-
-        plt.xlim(-4,4)
-        plt.ylim(-4,4)
-        plt.legend(loc=3)
-        plt.show()
-
-    def gen_fake_gamma(self):
-        def ap():
-            self.gamma.append(self.get_coord_inv(x, y))
-
-        self.gamma = []
-        h = self.AD_len / self.N
-        a = self.a
-        
-        for r in np.arange(.1, self.R, .2):
-            x = r
-            y = h/5
-            ap()
-
-            y = -h/5
-            ap()
-
-            x = r*cos(a) + h*sin(a)
-            y = r*sin(a) + h*cos(a)
-            ap()
-
-            x = r*cos(a) - h*sin(a)/5
-            y = r*sin(a) - h*cos(a)/5
-            ap()
-
-        for th in np.arange(self.a+.001, 2*np.pi, .1):
-            r = self.R + h/2
-            x = r*cos(th)
-            y = r*sin(th)
-            ap()
-
-            r = self.R - h/2
-            x = r*cos(th)
-            y = r*sin(th)
-            ap()
-        
-        for t in (True, False):
-            r = self.R + h
-            b = np.pi*h/10
-            if t:
-                b = self.a - b 
-            x = r*cos(b)
-            y = r*sin(b)
-            ap()
-
-            r = self.R + h
-            b = np.pi*h/5
-            if t:
-                b = self.a - b 
-            x = r*cos(b)
-            y = r*sin(b)
-            ap()
-
