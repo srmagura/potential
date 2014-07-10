@@ -112,7 +112,7 @@ class CsFourier(CircleSolver):
 
             boundary[l] = self.extend_circle(r, xi0, xi1, d2_xi0_th, d2_xi1_th,
                 d4_xi0_th)
-            boundary[l] += self.extend_inhomogeneous(r, th)
+            boundary[l] += self.extend_inhomogeneous_circle(r, th)
 
         return boundary
 

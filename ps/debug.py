@@ -33,7 +33,7 @@ class PsDebug:
 
         return result
 
-    def extension_test(self, etypes=None):
+    def test_extend_boundary(self, etypes=None):
         if etypes is None:
             etypes = self.etype.values()
 

@@ -272,6 +272,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
             if etype == self.etypes['circle']:
                 boundary[l] = self.do_extend_circle(i, j)
+                boundary[l] += self.extend_inhomogeneous_circle(r, th)
 
             elif etype == self.etypes['radius1']:
                 boundary[l] = self.do_extend_radius1(i, j)
@@ -289,7 +290,9 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
 
     def run(self):
-        return self.test_extend_src_f_etype()
+        return self.test_extend_boundary({
+            self.etypes['circle']
+        })
         self.calc_c0()
         self.calc_c1()
 
