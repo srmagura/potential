@@ -40,13 +40,15 @@ class Ripple(Problem):
         return cos(self.k*r)
 
     def eval_d_u_r(self, th):
-        return -self.k*sin(self.k*self.R)
+        k = self.k
+        return -k*sin(k*self.R)
 
     def eval_f_polar(self, r, th):
+        k = self.k
         if r != 0:
-            return -self.k * sin(self.k*r)/r
+            return -k * sin(k*r)/r
         else:
-            return -self.k**2
+            return -k**2
 
     def eval_d_f_r(self, r, th):
         k = self.k
@@ -61,11 +63,16 @@ class Ripple(Problem):
 
     def eval_grad_f(self, x, y):
         k = self.k
-        return (-k**2*x*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2) +
+        grad = (-k**2*x*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2) +
             k*x*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(3/2),
             -k**2*y*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2) + 
             k*y*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(3/2))
+        return np.array(grad)
 
+    def eval_hessian_f(self, x, y):
+        k = self.k
+        hessian = ((k*(k**2*x**2*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(3/2) + 3*k*x**2*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2)**2 - k*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2) - 3*x**2*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(5/2) + sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(3/2)), k*x*y*(k**2*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(3/2) + 3*k*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2)**2 - 3*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(5/2))), (k*x*y*(k**2*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(3/2) + 3*k*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2)**2 - 3*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(5/2)), k*(k**2*y**2*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(3/2) + 3*k*y**2*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2)**2 - k*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2) - 3*y**2*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(5/2) + sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(3/2))))
+        return np.array(hessian)
 
 class YCosine(Problem):
     k = 2/3

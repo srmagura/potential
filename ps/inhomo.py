@@ -10,6 +10,9 @@ class PsInhomo:
         return ext
 
     def extend_src_f(self):
+        R = self.R
+        a = self.a
+
         p = self.problem
         if p.homogeneous:
             return
@@ -19,14 +22,34 @@ class PsInhomo:
             r, th = self.get_polar(i, j)
             etype = self.get_etype(i, j)
 
-            derivs = [0, 0]
-
             if etype == self.etypes['circle']:
-                R = self.R
-                delta = r - R
                 x0 = R * np.cos(th)
                 y0 = R * np.sin(th)
-                derivs[0] = p.eval_d_f_r(R, th)
+            elif etype == self.etypes['radius1']:
+                x0 = x
+                y0 = 0
+            elif etype == self.etypes['radius2']:
+                x0, y0 = self.get_radius_point(2, x, y)
+
+            elif etype == self.etypes['outer1']:
+                x0 = R
+                y0 = 0
+
+            elif etype == self.etypes['outer2']:
+                x0 = R * np.cos(a)
+                y0 = R * np.sin(a)
+
+            vec = np.array((x-x0, y-y0))
+            delta = np.linalg.norm(vec)
+            vec /= delta
+
+            derivs = [0, 0]
+
+            grad_f = p.eval_grad_f(x0, y0)
+            derivs[0] = grad_f.dot(vec)
+
+            hessian_f = p.eval_hessian_f(x0, y0)
+            derivs[1] = hessian_f.dot(vec).dot(vec)
 
             v = p.eval_f(x0, y0)
             for l in range(1, len(derivs)+1):

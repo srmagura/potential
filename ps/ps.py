@@ -43,7 +43,6 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
         return np.column_stack(columns)
 
-
     def get_radius_point(self, sid, x, y):
         assert sid == 2
 
@@ -290,7 +289,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
 
     def run(self):
-        return self.test_extend_src_f_etype({self.etypes['circle']})
+        return self.test_extend_src_f_etype()
         self.calc_c0()
         self.calc_c1()
 
