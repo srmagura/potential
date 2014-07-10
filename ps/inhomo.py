@@ -10,20 +10,26 @@ class PsInhomo:
         return ext
 
     def extend_src_f(self):
-        #NOTE
-        return
         p = self.problem
         if p.homogeneous:
             return
 
         for i,j in self.Kplus - self.Mplus:
             x, y = self.get_coord(i, j)
-            delta = 0
+            r, th = self.get_polar(i, j)
+            etype = self.get_etype(i, j)
 
-            derivs = (0, 0)
+            derivs = [0, 0]
 
-            v = p.eval_f(x, y)
-            #for l in range(1, len(derivs)+1):
-            #    v += derivs[l-1] / math.factorial(l) * delta**l
+            if etype == self.etypes['circle']:
+                R = self.R
+                delta = r - R
+                x0 = R * np.cos(th)
+                y0 = R * np.sin(th)
+                derivs[0] = p.eval_d_f_r(R, th)
+
+            v = p.eval_f(x0, y0)
+            for l in range(1, len(derivs)+1):
+                v += derivs[l-1] / math.factorial(l) * delta**l
 
             self.src_f[matrices.get_index(self.N,i,j)] = v

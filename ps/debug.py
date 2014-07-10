@@ -71,6 +71,23 @@ class PsDebug:
         error = np.array(error)
         return np.max(np.abs(error))
 
+    def test_extend_src_f_etype(self, etypes=None):
+        if etypes is None:
+            etypes = self.etypes.values()
+
+        errors = []
+        for i, j in self.Kplus - self.Mplus:
+            x, y = self.get_coord(i, j)
+            etype = self.get_etype(i, j)
+
+            l = matrices.get_index(self.N, i, j)
+            if etype in etypes:
+                a = self.problem.eval_f(x, y)
+                b = self.src_f[l]
+                errors.append(abs(a-b))
+
+        return max(errors)
+
     def c0_test(self):
         sample = self.get_boundary_sample()
 

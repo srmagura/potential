@@ -12,5 +12,5 @@ class SolverDebug:
 
             l = matrices.get_index(self.N, i, j)
             exp_src_f[l] = self.problem.eval_f(x, y)
-            
+
         return np.max(np.abs(exp_src_f - self.src_f)) 

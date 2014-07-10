@@ -290,7 +290,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
 
     def run(self):
-        return self.test_extend_src_f()
+        return self.test_extend_src_f_etype({self.etypes['circle']})
         self.calc_c0()
         self.calc_c1()
 

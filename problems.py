@@ -1,5 +1,5 @@
 import numpy as np
-from numpy import cos, sin
+from numpy import cos, sin, sqrt
 
 from solver import SquareSolver, cart_to_polar
 from cs.csf import CsFourier
@@ -60,7 +60,12 @@ class Ripple(Problem):
         return 0
 
     def eval_grad_f(self, x, y):
-        pass
+        k = self.k
+        return (-k**2*x*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2) +
+            k*x*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(3/2),
+            -k**2*y*cos(k*sqrt(x**2 + y**2))/(x**2 + y**2) + 
+            k*y*sin(k*sqrt(x**2 + y**2))/(x**2 + y**2)**(3/2))
+
 
 class YCosine(Problem):
     k = 2/3
