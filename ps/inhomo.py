@@ -56,3 +56,33 @@ class PsInhomo:
                 v += derivs[l-1] / math.factorial(l) * delta**l
 
             self.src_f[matrices.get_index(self.N,i,j)] = v
+
+    def extend_inhomogeneous_radius1(self, x, y):
+        p = self.problem
+        if p.homogeneous:
+            return 0
+
+        k = p.k
+
+        derivs = [0, 0]
+        derivs.append(p.eval_f(x, 0))
+
+        dir_X = np.array((1, 0))
+        dir_Y = np.array((0, 1))
+
+        grad_f = p.eval_grad_f(x, 0)
+        derivs.append(grad_f.dot(dir_Y))
+
+        hessian_f = p.eval_hessian_f(x, 0)
+        d2_f_X = hessian_f.dot(dir_X).dot(dir_X)
+        d2_f_Y = hessian_f.dot(dir_Y).dot(dir_Y)
+
+        derivs.append(
+            -d2_f_X - k**2 * p.eval_f(x, 0) + d2_f_Y
+        )
+
+        v = 0
+        for l in range(len(derivs)):
+            v += derivs[l] / math.factorial(l) * y**l
+
+        return v

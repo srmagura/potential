@@ -112,7 +112,7 @@ class Wave(Problem):
         return 1j*a*np.exp(1j*self.R*a)
 
 class Sine(Problem):
-    k = 1 
+    k = 1
 
     solver_class = CsFourier
     homogeneous = True

@@ -35,7 +35,7 @@ class PsDebug:
 
     def test_extend_boundary(self, etypes=None):
         if etypes is None:
-            etypes = self.etype.values()
+            etypes = self.etypes.values()
 
         self.calc_c0()
         self.calc_c1_exact()

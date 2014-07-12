@@ -107,8 +107,12 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         derivs.append(-(d2_xi0_X + k**2 * xi0))
 
         derivs.append(-(d2_xi1_X + k**2 * xi1))
-        derivs.append(d4_xi0_X + d2_xi0_X + 
-            k**2 * (d2_xi0_X + xi0))
+
+        # Previously was:
+        # derivs.append(d4_xi0_X + d2_xi0_X + 
+        #     k**2 * (d2_xi0_X + xi0))
+        derivs.append(d4_xi0_X + k**2 * (2*d2_xi0_X + k**2 * xi0))
+
 
         v = 0
         for l in range(len(derivs)):
@@ -276,6 +280,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
             elif etype == self.etypes['radius1']:
                 boundary[l] = self.do_extend_radius1(i, j)
+                boundary[l] += self.extend_inhomogeneous_radius1(x, y)
 
             elif etype == self.etypes['radius2']:
                 boundary[l] = self.do_extend_radius2(i, j)
@@ -290,8 +295,10 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
 
     def run(self):
+        self.gen_fake_gamma()
         return self.test_extend_boundary({
-            self.etypes['circle']
+            self.etypes['circle'],
+            self.etypes['radius1'],
         })
         self.calc_c0()
         self.calc_c1()
