@@ -57,7 +57,7 @@ class PsInhomo:
 
             self.src_f[matrices.get_index(self.N,i,j)] = v
 
-    def extend_inhomogeneous_radius1(self, x, y):
+    def _extend_inhomogeneous_radius(self, x0, y0, dir_X, dir_Y, Y):
         p = self.problem
         if p.homogeneous:
             return 0
@@ -65,24 +65,38 @@ class PsInhomo:
         k = p.k
 
         derivs = [0, 0]
-        derivs.append(p.eval_f(x, 0))
+        derivs.append(p.eval_f(x0, y0))
 
-        dir_X = np.array((1, 0))
-        dir_Y = np.array((0, 1))
-
-        grad_f = p.eval_grad_f(x, 0)
+        grad_f = p.eval_grad_f(x0, y0)
         derivs.append(grad_f.dot(dir_Y))
 
-        hessian_f = p.eval_hessian_f(x, 0)
+        hessian_f = p.eval_hessian_f(x0, y0)
         d2_f_X = hessian_f.dot(dir_X).dot(dir_X)
         d2_f_Y = hessian_f.dot(dir_Y).dot(dir_Y)
 
         derivs.append(
-            -d2_f_X - k**2 * p.eval_f(x, 0) + d2_f_Y
+            -d2_f_X - k**2 * p.eval_f(x0, y0) + d2_f_Y
         )
 
         v = 0
         for l in range(len(derivs)):
-            v += derivs[l] / math.factorial(l) * y**l
+            v += derivs[l] / math.factorial(l) * Y**l
 
         return v
+
+    def extend_inhomogeneous_radius1(self, x, y):
+        dir_X = np.array((1, 0))
+        dir_Y = np.array((0, 1))
+        return self._extend_inhomogeneous_radius(x, 0, dir_X, dir_Y, y)
+
+    def extend_inhomogeneous_radius2(self, x, y):
+        R = self.R
+        a = self.a
+
+        dir_X = np.array((np.cos(a), np.sin(a)))
+        dir_Y = np.array((np.sin(a), -np.cos(a)))
+
+        x0, y0 = self.get_radius_point(2, x, y) 
+        Y = self.signed_dist_to_radius(2, x, y)
+        return self._extend_inhomogeneous_radius(
+            x0, y0, dir_X, dir_Y, Y)
