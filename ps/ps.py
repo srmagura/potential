@@ -109,10 +109,8 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         derivs.append(-(d2_xi1_X + k**2 * xi1))
 
         # Previously was:
-        # derivs.append(d4_xi0_X + d2_xi0_X + 
-        #     k**2 * (d2_xi0_X + xi0))
+        # d4_xi0_X + d2_xi0_X + k**2 * (d2_xi0_X + xi0)
         derivs.append(d4_xi0_X + k**2 * (2*d2_xi0_X + k**2 * xi0))
-
 
         v = 0
         for l in range(len(derivs)):
@@ -276,15 +274,15 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
             if etype == self.etypes['circle']:
                 boundary[l] = self.do_extend_circle(i, j)
-                boundary[l] += self.extend_inhomogeneous_circle(r, th)
+                boundary[l] += self.extend_inhomo_circle(r, th)
 
             elif etype == self.etypes['radius1']:
                 boundary[l] = self.do_extend_radius1(i, j)
-                boundary[l] += self.extend_inhomogeneous_radius1(x, y)
+                boundary[l] += self.extend_inhomo_radius1(x, y)
 
             elif etype == self.etypes['radius2']:
                 boundary[l] = self.do_extend_radius2(i, j)
-                boundary[l] += self.extend_inhomogeneous_radius2(x, y)
+                boundary[l] += self.extend_inhomo_radius2(x, y)
 
             elif etype == self.etypes['outer1']:
                 boundary[l] = self.do_extend_outer(i, j, 1)

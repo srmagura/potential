@@ -29,7 +29,7 @@ class SolverExtend:
 
         return v
 
-    def extend_inhomogeneous_circle(self, r, th):
+    def extend_inhomo_circle(self, r, th):
         p = self.problem
         if p.homogeneous:
             return 0

@@ -147,7 +147,7 @@ class Solver(SolverExtend, SolverDebug):
         Q1 = self.get_Q(1)
 
         self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
-        ext_f = self.extend_inhomogeneous_f()    
+        ext_f = self.extend_inhomo_f()    
         proj_f = self.get_trace(self.get_potential(ext_f))
 
         rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
