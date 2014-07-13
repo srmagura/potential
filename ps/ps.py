@@ -290,6 +290,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
             elif etype == self.etypes['outer2']:
                 boundary[l] = self.do_extend_outer(i, j, 2)
+                boundary[l] += self.extend_inhomo_outer(x, y, 2)
 
         return boundary
 
@@ -302,6 +303,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
             self.etypes['radius1'],
             self.etypes['radius2'],
             self.etypes['outer1'],
+            self.etypes['outer2'],
         })
         self.calc_c0()
         self.calc_c1()
