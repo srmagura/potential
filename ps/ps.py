@@ -286,6 +286,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
             elif etype == self.etypes['outer1']:
                 boundary[l] = self.do_extend_outer(i, j, 1)
+                boundary[l] += self.extend_inhomo_outer(x, y, 1)
 
             elif etype == self.etypes['outer2']:
                 boundary[l] = self.do_extend_outer(i, j, 2)
@@ -295,10 +296,12 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
     def run(self):
         self.gen_fake_gamma()
+        #self.plot_gamma()
         return self.test_extend_boundary({
             self.etypes['circle'],
             self.etypes['radius1'],
             self.etypes['radius2'],
+            self.etypes['outer1'],
         })
         self.calc_c0()
         self.calc_c1()

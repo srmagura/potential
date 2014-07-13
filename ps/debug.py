@@ -166,22 +166,11 @@ class PsDebug:
     def plot_gamma(self, plot_rpoints=False):
         self.plot_Gamma()
 
-        for etype in ALL_ETYPES:
-            nodes = self.gamma_filter({etype})
+        for etype_name, etype_int in self.etypes.items():
+            nodes = self.gamma_filter({etype_int})
             x_data, y_data = self.nodes_to_plottable(nodes)
-            plt.plot(x_data, y_data, 'o', label=ETYPE_NAMES[etype])
+            plt.plot(x_data, y_data, 'o', label=etype_name)
 
-            if plot_rpoints and etype == EXTEND_RADIUS2:
-                x_data = np.zeros(len(nodes))
-                y_data = np.zeros(len(nodes))
-
-                for l in range(len(nodes)):
-                    x, y = self.get_coord(*nodes[l])
-                    x1, y1 = self.get_radius_point(2, x, y)
-                    x_data[l] = x1
-                    y_data[l] = y1
-
-                plt.plot(x_data, y_data, 'o', label='rpoints')
 
         plt.xlim(-4,4)
         plt.ylim(-4,4)
@@ -238,4 +227,4 @@ class PsDebug:
                 b = self.a - b 
             x = r*cos(b)
             y = r*sin(b)
-            ap()
+            #ap()

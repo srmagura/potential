@@ -2,6 +2,7 @@ import numpy as np
 import math
 
 import matrices
+from solver import cart_to_polar
 
 class PsInhomo:
 
@@ -57,7 +58,7 @@ class PsInhomo:
 
             self.src_f[matrices.get_index(self.N,i,j)] = v
 
-    def _extend_inhomo_radius(self, Y, f, d_f_Y, d2_f_X, d2_f_Y):
+    def inhomo_extend_from_radius(self, Y, f, d_f_Y, d2_f_X, d2_f_Y):
         k = self.problem.k
 
         derivs = (0, 0, 
@@ -72,6 +73,17 @@ class PsInhomo:
 
         return v
 
+    def get_dir_XY(self, radius_sid):
+        if radius_sid == 1:
+            dir_X = np.array((1, 0))
+            dir_Y = np.array((0, 1))
+        elif radius_sid == 2:
+            a = self.a
+            dir_X = np.array((np.cos(a), np.sin(a)))
+            dir_Y = np.array((np.sin(a), -np.cos(a)))
+
+        return dir_X, dir_Y
+
     def _calc_inhomo_radius(self, x0, y0, dir_X, dir_Y, Y):
         p = self.problem
         if p.homogeneous:
@@ -85,21 +97,67 @@ class PsInhomo:
         hessian_f = p.eval_hessian_f(x0, y0)
         d2_f_X = hessian_f.dot(dir_X).dot(dir_X)
         d2_f_Y = hessian_f.dot(dir_Y).dot(dir_Y)
-        return self._extend_inhomo_radius(Y, f, d_f_Y, d2_f_X, d2_f_Y)
+        return self.inhomo_extend_from_radius(
+            Y, f, d_f_Y, d2_f_X, d2_f_Y)
 
     def extend_inhomo_radius1(self, x, y):
-        dir_X = np.array((1, 0))
-        dir_Y = np.array((0, 1))
+        dir_X, dir_Y = self.get_dir_XY(1)
         return self._calc_inhomo_radius(x, 0, dir_X, dir_Y, y)
 
     def extend_inhomo_radius2(self, x, y):
-        R = self.R
-        a = self.a
-
-        dir_X = np.array((np.cos(a), np.sin(a)))
-        dir_Y = np.array((np.sin(a), -np.cos(a)))
+        dir_X, dir_Y = self.get_dir_XY(2)
 
         x0, y0 = self.get_radius_point(2, x, y) 
         Y = self.signed_dist_to_radius(2, x, y)
         return self._calc_inhomo_radius(
             x0, y0, dir_X, dir_Y, Y)
+
+    def extend_inhomo_outer(self, x, y, radius_sid):
+        r, th = cart_to_polar(x, y)
+
+        dist0 = r - self.R
+
+        if radius_sid == 1:
+            dist1 = y
+        elif radius_sid == 2:
+            dist1 = self.dist_to_radius(radius_sid, x, y)
+
+        if dist0 < dist1:
+            pass
+        else:
+            p = self.problem
+            x0, y0 = (self.R, 0)
+            Y = y
+
+            dir_X, dir_Y = self.get_dir_XY(1)
+
+            f0 = p.eval_f(x0, y0)
+            grad_f0 = p.eval_grad_f(x0, y0)
+            hessian_f0 = p.eval_hessian_f(x0, y0)
+
+            delta = x - x0
+
+            f_derivs = (
+                f0, 
+                grad_f0.dot(dir_X),
+                hessian_f0.dot(dir_X).dot(dir_X)
+            )
+
+            f = 0
+            for l in range(len(f_derivs)):
+                f += f_derivs[l] * delta**l / math.factorial(l)
+
+            d_f_Y_derivs = (
+                grad_f0.dot(dir_Y),
+                hessian_f0.dot(dir_Y).dot(dir_X),
+            )
+
+            d_f_Y = 0
+            for l in range(len(d_f_Y_derivs)):
+                d_f_Y += d_f_Y_derivs[l] * delta**l / math.factorial(l)
+
+            d2_f_X = hessian_f0.dot(dir_X).dot(dir_X)
+            d2_f_Y = hessian_f0.dot(dir_Y).dot(dir_Y)
+
+            return self.inhomo_extend_from_radius(
+                Y, f, d_f_Y, d2_f_X, d2_f_Y)
