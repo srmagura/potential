@@ -303,7 +303,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
             self.etypes['radius1'],
             self.etypes['radius2'],
             self.etypes['outer1'],
-            #self.etypes['outer2'],
+            self.etypes['outer2'],
         })
         self.calc_c0()
         self.calc_c1()

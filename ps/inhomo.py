@@ -169,10 +169,13 @@ class PsInhomo:
         R = self.R
         a = self.a
 
-        r, th = cart_to_polar(x, y)
+        if radius_sid == 1:
+            th0 = 0
+        elif radius_sid == 2:
+            th0 = a
 
-        th0 = 0
-        delta = abs(th - th0)
+        r, th = cart_to_polar(x, y)
+        delta = th - th0
 
         f0 = p.eval_f_polar(R, th0)
         d_f_th0 = p.eval_d_f_th(R, th0)
