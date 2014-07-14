@@ -13,12 +13,12 @@ class CircleSolver(Solver):
     def is_interior(self, i, j):
         return self.get_polar(i, j)[0] <= self.R
 
-    def extend_inhomogeneous_f(self):
+    def extend_inhomo_f(self):
         ext = np.zeros(len(self.gamma), dtype=complex)
         for l in range(len(self.gamma)):
             i, j = self.gamma[l]
             r, th = self.get_polar(i, j)
-            ext[l] = self.extend_inhomogeneous_circle(r, th)
+            ext[l] = self.calc_inhomo_circle(r, th)
 
         return ext
 

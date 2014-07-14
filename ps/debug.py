@@ -227,4 +227,4 @@ class PsDebug:
                 b = self.a - b 
             x = r*cos(b)
             y = r*sin(b)
-            #ap()
+            ap()

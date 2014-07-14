@@ -274,15 +274,15 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
             if etype == self.etypes['circle']:
                 boundary[l] = self.do_extend_circle(i, j)
-                boundary[l] += self.extend_inhomo_circle(r, th)
+                boundary[l] += self.calc_inhomo_circle(r, th)
 
             elif etype == self.etypes['radius1']:
                 boundary[l] = self.do_extend_radius1(i, j)
-                boundary[l] += self.extend_inhomo_radius1(x, y)
+                boundary[l] += self.extend_inhomo_radius(x, y, 1)
 
             elif etype == self.etypes['radius2']:
                 boundary[l] = self.do_extend_radius2(i, j)
-                boundary[l] += self.extend_inhomo_radius2(x, y)
+                boundary[l] += self.extend_inhomo_radius(x, y, 2)
 
             elif etype == self.etypes['outer1']:
                 boundary[l] = self.do_extend_outer(i, j, 1)
@@ -303,7 +303,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
             self.etypes['radius1'],
             self.etypes['radius2'],
             self.etypes['outer1'],
-            self.etypes['outer2'],
+            #self.etypes['outer2'],
         })
         self.calc_c0()
         self.calc_c1()

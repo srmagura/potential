@@ -100,17 +100,19 @@ class PsInhomo:
         return self.inhomo_extend_from_radius(
             Y, f, d_f_Y, d2_f_X, d2_f_Y)
 
-    def extend_inhomo_radius1(self, x, y):
-        dir_X, dir_Y = self.get_dir_XY(1)
-        return self._calc_inhomo_radius(x, 0, dir_X, dir_Y, y)
+    def extend_inhomo_radius(self, x, y, radius_sid):
+        if self.problem.homogeneous:
+            return 0
 
-    def extend_inhomo_radius2(self, x, y):
-        dir_X, dir_Y = self.get_dir_XY(2)
+        if radius_sid == 1:
+            x0, y0 = (x, 0)
+            Y = y
+        elif radius_sid == 2: 
+            x0, y0 = self.get_radius_point(radius_sid, x, y) 
+            Y = self.signed_dist_to_radius(radius_sid, x, y)
 
-        x0, y0 = self.get_radius_point(2, x, y) 
-        Y = self.signed_dist_to_radius(2, x, y)
-        return self._calc_inhomo_radius(
-            x0, y0, dir_X, dir_Y, Y)
+        dir_X, dir_Y = self.get_dir_XY(radius_sid)
+        return self._calc_inhomo_radius(x0, y0, dir_X, dir_Y, Y)
 
     def _extend_inhomo_outer_taylor12(self, x, y, radius_sid):
         p = self.problem
@@ -162,7 +164,44 @@ class PsInhomo:
         return self.inhomo_extend_from_radius(
             Y, f, d_f_Y, d2_f_X, d2_f_Y)
 
+    def _extend_inhomo_outer_taylor0(self, x, y, radius_sid):
+        p = self.problem
+        R = self.R
+        a = self.a
+
+        r, th = cart_to_polar(x, y)
+
+        th0 = 0
+        delta = abs(th - th0)
+
+        f0 = p.eval_f_polar(R, th0)
+        d_f_th0 = p.eval_d_f_th(R, th0)
+        d2_f_th0 = p.eval_d2_f_th(R, th0)
+
+        f_derivs = (f0, d_f_th0, d2_f_th0)
+
+        f = 0
+        for l in range(len(f_derivs)):
+            f += f_derivs[l] * delta**l / math.factorial(l)
+
+        d_f_r0 = p.eval_d_f_r(R, th0)
+        d2_f_r_th0 = p.eval_d2_f_r_th(R, th0)
+
+        d_f_r_derivs = (d_f_r0, d2_f_r_th0)
+
+        d_f_r = 0
+        for l in range(len(d_f_r_derivs)):
+            d_f_r += d_f_r_derivs[l] * delta**l / math.factorial(l)
+
+        d2_f_r = p.eval_d2_f_r(R, th0)
+        d2_f_th = p.eval_d2_f_th(R, th0)
+
+        return self.extend_inhomo_circle(r, f, d_f_r, d2_f_r, d2_f_th)
+
     def extend_inhomo_outer(self, x, y, radius_sid):
+        if self.problem.homogeneous:
+            return 0
+
         r, th = cart_to_polar(x, y)
 
         dist0 = r - self.R
@@ -173,7 +212,8 @@ class PsInhomo:
             dist1 = self.dist_to_radius(radius_sid, x, y)
 
         if dist0 < dist1:
-            pass
+            return self._extend_inhomo_outer_taylor0(
+                x, y, radius_sid)
         else:
             return self._extend_inhomo_outer_taylor12(
                 x, y, radius_sid)

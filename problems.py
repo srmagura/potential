@@ -58,7 +58,13 @@ class Ripple(Problem):
         k = self.k
         return k*(k**2*sin(k*r) + 2*k*cos(k*r)/r - 2*sin(k*r)/r**2)/r
 
+    def eval_d_f_th(self, r, th):
+        return 0
+
     def eval_d2_f_th(self, r, th):
+        return 0
+
+    def eval_d2_f_r_th(self, r, th):
         return 0
 
     def eval_grad_f(self, x, y):
