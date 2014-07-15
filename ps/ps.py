@@ -274,42 +274,29 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
             if etype == self.etypes['circle']:
                 boundary[l] = self.do_extend_circle(i, j)
-                boundary[l] += self.calc_inhomo_circle(r, th)
 
             elif etype == self.etypes['radius1']:
                 boundary[l] = self.do_extend_radius1(i, j)
-                boundary[l] += self.extend_inhomo_radius(x, y, 1)
 
             elif etype == self.etypes['radius2']:
                 boundary[l] = self.do_extend_radius2(i, j)
-                boundary[l] += self.extend_inhomo_radius(x, y, 2)
 
             elif etype == self.etypes['outer1']:
                 boundary[l] = self.do_extend_outer(i, j, 1)
-                boundary[l] += self.extend_inhomo_outer(x, y, 1)
 
             elif etype == self.etypes['outer2']:
                 boundary[l] = self.do_extend_outer(i, j, 2)
-                boundary[l] += self.extend_inhomo_outer(x, y, 2)
 
+        boundary += self.extend_inhomo_f()
         return boundary
 
 
     def run(self):
-        self.gen_fake_gamma()
-        #self.plot_gamma()
-        return self.test_extend_boundary({
-            self.etypes['circle'],
-            self.etypes['radius1'],
-            self.etypes['radius2'],
-            self.etypes['outer1'],
-            self.etypes['outer2'],
-        })
         self.calc_c0()
         self.calc_c1()
 
         ext = self.extend_boundary()
-        u_act = self.get_potential(ext) #+ self.ap_sol_f
+        u_act = self.get_potential(ext) + self.ap_sol_f
 
         error = self.eval_error(u_act)
         return error

@@ -6,8 +6,30 @@ from solver import cart_to_polar
 
 class PsInhomo:
 
-    def extend_inhomo_f(self, *args):
+    def extend_inhomo_f(self):
         ext = np.zeros(len(self.gamma), dtype=complex)
+
+        for l in range(len(self.gamma)):
+            i, j = self.gamma[l]
+            x, y = self.get_coord(i, j)
+            r, th = self.get_polar(i, j)
+            etype = self.get_etype(i, j)
+
+            if etype == self.etypes['circle']:
+                ext[l] += self.calc_inhomo_circle(r, th)
+
+            elif etype == self.etypes['radius1']:
+                ext[l] += self.extend_inhomo_radius(x, y, 1)
+
+            elif etype == self.etypes['radius2']:
+                ext[l] += self.extend_inhomo_radius(x, y, 2)
+
+            elif etype == self.etypes['outer1']:
+                ext[l] += self.extend_inhomo_outer(x, y, 1)
+
+            elif etype == self.etypes['outer2']:
+                ext[l] += self.extend_inhomo_outer(x, y, 2)
+
         return ext
 
     def extend_src_f(self):
