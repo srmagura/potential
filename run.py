@@ -2,16 +2,10 @@ import numpy as np
 import sys
 import argparse
 
-import warnings
-from scipy.integrate import IntegrationWarning
-
 import problems
 import solver
 
 class Interface:
-
-    def run_solver(self, solver):
-        return solver.run()
 
     def test_convergence(self):
         prev_error = None
@@ -19,7 +13,7 @@ class Interface:
         N = self.args.N
         while N <= self.args.c:
             my_solver = self.problem.get_solver(N, self.args.o)
-            error = self.run_solver(my_solver)
+            error = my_solver.run()
 
             print('---- {0} x {0} ----'.format(N)) 
             print('Error:', error)
@@ -50,10 +44,11 @@ class Interface:
         if self.args.c is None:
             my_solver = self.problem.get_solver(self.args.N, 
                 self.args.o, verbose=True)
-            error = self.run_solver(my_solver)
+            error = my_solver.run()
             print('Error:', error)
         else:
             self.test_convergence()
+
 
 if __name__ == '__main__':
     interface = Interface()
