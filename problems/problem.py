@@ -19,6 +19,11 @@ class Problem:
     def eval_f(self, x, y):
         return self.eval_f_polar(*cart_to_polar(x, y))
 
+    def eval_f_polar(self, r, th):
+        x = r * cos(th)
+        y = r * sin(th)
+        return self.eval_f(x, y)
+
        
 class Pizza:
     a = np.pi / 6

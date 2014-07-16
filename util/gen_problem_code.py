@@ -46,13 +46,15 @@ def find_f_polar_derivs(f_polar):
 
 def find_f_total_derivs(f):
     grad = (diff(f, x), diff(f, y))
-    print_code('eval_grad_f(self, x, y)', grad)
+    grad_np = 'np.array({})'.format(grad)
+    print_code('eval_grad_f(self, x, y)', grad_np)
 
     hessian = (
         (diff(f, x, x), diff(f, x, y)),
         (diff(f, y, x), diff(f, y, y))
     )
-    print_code('eval_hessian_f(self, x, y)', hessian)
+    hessian_np = 'np.array({})'.format(hessian)
+    print_code('eval_hessian_f(self, x, y)', hessian_np)
 
 
 if __name__ == '__main__':

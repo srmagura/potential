@@ -40,9 +40,12 @@ class YCosine(Problem):
 
     def eval_grad_f(self, x, y):
         k = self.k
-        return (-k**2*y*sin(x) + y*sin(x), k**2*cos(x) - cos(x))
+        return np.array((-k**2*y*sin(x) + y*sin(x), k**2*cos(x) - cos(x)))
 
     def eval_hessian_f(self, x, y):
         k = self.k
-        return ((y*(-k**2 + 1)*cos(x), (-k**2 + 1)*sin(x)), ((-k**2 + 1)*sin(x), 0))
+        return np.array(((y*(-k**2 + 1)*cos(x), (-k**2 + 1)*sin(x)), ((-k**2 + 1)*sin(x), 0)))
+
+class YCosinePizza(Pizza, YCosine):
+    pass
 
