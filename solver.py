@@ -195,9 +195,11 @@ class SquareSolver(Solver):
         u_act = self.LU_factorization.solve(self.B_src_f)
         return self.eval_error(u_act)
 
+
 from cs.csf import CsFourier
-from cs.cs1 import CsChebyshev1
 from cs.cs3 import CsChebyshev3
 
-solver_dict = {'csf': CsFourier,
-    'cs1': CsChebyshev1, 'cs3': CsChebyshev3}
+solver_dict = {
+    'csf': CsFourier,
+    'cs3': CsChebyshev3,
+}

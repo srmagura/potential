@@ -1,48 +1,60 @@
 from sympy import *
 
-def find_derivatives(u):
-    print('def eval_expected(self, x, y):')
-    print(rs + str(u))
-
-    k = Symbol('self.k') 
-
-    f = diff(u, x, 2) + diff(u, y, 2) + k**2 * u
-    print()
-    print('def eval_f(self, x, y):')
-    print(rs + str(f))
-
-    f_polar = f.subs(dict(x=r*cos(th), y=r*sin(th)))
-    find_f_derivatives(f_polar)
-
-def find_derivatives_polar(u):
-    print('def eval_expected_polar(self, r, th):')
-    print(rs + str(u))
-
-    k = Symbol('self.k') 
-
-    f = diff(u, r, 2) + 1/r * diff(u, r) + 1/r**2 * diff(u, th, 2) +  k**2 * u
-    print()
-    print('def eval_f_polar(self, r, th):')
-    print(rs + str(f))
-
-    find_f_derivatives(f)
-
-def find_f_derivatives(f_polar):
-    print()
-    print('def eval_d_f_r(self, r, th):')
-    print(rs + str(diff(f_polar, r)))
-
-    print()
-    print('def eval_d2_f_r(self, r, th):')
-    print(rs + str(diff(f_polar, r, 2)))
-
-    print()
-    print('def eval_d2_f_th(self, r, th):')
-    print(rs + str(diff(f_polar, th, 2)))
-
-rs = '    return '
+k = symbols('k')
 x, y = symbols('x y')
 r, th = symbols('r th')
 
-u = cos(r)
-find_derivatives_polar(u)
+def print_code(signature, return_value):
+    ind = ' '*4
+    print()
+    print(ind + 'def {}:'.format(signature))
+    print(2*ind + 'k = self.k')
+    print(2*ind + 'return {}'.format(return_value))
+
+
+def find_derivs(u):
+    print_code('eval_expected(self, x, y)', u)
+
+    f = diff(u, x, 2) + diff(u, y, 2) + k**2 * u
+    print_code('eval_f(self, x, y)', f)
+
+    f_polar = f.subs(dict(x=r*cos(th), y=r*sin(th)))
+    find_f_polar_derivs(f_polar)
+    
+    find_f_total_derivs(f)
+
+
+def find_derivs_polar(u):
+    print_code('eval_expected_polar(self, r, th)', u)
+
+    f = diff(u, r, 2) + 1/r * diff(u, r) + 1/r**2 * diff(u, th, 2) +  k**2 * u
+    print_code('eval_f_polar(self, r, th)', f)
+
+    find_f_polar_derivs(f)
+    #TODO: find_f_total_derivs
+
+
+def find_f_polar_derivs(f_polar):
+    print_code('eval_d_f_r(self, r, th)', diff(f_polar, r))
+    print_code('eval_d2_f_r(self, r, th)', diff(f_polar, r, 2))
+   
+    print_code('eval_d_f_th(self, r, th)', diff(f_polar, th)) 
+    print_code('eval_d2_f_th(self, r, th)', diff(f_polar, th, 2))
+
+    print_code('eval_d2_f_r_th(self, r, th)', diff(f_polar, r, th))
+  
+
+def find_f_total_derivs(f):
+    grad = (diff(f, x), diff(f, y))
+    print_code('eval_grad_f(self, x, y)', grad)
+
+    hessian = (
+        (diff(f, x, x), diff(f, x, y)),
+        (diff(f, y, x), diff(f, y, y))
+    )
+    print_code('eval_hessian_f(self, x, y)', hessian)
+
+
+if __name__ == '__main__':
+    u = y*cos(x)
+    find_derivs(u)

@@ -5,7 +5,7 @@ from .problem import Problem, Pizza
 from cs.csf import CsFourier
 
 class Ripple(Problem):
-    k = 1
+    k = 2/3
     solver_class = CsFourier
 
     def eval_expected_polar(self, r, th):
