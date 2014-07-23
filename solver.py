@@ -15,6 +15,10 @@ def cart_to_polar(x, y):
         th += 2*np.pi
 
     return r, th
+    
+class Result:
+    pass
+    
 
 class Solver(SolverExtend, SolverDebug):  
 
@@ -166,6 +170,9 @@ class Solver(SolverExtend, SolverDebug):
     # Returns || u_act - u_exp ||_inf, the error between 
     # actual and expected solutions under the infinity-norm. 
     def eval_error(self, u_act):
+        if not self.problem.expectedKnown:
+            return None
+    
         u_exp = np.zeros((self.N-1)**2, dtype=complex)
         for i,j in self.M0:
             u_exp[matrices.get_index(self.N, i,j)] =\

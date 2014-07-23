@@ -26,8 +26,8 @@ class PsBasis:
 
     def get_span_center(self, sid):
         if sid == 0:
-            span = np.pi
-            center = np.pi + .5*self.a
+            span = np.pi - np.pi/24      # 23/24 pi
+            center = np.pi + .5*self.a   # 26/24 pi
         elif sid == 1 or sid == 2:
             span = 6/10*self.R
             center = self.R/2
@@ -80,7 +80,7 @@ class PsBasis:
             boundary_data = np.zeros(len(arg_data), dtype=complex)
             for l in range(len(boundary_points)):
                 p = boundary_points[l]
-                boundary_data[l] = self.problem.eval_bc(p['x'], p['y'])
+                boundary_data[l] = self.problem.eval_bc_extended(p['x'], p['y'], sid)
 
             n_basis = self.segment_desc[sid]['n_basis']
             self.c0.extend(np.polynomial.chebyshev.chebfit(

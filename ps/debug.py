@@ -3,6 +3,7 @@ from numpy import cos, sin
 
 import matplotlib.pyplot as plt
 
+from solver import cart_to_polar
 from chebyshev import get_chebyshev_roots
 import matrices
 

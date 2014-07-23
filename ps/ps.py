@@ -2,7 +2,7 @@ import math
 import numpy as np
 from numpy import cos, sin
 
-from solver import Solver, cart_to_polar
+from solver import Solver, Result, cart_to_polar
 import matrices
 
 from ps.basis import PsBasis
@@ -299,4 +299,8 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         u_act = self.get_potential(ext) + self.ap_sol_f
 
         error = self.eval_error(u_act)
-        return error
+        
+        result = Result()
+        result.error = error
+        result.u_act = u_act
+        return result

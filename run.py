@@ -5,23 +5,41 @@ import argparse
 import problems
 import solver
 
+
 class Interface:
 
     def test_convergence(self):
         prev_error = None
+        
+        u2 = None
+        u1 = None
+        u0 = None
 
         N = self.args.N
         while N <= self.args.c:
             my_solver = self.problem.get_solver(N, self.args.o)
-            error = my_solver.run()
+            result = my_solver.run()
 
-            print('---- {0} x {0} ----'.format(N)) 
-            print('Error:', error)
+            print('---- {0} x {0} ----'.format(N))
+            
+            if result.error is not None:
+                print('Error:', result.error)
+                
+            u2 = u1
+            u1 = u0
+            u0 = result.u_act
 
             if prev_error is not None:
-                print('Convergence:', np.log2(prev_error / error))
-
-            prev_error = error
+                convergence = np.log2(prev_error / result.error)
+            elif u2 is not None:
+                convergence = my_solver.calc_convergence3(u0, u1, u2)
+            else:
+                convergence = None
+                
+            if convergence is not None:
+                print('Convergence:', convergence)
+             
+            prev_error = result.error   
             N *= 2
             print()
 
@@ -44,8 +62,10 @@ class Interface:
         if self.args.c is None:
             my_solver = self.problem.get_solver(self.args.N, 
                 self.args.o, verbose=True)
-            error = my_solver.run()
-            print('Error:', error)
+            result = my_solver.run()
+            
+            if result.error is not None:
+                print('Error:', result.error)
         else:
             self.test_convergence()
 

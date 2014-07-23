@@ -6,6 +6,7 @@ from ps.ps import PizzaSolver
 
 class Problem:
     homogeneous = False
+    expectedKnown = True
 
     def get_solver(self, *args, **kwargs):
         return self.solver_class(self, *args, **kwargs)
@@ -31,15 +32,20 @@ class Pizza:
 
     def eval_bc(self, x, y):
         return self.eval_expected(x, y)
+        
+    def eval_bc_extended(self, x, y, sid):
+        return self.eval_bc(x, y)
 
-    def get_sid(self, th):
+    @staticmethod
+    def get_sid(th):
         tol = 1e-12
+        a = Pizza.a
 
-        if th > self.a:
+        if th > a:
             return 0
         elif abs(th) < tol:
             return 1
-        elif abs(th - self.a) < tol:
+        elif abs(th - a) < tol:
             return 2
 
         assert False

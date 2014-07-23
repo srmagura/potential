@@ -2,6 +2,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
+from solver import Result
 from cs.cs import CircleSolver
 import matrices
 from chebyshev import *
@@ -157,7 +158,11 @@ class CsChebyshev3(CircleSolver):
         u_act = self.get_potential(ext) + self.ap_sol_f
 
         error = self.eval_error(u_act)
-        return error
+        
+        result = Result()
+        result.error = error
+        result.u_act = u_act
+        return result
 
 
     ## DEBUGGING FUNCTIONS ##
