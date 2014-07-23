@@ -5,7 +5,7 @@ from chebyshev import eval_dn_T_t, get_chebyshev_roots
 
 class PsBasis:
 
-    n_basis_by_sid = (60, 30, 30)
+    n_basis_by_sid = (40, 20, 20)
     N_SEGMENT = 3
 
     def __init__(self):

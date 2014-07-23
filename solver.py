@@ -170,7 +170,7 @@ class Solver(SolverExtend, SolverDebug):
     # Returns || u_act - u_exp ||_inf, the error between 
     # actual and expected solutions under the infinity-norm. 
     def eval_error(self, u_act):
-        if not self.problem.expectedKnown:
+        if not self.problem.expected_known:
             return None
     
         u_exp = np.zeros((self.N-1)**2, dtype=complex)

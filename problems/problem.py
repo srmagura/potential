@@ -6,7 +6,7 @@ from ps.ps import PizzaSolver
 
 class Problem:
     homogeneous = False
-    expectedKnown = True
+    expected_known = True
 
     def get_solver(self, *args, **kwargs):
         return self.solver_class(self, *args, **kwargs)

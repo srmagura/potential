@@ -1,5 +1,7 @@
 import math
 import numpy as np
+from numpy import pi
+
 import matplotlib.pyplot as plt
 
 from solver import Result
@@ -7,10 +9,10 @@ from cs.cs import CircleSolver
 import matrices
 from chebyshev import *
 
-N_BASIS = 25
-DELTA = .1
+DELTA = .25
 
-N_SEGMENT = 3
+N_SEGMENT = 6
+N_BASIS = 15
 
 segment_desc = []
 B_desc = []
@@ -27,15 +29,12 @@ for sid in range(N_SEGMENT):
 
 
 def get_sid(th):
-    if th <= 2/3*np.pi:
-        return 0
-    elif th <= 4/3*np.pi:
-        return 1
-    else:
-        return 2
+    for sid in range(N_SEGMENT):
+        if th <= (sid+1) * 2*pi/N_SEGMENT:
+            return sid
 
 def get_span_center(sid):
-    return (np.pi/3 + DELTA, sid*2/3*np.pi + np.pi/3)
+    return ((pi+DELTA)/N_SEGMENT, (sid*2*pi + pi)/N_SEGMENT)
 
 def eval_g(sid, t):
     span, center = get_span_center(sid)
@@ -45,7 +44,7 @@ def eval_g_inv(sid, th):
     span, center = get_span_center(sid)
     return (th - center) / span
 
-d_g_inv_th = 1 / (np.pi/3 + DELTA) 
+d_g_inv_th = 1 / ((pi + DELTA)/N_SEGMENT) 
 
 def _eval_dn_B_th(JJ, th, n, deriv):
     sid = get_sid(th)
@@ -66,6 +65,8 @@ def eval_d2_B_th(JJ, th):
 
 def eval_d4_B_th(JJ, th):
     return _eval_dn_B_th(JJ, th, 4, eval_d4_T_t)
+
+
 
 class CsChebyshev3(CircleSolver):
     # Side length of square domain on which AP is solved
