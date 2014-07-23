@@ -184,6 +184,25 @@ class Solver(SolverExtend, SolverDebug):
             error.append(abs(u_exp[l] - u_act[l]))
 
         return max(error)
+        
+    def calc_convergence3(self, u0, u1, u2):
+        N = self.N
+        diff12 = []
+        diff01 = []
+    
+        for i, j in self.Mplus:
+            k0 = matrices.get_index(N, i, j)
+            k1 = matrices.get_index(N//2, i//2, j//2)
+            k2 = matrices.get_index(N//4, i//4, j//4)
+        
+            if i % 4 == 0 and j % 4 == 0:
+                diff12.append(abs(u1[k1] - u2[k2]))
+                
+            if i % 2 == 0 and j % 2 == 0:
+                diff01.append(abs(u0[k0] - u1[k1]))
+                
+        return np.log2(max(diff12) / max(diff01))
+           
 
 class SquareSolver(Solver):
 
