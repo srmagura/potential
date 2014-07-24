@@ -104,12 +104,12 @@ class RegF:
         return np.array(((0, 0), (0, 0)))
         
   
-class SinePizzaReg(Pizza, RegF, Problem): 
+class u04TestProblem(Pizza, RegF, Problem): 
     k = 1
 
     def eval_expected(self, x, y):
         r, th = cart_to_polar(x, y)
-        return sin(self.k*x) - eval_u04(self.k, self.R, r, th)
+        return -eval_u04(self.k, self.R, r, th)
         
     
 class JumpReg(Pizza, RegF, Problem):
