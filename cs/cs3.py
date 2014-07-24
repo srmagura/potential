@@ -11,21 +11,22 @@ from chebyshev import *
 
 DELTA = .25
 
-N_SEGMENT = 6
-N_BASIS = 15
+N_SEGMENT = 3
 
-segment_desc = []
-B_desc = []
+def setup_B_desc(n_basis):
+    global B_desc, segment_desc
+    segment_desc = []
+    B_desc = []
 
-for sid in range(N_SEGMENT):
-    s_desc = {'n_basis': N_BASIS}
-    segment_desc.append(s_desc)
+    for sid in range(N_SEGMENT):
+        s_desc = {'n_basis': n_basis}
+        segment_desc.append(s_desc)
 
-    for J in range(s_desc['n_basis']):
-        b_desc = {} 
-        b_desc['J'] = J
-        b_desc['sid'] = sid
-        B_desc.append(b_desc)
+        for J in range(s_desc['n_basis']):
+            b_desc = {} 
+            b_desc['J'] = J
+            b_desc['sid'] = sid
+            B_desc.append(b_desc)
 
 
 def get_sid(th):
@@ -152,6 +153,9 @@ class CsChebyshev3(CircleSolver):
                 t_data, boundary_data, n_basis-1))
 
     def run(self):
+        n_basis = self.problem.get_n_basis(self.N)
+        setup_B_desc(n_basis)
+    
         self.calc_c0()
         self.calc_c1()
 
@@ -191,29 +195,7 @@ class CsChebyshev3(CircleSolver):
             x, y = self.get_coord(*self.gamma[l])
             error[l] = self.problem.eval_expected(x, y) - ext[l]
 
-        return np.max(np.abs(error))
-
-    def c0_test(self):
-        n = 50
-        eps = .01
-        th_data = np.linspace(eps, 2*np.pi-eps, n)
-        exact_data = np.zeros(n)
-        expansion_data = np.zeros(n)
-
-        for l in range(n):
-            th = th_data[l]
-            exact_data[l] = self.problem.eval_bc(th).real
-
-            for JJ in range(len(B_desc)):
-                expansion_data[l] +=\
-                    (self.c0[JJ] * eval_B(JJ, th)).real
-
-        plt.plot(th_data, exact_data, label='Exact')
-        plt.plot(th_data, expansion_data, 'o', label='Expansion')
-        plt.legend()
-        plt.ylim(-1, 1)
-        plt.title('c0')
-        plt.show()
+        return np.max(np.abs(error))    
 
     def c1_test(self):
         n = 50

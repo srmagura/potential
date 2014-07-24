@@ -237,4 +237,25 @@ class PsDebug:
             x = r*cos(b)
             y = r*sin(b)
             ap()
+            
+    def optimize_n_basis(self):
+        min_error = float('inf')
         
+        for n_circle in range(5, 50):
+            for n_radius in range(max(5,n_circle-5), n_circle+1):
+                self.setup_B_desc(n_circle, n_radius)
+                
+                self.calc_c0()
+                self.calc_c1()
+
+                ext = self.extend_boundary()
+                u_act = self.get_potential(ext) + self.ap_sol_f
+
+                error = self.eval_error(u_act)
+                s ='n_circle={}    n_radius={}    error={}'.format(n_circle, n_radius, error)
+                
+                if error < min_error:
+                    min_error = error
+                    s = '!!!    ' + s
+                    
+                print(s)

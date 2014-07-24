@@ -27,8 +27,6 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         problem.R = self.R
         
         super().__init__(problem, N, scheme_order, **kwargs)
-        
-        self.ignore_nodes = {(N//2, N//2)}
 
     def is_interior(self, i, j):
         r, th = self.get_polar(i, j)
@@ -293,11 +291,12 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         boundary += self.extend_inhomo_f()
         return boundary
 
-
     def run(self):
+        n_basis_tuple = self.problem.get_n_basis(self.N)
+        self.setup_B_desc(*n_basis_tuple)
+        
         self.calc_c0()
         self.calc_c1()
-        self.c1_test()
 
         ext = self.extend_boundary()
         u_act = self.get_potential(ext) + self.ap_sol_f

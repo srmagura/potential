@@ -10,6 +10,12 @@ class Problem:
 
     def get_solver(self, *args, **kwargs):
         return self.solver_class(self, *args, **kwargs)
+        
+    def get_n_basis(self, N):
+        if N in self.n_basis_dict:
+            return self.n_basis_dict[N]
+        else:
+            return self.n_basis_dict[None]
 
     def eval_bc(self, th):
         return self.eval_expected(self.R*cos(th), self.R*sin(th))

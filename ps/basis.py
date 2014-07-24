@@ -5,17 +5,20 @@ from chebyshev import eval_dn_T_t, get_chebyshev_roots
 
 class PsBasis:
 
-    n_basis_by_sid = (40, 20, 20)
     N_SEGMENT = 3
 
     def __init__(self):
         super().__init__()
+        self.setup_B_desc(40, 20)
 
+    def setup_B_desc(self, n_circle, n_radius):
         self.segment_desc = []
         self.B_desc = []
+        
+        n_basis_by_sid = (n_circle, n_radius, n_radius)
 
         for sid in range(self.N_SEGMENT):
-            s_desc = {'n_basis': self.n_basis_by_sid[sid]}
+            s_desc = {'n_basis': n_basis_by_sid[sid]}
             self.segment_desc.append(s_desc)
 
             for J in range(s_desc['n_basis']):
