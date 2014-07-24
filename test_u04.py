@@ -34,7 +34,7 @@ def do_test(h):
     return max(error)
 
 k = 1
-R = 1
+R = 2.3
 
 p = -4
 while p >= -10:
