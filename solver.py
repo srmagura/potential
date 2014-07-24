@@ -20,7 +20,7 @@ class Result:
     pass
     
 
-class Solver(SolverExtend, SolverDebug):  
+class Solver(SolverExtend, SolverDebug): 
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         super().__init__()
@@ -28,6 +28,7 @@ class Solver(SolverExtend, SolverDebug):
         self.k = self.problem.k
         self.N = N
         self.scheme_order = scheme_order
+        self.ignore_nodes = set()
 
         if 'verbose' in kwargs:
             self.verbose = kwargs['verbose']
@@ -174,12 +175,13 @@ class Solver(SolverExtend, SolverDebug):
             return None
     
         u_exp = np.zeros((self.N-1)**2, dtype=complex)
-        for i,j in self.M0:
+        for i,j in self.M0 - self.ignore_nodes:
+            x, y = self.get_coord(i,j)
             u_exp[matrices.get_index(self.N, i,j)] =\
-                self.problem.eval_expected(*self.get_coord(i,j))
+                self.problem.eval_expected(x, y)
 
         error = []
-        for i,j in self.Mplus:
+        for i,j in self.Mplus - self.ignore_nodes:
             l = matrices.get_index(self.N, i,j)
             error.append(abs(u_exp[l] - u_act[l]))
 

@@ -20,12 +20,15 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
     etypes = dict(zip(ETYPE_NAMES, range(len(ETYPE_NAMES))))
 
+
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
         self.get_sid = problem.get_sid
         problem.R = self.R
-
+        
         super().__init__(problem, N, scheme_order, **kwargs)
+        
+        self.ignore_nodes = {(N//2, N//2)}
 
     def is_interior(self, i, j):
         r, th = self.get_polar(i, j)

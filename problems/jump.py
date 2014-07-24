@@ -41,7 +41,8 @@ class JumpNoCorrection(Pizza, Problem):
 
 def eval_u04(k, R, r, th):
     if r == 0:
-        print('eval_u04 received r=0')
+        print('u04 received r=0')
+        return None
 
     l = 1 / get_L(R)
     phi = th + pi / 6
@@ -79,26 +80,10 @@ def eval_reg_f(k, R, r, th):
     return f
     
     
-class JumpRegularized(Pizza, Problem):
-    k = 1
-
-    solver_class = PizzaSolver
-    expected_known = False
+class RegF:
 
     def eval_f_polar(self, r, th):
         return eval_reg_f(self.k, self.R, r, th)
-        
-    def eval_bc(self, x, y):
-        sid = Pizza.get_sid(th)
-        return self.eval_bc_extended(x, y, sid)
-        
-    def eval_bc_extended(self, x, y, sid):
-        r, th = cart_to_polar(x, y)
-        
-        bc_nc = eval_bc_extended(self.R, r, th, sid)
-        u04 = eval_u04(self.k, self.R, r, th)
-        
-        return bc_nc - u04
         
     def eval_d_f_r(self, r, th):
         return 0
@@ -117,3 +102,30 @@ class JumpRegularized(Pizza, Problem):
         
     def eval_hessian_f(self, x, y):
         return np.array(((0, 0), (0, 0)))
+        
+  
+class SinePizzaReg(Pizza, RegF, Problem): 
+    k = 1
+
+    def eval_expected(self, x, y):
+        r, th = cart_to_polar(x, y)
+        return sin(self.k*x) - eval_u04(self.k, self.R, r, th)
+        
+    
+class JumpReg(Pizza, RegF, Problem):
+    k = 1
+
+    expected_known = False
+        
+    def eval_bc(self, x, y):
+        sid = Pizza.get_sid(th)
+        return self.eval_bc_extended(x, y, sid)
+        
+    def eval_bc_extended(self, x, y, sid):
+        r, th = cart_to_polar(x, y)
+        
+        bc_nc = eval_bc_extended(self.R, r, th, sid)
+        u04 = eval_u04(self.k, self.R, r, th)
+        
+        return bc_nc - u04
+
