@@ -88,7 +88,9 @@ class PsBasis:
 
     def get_boundary_sample(self):
         th_data = np.arange(self.a, 2*np.pi, .1)
-        r_data = np.linspace(0, self.R, 25)
+        
+        n = 25
+        r_data = np.linspace(self.R/n, self.R, n)
 
         points = []
         arg_datas = (th_data, r_data[::-1], r_data)

@@ -297,6 +297,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
     def run(self):
         self.calc_c0()
         self.calc_c1()
+        self.c1_test()
 
         ext = self.extend_boundary()
         u_act = self.get_potential(ext) + self.ap_sol_f

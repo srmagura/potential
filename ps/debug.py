@@ -110,21 +110,27 @@ class PsDebug:
         plt.plot(s_data, exact_data, label='Exact')
         plt.plot(s_data, expansion_data, 'o', label='Expansion')
         plt.legend(loc=0)
-        plt.ylim(-1, 1)
+        #plt.ylim(-1, 1)
         plt.title('c0')
         plt.show()
 
     def c1_test(self):
         sample = self.get_boundary_sample()
 
+        do_exact = hasattr(self.problem, 'eval_d_u_outwards')       
+
         s_data = np.zeros(len(sample))
-        exact_data = np.zeros(len(sample))
         expansion_data = np.zeros(len(sample))
+        
+        if do_exact:
+            exact_data = np.zeros(len(sample))
 
         for l in range(len(sample)):
             p = sample[l]
             s_data[l] = p['s']
-            exact_data[l] = self.problem.eval_d_u_outwards(p['x'], p['y']).real
+            
+            if do_exact:
+                exact_data[l] = self.problem.eval_d_u_outwards(p['x'], p['y']).real
 
             r, th = cart_to_polar(p['x'], p['y'])
             for JJ in range(len(self.B_desc)):
@@ -132,10 +138,12 @@ class PsDebug:
                     (self.c1[JJ] *
                     self.eval_dn_B_arg(0, JJ, r, th)).real
 
-        plt.plot(s_data, exact_data, label='Exact')
+        if do_exact:
+            plt.plot(s_data, exact_data, label='Exact')
+            
         plt.plot(s_data, expansion_data, 'o', label='Expansion')
         plt.legend(loc=4)
-        plt.ylim(-1.5, 1.5)
+        #plt.ylim(-1.5, 1.5)
         plt.title('c1')
         plt.show()
 
@@ -229,3 +237,4 @@ class PsDebug:
             x = r*cos(b)
             y = r*sin(b)
             ap()
+        
