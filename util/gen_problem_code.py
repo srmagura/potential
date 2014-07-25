@@ -55,8 +55,3 @@ def find_f_total_derivs(f):
     )
     hessian_np = 'np.array({})'.format(hessian)
     print_code('eval_hessian_f(self, x, y)', hessian_np)
-
-
-if __name__ == '__main__':
-    u = y*cos(x)
-    find_derivs(u)

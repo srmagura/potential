@@ -35,6 +35,9 @@ class Problem:
 class Pizza:
     a = np.pi / 6
     solver_class = PizzaSolver
+    
+    n_basis_dict = {16: (17, 12), 32: (23, 19), 64: (32, 27), 
+        128: (45, 37), None: (55, 50)}   
 
     def eval_bc(self, x, y):
         return self.eval_expected(x, y)
