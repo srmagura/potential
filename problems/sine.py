@@ -28,7 +28,8 @@ class Sine(Problem):
 
 class SinePizza(Pizza, Sine):
 
-    n_basis_dict = {16: (17, 12), 32: (23, 19), 64: (32, 27), None: (45, 37)}    
+    n_basis_dict = {16: (17, 12), 32: (23, 19), 64: (32, 27), 
+        128: (45, 37), None: (55, 50)}    
     
     def eval_d_u_outwards(self, x, y, **kwargs):
         r, th = cart_to_polar(x, y)
