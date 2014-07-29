@@ -90,14 +90,13 @@ class PsBasis:
                 t_data, boundary_data, n_basis-1))
 
     def get_boundary_sample(self):
-        th_data = np.arange(self.a, 2*np.pi, .1)
+        n = 100
+        th_data = np.arange(self.a, 2*np.pi, (2*np.pi-self.a)/(3*n))
         
-        n = 25
         r_data = np.linspace(self.R/n, self.R, n)
 
         points = []
         arg_datas = (th_data, r_data[::-1], r_data)
-
         for sid in range(self.N_SEGMENT):
             points.extend(
                 self.get_boundary_sample_by_sid(sid, arg_datas[sid]))
@@ -115,7 +114,7 @@ class PsBasis:
                 points.append({'x': self.R * np.cos(th),
                     'y': self.R * np.sin(th),
                     's': self.R * (th - a),
-                    'sid': 0})
+                    'sid': sid})
 
         elif sid == 1:
             for i in range(len(arg_data)):
@@ -124,7 +123,7 @@ class PsBasis:
                 points.append({'x': r,
                     'y': 0,
                     's': self.R*(2*np.pi - a + 1) - r,
-                    'sid': 1})
+                    'sid': sid})
 
         elif sid == 2:
             for i in range(len(arg_data)):
@@ -133,7 +132,7 @@ class PsBasis:
                 points.append({'x': r*np.cos(a),
                     'y': r*np.sin(a),
                     's': self.R*(2*np.pi - a + 1) + r,
-                    'sid': 2})
+                    'sid': sid})
 
         return points
 
@@ -152,7 +151,7 @@ class PsBasis:
                 param_th = th
             elif etype == self.etypes['radius1']:
                 param_r = x
-                param_th = 0 
+                param_th = 2*np.pi
             elif etype == self.etypes['radius2']:
                 x0, y0 = self.get_radius_point(2, x, y)
                 param_r = cart_to_polar(x0, y0)[0]

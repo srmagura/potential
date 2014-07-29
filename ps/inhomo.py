@@ -192,7 +192,7 @@ class PsInhomo:
         a = self.a
 
         if radius_sid == 1:
-            th0 = 0
+            th0 = 2*np.pi
         elif radius_sid == 2:
             th0 = a
 

@@ -50,10 +50,10 @@ class Pizza:
         tol = 1e-12
         a = Pizza.a
 
-        if th > a:
-            return 0
-        elif abs(th) < tol:
+        if th >= 2*np.pi:
             return 1
+        elif th > a:
+            return 0
         elif abs(th - a) < tol:
             return 2
 

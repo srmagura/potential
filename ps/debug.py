@@ -99,16 +99,16 @@ class PsDebug:
         for l in range(len(sample)):
             p = sample[l]
             s_data[l] = p['s']
-            exact_data[l] = self.problem.eval_bc(p['x'], p['y']).real
-
+            exact_data[l] = self.problem.eval_bc(p['x'], p['y']).real          
+            
             r, th = cart_to_polar(p['x'], p['y'])
             for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\
                     (self.c0[JJ] *
                     self.eval_dn_B_arg(0, JJ, r, th)).real
 
-        plt.plot(s_data, exact_data, label='Exact')
-        plt.plot(s_data, expansion_data, 'o', label='Expansion')
+        plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
+        plt.plot(s_data, expansion_data, label='Expansion')
         plt.legend(loc=0)
         #plt.ylim(-1, 1)
         plt.title('c0')
@@ -141,7 +141,7 @@ class PsDebug:
         if do_exact:
             plt.plot(s_data, exact_data, label='Exact')
             
-        plt.plot(s_data, expansion_data, 'o', label='Expansion')
+        plt.plot(s_data, expansion_data, label='Expansion')
         plt.legend(loc=4)
         #plt.ylim(-1.5, 1.5)
         plt.title('c1')

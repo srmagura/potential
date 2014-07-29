@@ -146,7 +146,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
     def do_extend_radius1(self, i, j):
         x, y = self.get_coord(i, j)
-        derivs = self.ext_calc_certain_xi_derivs(i, j, x, 0)
+        derivs = self.ext_calc_certain_xi_derivs(i, j, x, 2*np.pi)
 
         return self.extend_from_radius(y, *derivs)
 
@@ -296,7 +296,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         self.setup_B_desc(*n_basis_tuple)
         
         self.calc_c0()
-        #self.c0_test()
+        #return self.c0_test()
         self.calc_c1()
         #self.c1_test()
 

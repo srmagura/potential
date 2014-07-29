@@ -11,7 +11,7 @@ from extend import SolverExtend
 def cart_to_polar(x, y):
     r, th = math.hypot(x, y), math.atan2(y, x)
 
-    if th < 0:
+    if th <= 0:
         th += 2*np.pi
 
     return r, th
