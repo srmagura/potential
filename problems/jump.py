@@ -109,14 +109,20 @@ class RegF:
         x, y = symbols('x y')
         cart_args = (k, R, x, y)
         
-        subs_dict = {r: sqrt(x**2 + y**2)}
+        subs_dict_upper = {
+            r: sqrt(x**2 + y**2),
+            phi: atan2(y, x)
+        }
         
-        subs_dict[phi] = atan2(y, x)
-        f_cart_upper = f.subs(subs_dict)
+        subs_dict_lower = {
+            r: sqrt(x**2 + y**2),
+            phi: atan2(y, x) + 2*pi
+        }
         
-        subs_dict[phi] = atan2(y, x) + 2*pi
-        f_cart_lower = f.subs(subs_dict)
+        f_cart_upper = f.subs(subs_dict_upper)
+        f_cart_lower = f.subs(subs_dict_lower)
         
+        # Gradient
         d_f_x_upper = diff(f_cart_upper, x)
         self.d_f_x_upper_lambda = lambdify(cart_args, d_f_x_upper)
         
@@ -128,6 +134,25 @@ class RegF:
         
         d_f_y_lower = diff(f_cart_lower, y)
         self.d_f_y_lower_lambda = lambdify(cart_args, d_f_y_lower)
+        
+        # Hessian
+        d2_f_x_upper = diff(f_cart_upper, x, 2)
+        self.d2_f_x_upper_lambda = lambdify(cart_args, d2_f_x_upper)
+        
+        d2_f_x_lower = diff(f_cart_lower, x, 2)
+        self.d2_f_x_lower_lambda = lambdify(cart_args, d2_f_x_lower)
+        
+        d2_f_x_y_upper = diff(f_cart_upper, x, y)
+        self.d2_f_x_y_upper_lambda = lambdify(cart_args, d2_f_x_y_upper)
+        
+        d2_f_x_y_lower = diff(f_cart_lower, x, y)
+        self.d2_f_x_y_lower_lambda = lambdify(cart_args, d2_f_x_y_lower)
+        
+        d2_f_y_upper = diff(f_cart_upper, y, 2)
+        self.d2_f_y_upper_lambda = lambdify(cart_args, d2_f_y_upper)
+        
+        d2_f_y_lower = diff(f_cart_lower, y, 2)
+        self.d2_f_y_lower_lambda = lambdify(cart_args, d2_f_y_lower)
 
     def eval_f_polar(self, r, th):
         assert th > .01
@@ -164,9 +189,16 @@ class RegF:
         return np.array((d_f_x, d_f_y))
 
     def eval_hessian_f(self, x, y):
-        k = self.k
-        l = 1 / get_L(self.R)
-        return np.array(((0, 0), (0, 0)))
+        if y > 0:
+            d2_f_x = self.d2_f_x_upper_lambda(self.k, self.R, x, y)
+            d2_f_x_y = self.d2_f_x_y_upper_lambda(self.k, self.R, x, y)
+            d2_f_y = self.d2_f_y_upper_lambda(self.k, self.R, x, y)
+        else:
+            d2_f_x = self.d2_f_x_lower_lambda(self.k, self.R, x, y)
+            d2_f_x_y = self.d2_f_x_y_lower_lambda(self.k, self.R, x, y)
+            d2_f_y = self.d2_f_y_lower_lambda(self.k, self.R, x, y)
+        
+        return np.array(((d2_f_x, d2_f_x_y), (d2_f_x_y, d2_f_y)))
           
     
 class JumpReg(Pizza, RegF, Problem):

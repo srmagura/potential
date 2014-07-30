@@ -115,6 +115,18 @@ class PsDebug:
         plt.show()
 
     def c1_test(self):
+        sid = 0
+        i = 0
+        
+        for desc in self.segment_desc:
+            print('c1(segment {}):'.format(sid))
+            
+            n_basis = desc['n_basis']
+            print(self.c1[i:i+n_basis])
+            
+            i += n_basis
+            sid += 1
+    
         sample = self.get_boundary_sample()
 
         do_exact = hasattr(self.problem, 'eval_d_u_outwards')       
@@ -139,7 +151,7 @@ class PsDebug:
                     self.eval_dn_B_arg(0, JJ, r, th)).real
 
         if do_exact:
-            plt.plot(s_data, exact_data, label='Exact')
+            plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
             
         plt.plot(s_data, expansion_data, label='Expansion')
         plt.legend(loc=4)

@@ -296,9 +296,9 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         self.setup_B_desc(*n_basis_tuple)
         
         self.calc_c0()
-        #return self.c0_test()
+        #self.c0_test()
         self.calc_c1()
-        #self.c1_test()
+        self.c1_test()
 
         ext = self.extend_boundary()
         u_act = self.get_potential(ext) + self.ap_sol_f
