@@ -39,9 +39,15 @@ class SolverExtend:
         y = R * np.sin(th)
 
         f = p.eval_f(x, y)
-        d_f_r = p.eval_d_f_r(R, th)
-        d2_f_r = p.eval_d2_f_r(R, th)
-        d2_f_th = p.eval_d2_f_th(R, th)
+        
+        if self.scheme_order == 4:
+            d_f_r = p.eval_d_f_r(R, th)
+            d2_f_r = p.eval_d2_f_r(R, th)
+            d2_f_th = p.eval_d2_f_th(R, th)
+        else:
+            d_f_r = 0
+            d2_f_r = 0
+            d2_f_th = 0
 
         return self.extend_inhomo_circle(
             r, f, d_f_r, d2_f_r, d2_f_th)
@@ -50,11 +56,13 @@ class SolverExtend:
         R = self.R
         k = self.k
 
-        derivs = (0, 0, 
-            f,
-            d_f_r - f / R,
-            d2_f_r - d2_f_th / R**2 - d_f_r / R + (3/R**2 - k**2) * f
-        )
+        derivs = [0, 0, f]
+        
+        if self.scheme_order == 4:
+            derivs.extend([
+                d_f_r - f / R,
+                d2_f_r - d2_f_th / R**2 - d_f_r / R + (3/R**2 - k**2) * f
+            ])
 
         v = 0
         for l in range(len(derivs)):

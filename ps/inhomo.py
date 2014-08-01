@@ -83,11 +83,10 @@ class PsInhomo:
     def inhomo_extend_from_radius(self, Y, f, d_f_Y, d2_f_X, d2_f_Y):
         k = self.problem.k
 
-        derivs = (0, 0, 
-            f, 
-            d_f_Y, 
-            -d2_f_X - k**2 * f + d2_f_Y
-        )
+        derivs = [0, 0, f]
+        
+        if self.scheme_order == 4:
+            derivs.extend([d_f_Y, -d2_f_X - k**2 * f + d2_f_Y])
 
         v = 0
         for l in range(len(derivs)):
@@ -113,10 +112,15 @@ class PsInhomo:
 
         f = p.eval_f(x0, y0)
 
-        grad_f = p.eval_grad_f(x0, y0)
+        if self.scheme_order == 4:
+            grad_f = p.eval_grad_f(x0, y0)
+            hessian_f = p.eval_hessian_f(x0, y0)
+        else:
+            grad_f = np.zeros(2)
+            hessian_f = np.zeros((2, 2))
+        
         d_f_Y = grad_f.dot(dir_Y)
 
-        hessian_f = p.eval_hessian_f(x0, y0)
         d2_f_X = hessian_f.dot(dir_X).dot(dir_X)
         d2_f_Y = hessian_f.dot(dir_Y).dot(dir_Y)
         return self.inhomo_extend_from_radius(
@@ -158,8 +162,13 @@ class PsInhomo:
         dir_X, dir_Y = self.get_dir_XY(radius_sid)
 
         f0 = p.eval_f(x0, y0)
-        grad_f0 = p.eval_grad_f(x0, y0)
-        hessian_f0 = p.eval_hessian_f(x0, y0)
+        
+        if self.scheme_order == 4:
+            grad_f0 = p.eval_grad_f(x0, y0)
+            hessian_f0 = p.eval_hessian_f(x0, y0)
+        else:
+            grad_f0 = np.zeros(2)
+            hessian_f0 = np.zeros((2, 2))
 
         f_derivs = (
             f0, 
@@ -200,26 +209,34 @@ class PsInhomo:
         delta = th - th0
 
         f0 = p.eval_f_polar(R, th0)
-        d_f_th0 = p.eval_d_f_th(R, th0)
-        d2_f_th0 = p.eval_d2_f_th(R, th0)
+        f_derivs = [f0]
+        
+        if self.scheme_order == 4:
+            d_f_th0 = p.eval_d_f_th(R, th0)
+            d2_f_th0 = p.eval_d2_f_th(R, th0)
 
-        f_derivs = (f0, d_f_th0, d2_f_th0)
+            f_derivs.extend([d_f_th0, d2_f_th0])
 
         f = 0
         for l in range(len(f_derivs)):
             f += f_derivs[l] * delta**l / math.factorial(l)
 
-        d_f_r0 = p.eval_d_f_r(R, th0)
-        d2_f_r_th0 = p.eval_d2_f_r_th(R, th0)
+        d_f_r = 0       
+        if self.scheme_order == 4:
+            d_f_r0 = p.eval_d_f_r(R, th0)
+            d2_f_r_th0 = p.eval_d2_f_r_th(R, th0)
 
-        d_f_r_derivs = (d_f_r0, d2_f_r_th0)
+            d_f_r_derivs = (d_f_r0, d2_f_r_th0)
 
-        d_f_r = 0
-        for l in range(len(d_f_r_derivs)):
-            d_f_r += d_f_r_derivs[l] * delta**l / math.factorial(l)
+            for l in range(len(d_f_r_derivs)):
+                d_f_r += d_f_r_derivs[l] * delta**l / math.factorial(l)
 
-        d2_f_r = p.eval_d2_f_r(R, th0)
-        d2_f_th = p.eval_d2_f_th(R, th0)
+            d2_f_r = p.eval_d2_f_r(R, th0)
+            d2_f_th = p.eval_d2_f_th(R, th0)
+            
+        else:
+            d2_f_r = 0
+            d2_f_th = 0
 
         return self.extend_inhomo_circle(r, f, d_f_r, d2_f_r, d2_f_th)
 
