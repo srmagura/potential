@@ -5,6 +5,7 @@ from solver import cart_to_polar
 from ps.ps import PizzaSolver
 
 from .problem import Problem, Pizza
+import problems.sympy_f as sympy_f
 
 def get_L(R):
     return 2*R + 11/6*pi*R
@@ -79,138 +80,14 @@ def get_reg_f_expr():
 def eval_phi(th):
     return th - pi/6
     
-    
-class RegF:
-
-    def __init__(self):
-        super().__init__()
         
-        k, R, r, phi = symbols('k R r phi')
-        args = (k, R, r, phi)
-        f = get_reg_f_expr()
-          
-        self.f_polar_lambda = lambdify(args, f)
-        
-        d_f_r = diff(f, r)
-        self.d_f_r_lambda = lambdify(args, d_f_r)
-        
-        d2_f_r = diff(f, r, 2)
-        self.d2_f_r_lambda = lambdify(args, d2_f_r)
-        
-        d_f_th = diff(f, phi)
-        self.d_f_th_lambda = lambdify(args, d_f_th)
-        
-        d2_f_th = diff(f, phi, 2)
-        self.d2_f_th_lambda = lambdify(args, d2_f_th)
-        
-        d2_f_r_th = diff(f, r, phi)
-        self.d2_f_r_th_lambda = lambdify(args, d2_f_r_th)
-        
-        x, y = symbols('x y')
-        cart_args = (k, R, x, y)
-        
-        subs_dict_upper = {
-            r: sqrt(x**2 + y**2),
-            phi: atan2(y, x)
-        }
-        
-        subs_dict_lower = {
-            r: sqrt(x**2 + y**2),
-            phi: atan2(y, x) + 2*pi
-        }
-        
-        f_cart_upper = f.subs(subs_dict_upper)
-        f_cart_lower = f.subs(subs_dict_lower)
-        
-        # Gradient
-        d_f_x_upper = diff(f_cart_upper, x)
-        self.d_f_x_upper_lambda = lambdify(cart_args, d_f_x_upper)
-        
-        d_f_x_lower = diff(f_cart_lower, x)
-        self.d_f_x_lower_lambda = lambdify(cart_args, d_f_x_lower)
-        
-        d_f_y_upper = diff(f_cart_upper, y)
-        self.d_f_y_upper_lambda = lambdify(cart_args, d_f_y_upper)
-        
-        d_f_y_lower = diff(f_cart_lower, y)
-        self.d_f_y_lower_lambda = lambdify(cart_args, d_f_y_lower)
-        
-        # Hessian
-        d2_f_x_upper = diff(f_cart_upper, x, 2)
-        self.d2_f_x_upper_lambda = lambdify(cart_args, d2_f_x_upper)
-        
-        d2_f_x_lower = diff(f_cart_lower, x, 2)
-        self.d2_f_x_lower_lambda = lambdify(cart_args, d2_f_x_lower)
-        
-        d2_f_x_y_upper = diff(f_cart_upper, x, y)
-        self.d2_f_x_y_upper_lambda = lambdify(cart_args, d2_f_x_y_upper)
-        
-        d2_f_x_y_lower = diff(f_cart_lower, x, y)
-        self.d2_f_x_y_lower_lambda = lambdify(cart_args, d2_f_x_y_lower)
-        
-        d2_f_y_upper = diff(f_cart_upper, y, 2)
-        self.d2_f_y_upper_lambda = lambdify(cart_args, d2_f_y_upper)
-        
-        d2_f_y_lower = diff(f_cart_lower, y, 2)
-        self.d2_f_y_lower_lambda = lambdify(cart_args, d2_f_y_lower)
-
-    def eval_f_polar(self, r, th):
-        assert th > .01
-        return self.f_polar_lambda(self.k, self.R, r, eval_phi(th))
-    
-    def eval_d_f_r(self, r, th):
-        assert th > .01
-        return self.d_f_r_lambda(self.k, self.R, r, eval_phi(th))
-
-    def eval_d2_f_r(self, r, th):
-        assert th > .01
-        return self.d2_f_r_lambda(self.k, self.R, r, eval_phi(th))
-
-    def eval_d_f_th(self, r, th):
-        assert th > .01
-        return self.d_f_th_lambda(self.k, self.R, r, eval_phi(th))
-
-    def eval_d2_f_th(self, r, th):
-        assert th > .01
-        return self.d2_f_th_lambda(self.k, self.R, r, eval_phi(th))
-
-    def eval_d2_f_r_th(self, r, th):
-        assert th > .01
-        return self.d2_f_r_th_lambda(self.k, self.R, r, eval_phi(th))
-
-    def eval_grad_f(self, x, y):
-        if y > 0:
-            d_f_x = self.d_f_x_upper_lambda(self.k, self.R, x, y)
-            d_f_y = self.d_f_y_upper_lambda(self.k, self.R, x, y)
-        else:
-            d_f_x = self.d_f_x_lower_lambda(self.k, self.R, x, y)
-            d_f_y = self.d_f_y_lower_lambda(self.k, self.R, x, y)
-        
-        return np.array((d_f_x, d_f_y))
-
-    def eval_hessian_f(self, x, y):
-        if y > 0:
-            d2_f_x = self.d2_f_x_upper_lambda(self.k, self.R, x, y)
-            d2_f_x_y = self.d2_f_x_y_upper_lambda(self.k, self.R, x, y)
-            d2_f_y = self.d2_f_y_upper_lambda(self.k, self.R, x, y)
-        else:
-            d2_f_x = self.d2_f_x_lower_lambda(self.k, self.R, x, y)
-            d2_f_x_y = self.d2_f_x_y_lower_lambda(self.k, self.R, x, y)
-            d2_f_y = self.d2_f_y_lower_lambda(self.k, self.R, x, y)
-        
-        return np.array(((d2_f_x, d2_f_x_y), (d2_f_x_y, d2_f_y)))
-          
-    
-class JumpReg(Pizza, RegF, Problem):
+class JumpReg(Pizza, Problem):
     k = 1
 
     expected_known = False
     
     def __init__(self):
         super().__init__()
-        
-        k, R, r, phi = symbols('k R r phi')     
-        self.u04_lambda = lambdify((k, R, r, phi), get_u04_expr())
         
     def eval_bc(self, x, y):
         r, th = cart_to_polar(x, y)
@@ -236,5 +113,21 @@ class JumpReg(Pizza, RegF, Problem):
 
         return float(bc_nc - u04)
         #return bc_nc
-        #return u04 
+        #return u04
+        
+    
+class RegF0(sympy_f.SympyF):
+
+    def __init__(self):
+        kwargs = {'f_expr': get_reg_f_expr()}
+        super().__init__(**kwargs)
+        
+        
+class JumpReg0(RegF0, JumpReg):
+
+    def __init__(self): 
+        super().__init__()
+             
+        k, R, r, phi = symbols('k R r phi')     
+        self.u04_lambda = lambdify((k, R, r, phi), get_u04_expr())
 

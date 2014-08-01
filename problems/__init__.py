@@ -3,7 +3,7 @@ from .sine import Sine, SinePizza
 from .wave import Wave, WavePizza
 from .ripple import Ripple, RipplePizza
 from .ycosine import YCosine, YCosinePizza
-from .jump import JumpNoCorrection, JumpReg
+from .jump import JumpNoCorrection, JumpReg0
 
 
 problem_dict = {
@@ -17,5 +17,5 @@ problem_dict = {
     'ycosine': YCosine,
     'ycosine-pizza': YCosinePizza,
     'jump-nc': JumpNoCorrection,
-    'jump-reg': JumpReg,
+    'jump-reg0': JumpReg0,
 }
