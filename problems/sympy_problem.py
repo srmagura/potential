@@ -1,35 +1,39 @@
 from sympy import *
 import numpy as np
    
-def eval_phi(th):
-    return th - pi/6
-
-class SympyF:
-
-    print_calls = True
+   
+class SympyProblem:
 
     def __init__(self, **kwargs):
-        f = kwargs.pop('f_expr')
+        u = kwargs.pop('u_expr')
         super().__init__(**kwargs)
-        
-        k, R, r, phi = symbols('k R r phi')
-        args = (k, R, r, phi)
           
+        args = symbols('k R r th')
+        k, R, r, th = args
+        
+        f = diff(u, r, 2) + diff(u, r)/r + diff(u, th, 2)/r**2 + k**2 * u 
         self.f_polar_lambda = lambdify(args, f)
         
+        if kwargs['scheme_order'] == 4:
+            self.do_diff(f)
+        
+    def do_diff(self, f):
+        args = symbols('k R r th')
+        k, R, r, th = args
+    
         d_f_r = diff(f, r)
         self.d_f_r_lambda = lambdify(args, d_f_r)
         
         d2_f_r = diff(f, r, 2)
         self.d2_f_r_lambda = lambdify(args, d2_f_r)
         
-        d_f_th = diff(f, phi)
+        d_f_th = diff(f, th)
         self.d_f_th_lambda = lambdify(args, d_f_th)
         
-        d2_f_th = diff(f, phi, 2)
+        d2_f_th = diff(f, th, 2)
         self.d2_f_th_lambda = lambdify(args, d2_f_th)
         
-        d2_f_r_th = diff(f, r, phi)
+        d2_f_r_th = diff(f, r, th)
         self.d2_f_r_th_lambda = lambdify(args, d2_f_r_th)
         
         x, y = symbols('x y')
@@ -37,12 +41,12 @@ class SympyF:
         
         subs_dict_upper = {
             r: sqrt(x**2 + y**2),
-            phi: atan2(y, x) - pi/6
+            th: atan2(y, x)
         }
         
         subs_dict_lower = {
             r: sqrt(x**2 + y**2),
-            phi: atan2(y, x) + 2*pi - pi/6
+            th: atan2(y, x) + 2*pi
         }
         
         f_cart_upper = f.subs(subs_dict_upper)
@@ -82,47 +86,29 @@ class SympyF:
 
     def eval_f_polar(self, r, th):
         assert th > .01
-        return self.f_polar_lambda(self.k, self.R, r, eval_phi(th))
+        return self.f_polar_lambda(self.k, self.R, r, th)
     
     def eval_d_f_r(self, r, th):
-        if self.print_calls:
-            print('eval_d_f_r')
-       
         assert th > .01
-        return self.d_f_r_lambda(self.k, self.R, r, eval_phi(th))
+        return self.d_f_r_lambda(self.k, self.R, r, th)
 
     def eval_d2_f_r(self, r, th):
-        if self.print_calls:
-            print('eval_d2_f_r')
-    
         assert th > .01
-        return self.d2_f_r_lambda(self.k, self.R, r, eval_phi(th))
+        return self.d2_f_r_lambda(self.k, self.R, r, th)
 
     def eval_d_f_th(self, r, th):
-        if self.print_calls:
-            print('eval_d_f_th')
-    
         assert th > .01
-        return self.d_f_th_lambda(self.k, self.R, r, eval_phi(th))
+        return self.d_f_th_lambda(self.k, self.R, r, th)
 
-    def eval_d2_f_th(self, r, th):
-        if self.print_calls:
-            print('eval_d2_f_th')
-    
+    def eval_d2_f_th(self, r, th):   
         assert th > .01
-        return self.d2_f_th_lambda(self.k, self.R, r, eval_phi(th))
+        return self.d2_f_th_lambda(self.k, self.R, r, th)
 
-    def eval_d2_f_r_th(self, r, th):
-        if self.print_calls:
-            print('eval_d2_f_r_th')
-    
+    def eval_d2_f_r_th(self, r, th):  
         assert th > .01
-        return self.d2_f_r_th_lambda(self.k, self.R, r, eval_phi(th))
+        return self.d2_f_r_th_lambda(self.k, self.R, r, th)
 
     def eval_grad_f(self, x, y):
-        if self.print_calls:
-            print('eval_grad_f')
-    
         if y > 0:
             d_f_x = self.d_f_x_upper_lambda(self.k, self.R, x, y)
             d_f_y = self.d_f_y_upper_lambda(self.k, self.R, x, y)
@@ -132,10 +118,7 @@ class SympyF:
         
         return np.array((d_f_x, d_f_y))
 
-    def eval_hessian_f(self, x, y):
-        if self.print_calls:
-            print('eval_hessian_f')
-    
+    def eval_hessian_f(self, x, y): 
         if y > 0:
             d2_f_x = self.d2_f_x_upper_lambda(self.k, self.R, x, y)
             d2_f_x_y = self.d2_f_x_y_upper_lambda(self.k, self.R, x, y)

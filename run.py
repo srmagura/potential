@@ -53,7 +53,7 @@ class Interface:
         parser.add_argument('-s', choices=solver.solver_dict.keys())
         self.args = parser.parse_args()
 
-        self.problem = problems.problem_dict[self.args.p]()
+        self.problem = problems.problem_dict[self.args.p](scheme_order=self.args.o)
 
         if self.args.s is not None:
             self.problem.solver_class =\

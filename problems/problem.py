@@ -7,6 +7,9 @@ from ps.ps import PizzaSolver
 class Problem:
     homogeneous = False
     expected_known = True
+    
+    def __init__(self, **kwargs):
+        super().__init__() 
 
     def get_solver(self, *args, **kwargs):
         return self.solver_class(self, *args, **kwargs)
@@ -37,7 +40,10 @@ class Pizza:
     solver_class = PizzaSolver
     
     n_basis_dict = {16: (17, 12), 32: (23, 19), 64: (32, 27), 
-        128: (45, 37), None: (55, 50)}   
+        128: (45, 37), None: (55, 50)}
+        
+    def __init__(self, **kwargs):
+        super().__init__()   
 
     def eval_bc(self, x, y):
         return self.eval_expected(x, y)

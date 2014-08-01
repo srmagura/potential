@@ -1,7 +1,9 @@
 import numpy as np
 from numpy import sin, cos, sqrt
+import sympy
 
 from .problem import Problem, Pizza
+from .sympy_problem import SympyProblem
 from cs.csf import CsFourier
 
 class Ripple(Problem):
@@ -70,3 +72,21 @@ class RipplePizza(Pizza, Ripple):
             return super().eval_d_u_r(th)
         elif sid == 1 or sid == 2:
             return 0
+            
+class RipplePizzaSympy(SympyProblem, Pizza, Problem):
+
+    k = 1
+
+    def __init__(self, **kwargs):
+        k, r = sympy.symbols('k r')
+        kwargs['u_expr'] = sympy.cos(k*r)
+        super().__init__(**kwargs)
+        
+    def eval_expected_polar(self, r, th):
+        return cos(self.k*r)
+        
+    def eval_f_polar(self, r, th):
+        if r != 0:
+            return super().eval_f_polar(r, th)
+        else:
+            return -self.k**2
