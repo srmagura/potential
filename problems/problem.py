@@ -9,7 +9,7 @@ class Problem:
     expected_known = True
     
     def __init__(self, **kwargs):
-        super().__init__() 
+        super().__init__()
 
     def get_solver(self, *args, **kwargs):
         return self.solver_class(self, *args, **kwargs)
