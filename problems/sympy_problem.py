@@ -5,13 +5,12 @@ import numpy as np
 class SympyProblem:
 
     def __init__(self, **kwargs):
-        u = kwargs.pop('u_expr')
+        f = kwargs.pop('f_expr')
         super().__init__(**kwargs)
           
         args = symbols('k R r th')
         k, R, r, th = args
         
-        f = diff(u, r, 2) + diff(u, r)/r + diff(u, th, 2)/r**2 + k**2 * u 
         self.f_polar_lambda = lambdify(args, f)
         
         if kwargs['scheme_order'] == 4:

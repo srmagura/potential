@@ -302,6 +302,8 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
         ext = self.extend_boundary()
         u_act = self.get_potential(ext) + self.ap_sol_f
+        
+        self.plot_contour(u_act)
 
         error = self.eval_error(u_act)
         

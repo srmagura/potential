@@ -1,6 +1,8 @@
 import numpy as np
 from numpy import cos, sin
 
+import itertools as it
+
 import matplotlib.pyplot as plt
 
 from solver import cart_to_polar
@@ -271,3 +273,24 @@ class PsDebug:
                     s = '!!!    ' + s
                     
                 print(s)
+                
+    def plot_contour(self, u):
+        N = self.N
+    
+        x_range = np.zeros(N-1)
+        y_range = np.zeros(N-1)
+        
+        for i in range(1, N):
+            x_range[i-1] = y_range[i-1] = self.get_coord(i, 0)[0]
+        
+        Z = np.zeros((N-1, N-1))
+        for i, j in self.Mplus:            
+            Z[i-1, j-1] = u[matrices.get_index(N, i, j)].real
+    
+        X, Y = np.meshgrid(x_range, y_range, indexing='ij')
+        fig = plt.contourf(X, Y, Z)
+        
+        plt.colorbar(fig)
+        
+        self.plot_Gamma()
+        plt.show()

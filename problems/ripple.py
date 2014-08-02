@@ -79,14 +79,15 @@ class RipplePizzaSympy(SympyProblem, Pizza, Problem):
 
     def __init__(self, **kwargs):
         k, r = sympy.symbols('k r')
-        kwargs['u_expr'] = sympy.cos(k*r)
+        kwargs['f_expr'] = -k * sympy.sin(k*r)/r
         super().__init__(**kwargs)
         
     def eval_expected_polar(self, r, th):
         return cos(self.k*r)
         
     def eval_f_polar(self, r, th):
+        k = self.k
         if r != 0:
-            return super().eval_f_polar(r, th)
+            return -k * sin(k*r)/r
         else:
-            return -self.k**2
+            return -k**2
