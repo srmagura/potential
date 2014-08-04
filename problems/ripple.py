@@ -2,6 +2,7 @@ import numpy as np
 from numpy import sin, cos, sqrt
 import sympy
 
+from solver import cart_to_polar
 from .problem import Problem, Pizza
 from .sympy_problem import SympyProblem
 from cs.csf import CsFourier

@@ -51,8 +51,9 @@ class Pizza:
     def eval_bc_extended(self, x, y, sid):
         return self.eval_bc(x, y)
 
-    @staticmethod
-    def get_sid(th):
+    # Note: need to handle cases when a point is at the interface of 
+    # two segments carefully
+    def get_sid(self, th):
         tol = 1e-12
         a = Pizza.a
 

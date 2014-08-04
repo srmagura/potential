@@ -1,11 +1,12 @@
 import numpy as np
 from numpy import cos, sin
+import scipy
 
 import itertools as it
 
 import matplotlib.pyplot as plt
 
-from solver import cart_to_polar
+from solver import cart_to_polar, Result
 from chebyshev import get_chebyshev_roots
 import matrices
 
@@ -51,7 +52,10 @@ class PsDebug:
             x, y = self.get_coord(*nodes[l])
             error[l] = self.problem.eval_expected(x, y) - ext[l]
 
-        return np.max(np.abs(error))
+        result = Result()
+        result.error = np.max(np.abs(error))
+        result.u_act = None
+        return result
 
     def test_extend_basis(self):
         error = []
@@ -68,11 +72,22 @@ class PsDebug:
                     self.c1[JJ] = 1
 
                 ext2 = self.extend_boundary()
-                error.append(np.max(np.abs(ext1-ext2)))
+                diff = np.abs(ext1-ext2)
+                error.append(np.max(diff))
                 print('index={}  JJ={}  error={}'.format(index, JJ, error[-1]))
+                
+                for l in range(len(self.gamma)):
+                    if diff[l] != 0:
+                        i, j = self.gamma[l]
+                        x, y = self.get_coord(i, j)
+                        print('at {}   ext1={}    ext2={}'.format((x, y), ext1[l], ext2[l]))
 
         error = np.array(error)
-        return np.max(np.abs(error))
+        
+        result = Result()
+        result.error = np.max(np.abs(error))
+        result.u_act = None
+        return result
 
     def test_extend_src_f_etype(self, etypes=None):
         if etypes is None:
@@ -115,20 +130,24 @@ class PsDebug:
         #plt.ylim(-1, 1)
         plt.title('c0')
         plt.show()
-
-    def c1_test(self):
+        
+    def print_c1(self):
         sid = 0
         i = 0
         
+        print()
+        print('print_c1: not showing complex part.')
         for desc in self.segment_desc:
-            print('c1(segment {}):'.format(sid))
-            
             n_basis = desc['n_basis']
-            print(self.c1[i:i+n_basis])
+            print('c1(segment {}): {}'.format(sid, n_basis))
+            
+            print(scipy.real(np.round(self.c1[i:i+n_basis], 2)))
+            print()
             
             i += n_basis
             sid += 1
-    
+
+    def c1_test(self):  
         sample = self.get_boundary_sample()
 
         do_exact = hasattr(self.problem, 'eval_d_u_outwards')       
@@ -146,11 +165,11 @@ class PsDebug:
             if do_exact:
                 exact_data[l] = self.problem.eval_d_u_outwards(p['x'], p['y']).real
 
-            r, th = cart_to_polar(p['x'], p['y'])
-            for JJ in range(len(self.B_desc)):
+            r, th = cart_to_polar(p['x'], p['y'])            
+            for JJ in range(len(self.B_desc)):                             
                 expansion_data[l] +=\
                     (self.c1[JJ] *
-                    self.eval_dn_B_arg(0, JJ, r, th)).real
+                    self.eval_dn_B_arg(0, JJ, r, th)).real        
 
         if do_exact:
             plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
@@ -294,3 +313,25 @@ class PsDebug:
         
         self.plot_Gamma()
         plt.show()
+        
+    def test_Q(self):
+        Q = self.get_Q(0)
+        error = []
+        
+        for JJ in range(len(self.B_desc)):
+            for l in range(len(self.gamma)):
+                JJ_sid = self.sid_by_JJ[JJ]
+                l_sid = self.sid_by_gamma_l[l]
+                
+                if JJ_sid != l_sid:
+                    if abs(Q[l, JJ]) > 1e-5:
+                        print('Basis on {}, node on {}'.format(JJ_sid, l_sid))
+                        i, j = self.gamma[l]
+                        print(i, j)
+                        print('etype: {}'.format(self.get_etype(i,j)))
+                        print(self.get_coord(i, j))
+                    error.append(abs(Q[l, JJ]))
+                    
+        print('Q{} error: ', max(error))
+                
+        

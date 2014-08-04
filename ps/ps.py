@@ -23,10 +23,12 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
-        self.get_sid = problem.get_sid
         problem.R = self.R
         
         super().__init__(problem, N, scheme_order, **kwargs)
+        
+    def get_sid(self, th):
+        return self.problem.get_sid(th)
 
     def is_interior(self, i, j):
         r, th = self.get_polar(i, j)
@@ -41,8 +43,20 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
             projection = self.get_trace(potential)
 
             columns.append(projection - ext)
-
-        return np.column_stack(columns)
+            #FIXME
+            #columns.append(ext)
+        
+        Q = np.column_stack(columns)
+            
+        #for JJ in range(len(self.B_desc)):
+        #    for l in range(len(self.gamma)):
+        #        JJ_sid = self.sid_by_JJ[JJ]
+        #        l_sid = self.sid_by_gamma_l[l]
+                
+        #        if JJ_sid != l_sid:
+        #            Q[l, JJ] = 0
+                    
+        return Q
 
     def get_radius_point(self, sid, x, y):
         assert sid == 2
@@ -109,8 +123,6 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
         derivs.append(-(d2_xi1_X + k**2 * xi1))
 
-        # Previously was:
-        # d4_xi0_X + d2_xi0_X + k**2 * (d2_xi0_X + xi0)
         derivs.append(d4_xi0_X + k**2 * (2*d2_xi0_X + k**2 * xi0))
 
         v = 0
@@ -140,8 +152,8 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
 
     def do_extend_circle(self, i, j):
-        r, th = self.get_polar(i, j)
-        derivs = self.ext_calc_certain_xi_derivs(i, j, self.R, th)
+        r, th = self.get_polar(i, j)       
+        derivs = self.ext_calc_certain_xi_derivs(i, j, self.R, th, sid=0)
         return self.extend_circle(r, *derivs)
 
     def do_extend_radius1(self, i, j):
@@ -288,22 +300,67 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
             elif etype == self.etypes['outer2']:
                 boundary[l] = self.do_extend_outer(i, j, 2)
 
-        boundary += self.extend_inhomo_f()
+        boundary += self.extend_inhomo_f(nodes)
         return boundary
+        
+    def sort_gamma(self):
+        s_list = ('outer1', 'circle', 'outer2', 'radius1', 'radius2')
+        etype_list = [self.etypes[s] for s in s_list]
+        
+        def sort_key(ij):
+            i, j = ij
+            etype = self.get_etype(i, j)
+            return etype_list.index(etype)
+        
+        self.gamma = sorted(self.gamma, key=sort_key)
+        
+        self.sid_by_gamma_l = {}          
+        for l in range(len(self.gamma)):
+            i, j = self.gamma[l]
+            x, y = self.get_coord(i, j)
+            r, th = self.get_polar(i, j)
+            etype = self.get_etype(i, j)
+                
+            if etype == self.etypes['radius1']:
+                sid = 1
+            elif etype == self.etypes['radius2']:
+                sid = 2
+            elif etype == self.etypes['outer1']:
+                if r - self.R < y:
+                    sid = 0
+                else:
+                    sid = 1
+            elif etype == self.etypes['outer2']:
+                if r - self.R < self.dist_to_radius(2, x, y):
+                    sid = 0
+                else:
+                    sid = 2
+            else:
+                sid = 0                   
+        
+            self.sid_by_gamma_l[l] = sid
 
     def run(self):
         n_basis_tuple = self.problem.get_n_basis(self.N)
+        #print('n_basis_tuple: {}'.format(n_basis_tuple))
         self.setup_B_desc(*n_basis_tuple)
         
+        self.sort_gamma()
+        #return self.test_extend_boundary()
+        #return self.test_extend_basis()
+
         self.calc_c0()
         #self.c0_test()
         self.calc_c1()
         #self.c1_test()
+        #self.print_c1()
+        #self.test_Q()
+        #self.plot_gamma()
 
         ext = self.extend_boundary()
         u_act = self.get_potential(ext) + self.ap_sol_f
         
-        self.plot_contour(u_act)
+        #self.plot_contour(u_act)
 
         error = self.eval_error(u_act)
         

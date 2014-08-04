@@ -7,16 +7,14 @@ class PsBasis:
 
     N_SEGMENT = 3
 
-    def __init__(self):
-        super().__init__()
-        self.setup_B_desc(40, 20)
-
     def setup_B_desc(self, n_circle, n_radius):
         self.segment_desc = []
         self.B_desc = []
+        self.sid_by_JJ = {}
         
         n_basis_by_sid = (n_circle, n_radius, n_radius)
 
+        JJ = 0
         for sid in range(self.N_SEGMENT):
             s_desc = {'n_basis': n_basis_by_sid[sid]}
             self.segment_desc.append(s_desc)
@@ -26,6 +24,9 @@ class PsBasis:
                 b_desc['J'] = J
                 b_desc['sid'] = sid
                 self.B_desc.append(b_desc)
+                
+                self.sid_by_JJ[JJ] = sid
+                JJ += 1
 
     def get_span_center(self, sid):
         if sid == 0:
@@ -89,11 +90,11 @@ class PsBasis:
             self.c0.extend(np.polynomial.chebyshev.chebfit(
                 t_data, boundary_data, n_basis-1))
 
-    def get_boundary_sample(self):
-        n = 100
-        th_data = np.arange(self.a, 2*np.pi, (2*np.pi-self.a)/(3*n))
+    def get_boundary_sample(self, n=100):
+        ep = 1e-5
+        th_data = np.linspace(self.a+ep, 2*np.pi-ep, 3*n)
         
-        r_data = np.linspace(self.R/n, self.R, n)
+        r_data = np.arange(ep, self.R, self.R/n)
 
         points = []
         arg_datas = (th_data, r_data[::-1], r_data)
@@ -137,7 +138,9 @@ class PsBasis:
         return points
 
     def extend_basis(self, JJ, index):
+        JJ_sid = self.sid_by_JJ[JJ]
         ext = np.zeros(len(self.gamma), dtype=complex)
+        
         for l in range(len(self.gamma)):
             i, j = self.gamma[l]
             r, th = self.get_polar(i, j)
@@ -145,10 +148,12 @@ class PsBasis:
             etype = self.get_etype(i, j)
 
             param_r = None
+            force_sid = None
 
             if etype == self.etypes['circle']:
                 param_r = self.R
                 param_th = th
+                force_sid = 0
             elif etype == self.etypes['radius1']:
                 param_r = x
                 param_th = 2*np.pi
@@ -159,16 +164,16 @@ class PsBasis:
 
             if param_r is not None:
                 B_args = (JJ, param_r, param_th)
-                B = self.eval_dn_B_arg(0, *B_args)
-                d2_B_arg = self.eval_dn_B_arg(2, *B_args)
-                d4_B_arg = self.eval_dn_B_arg(4, *B_args)
+                B = self.eval_dn_B_arg(0, *B_args, sid=force_sid)
+                d2_B_arg = self.eval_dn_B_arg(2, *B_args, sid=force_sid)
+                d4_B_arg = self.eval_dn_B_arg(4, *B_args, sid=force_sid)
 
                 args = (
                     (B, 0, d2_B_arg, 0, d4_B_arg),
                     (0, B, 0, d2_B_arg, 0)
                 )
 
-            if etype == self.etypes['circle']:
+            if JJ_sid == 0 and etype == self.etypes['circle']:
                 ext[l] = self.extend_circle(r, *args[index])
 
             elif etype == self.etypes['radius1']:
@@ -179,9 +184,10 @@ class PsBasis:
                 ext[l] = self.extend_from_radius(Y, *args[index])
 
             elif etype == self.etypes['outer1']:
-                ext[l] = self.do_extend_outer(i, j, 1, JJ, index) 
+                ext[l] = self.do_extend_outer(i, j, 1, JJ, index)
 
             elif etype == self.etypes['outer2']:
-                ext[l] = self.do_extend_outer(i, j, 2, JJ, index) 
+                ext[l] = self.do_extend_outer(i, j, 2, JJ, index)
+                
 
         return ext

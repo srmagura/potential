@@ -154,7 +154,7 @@ class Solver(SolverExtend, SolverDebug):
         ext_f = self.extend_inhomo_f()    
         proj_f = self.get_trace(self.get_potential(ext_f))
 
-        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
+        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f        
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def setup_src_f(self):

@@ -37,7 +37,7 @@ class SinePizza(Pizza, Sine):
         if 'sid' in kwargs:
             sid = kwargs['sid']
         else:
-            sid = Pizza.get_sid(th)
+            sid = self.get_sid(th)
 
         a = self.a
         k = self.k

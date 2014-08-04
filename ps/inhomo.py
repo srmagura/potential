@@ -6,11 +6,14 @@ from solver import cart_to_polar
 
 class PsInhomo:
 
-    def extend_inhomo_f(self):
-        ext = np.zeros(len(self.gamma), dtype=complex)
+    def extend_inhomo_f(self, nodes=None):
+        if nodes is None:
+            nodes = self.gamma
+    
+        ext = np.zeros(len(nodes), dtype=complex)
 
-        for l in range(len(self.gamma)):
-            i, j = self.gamma[l]
+        for l in range(len(nodes)):
+            i, j = nodes[l]
             x, y = self.get_coord(i, j)
             r, th = self.get_polar(i, j)
             etype = self.get_etype(i, j)
