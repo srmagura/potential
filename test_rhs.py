@@ -10,7 +10,6 @@ def do_test():
     k, R, r, th = args
 
     sympy_f_expr = diff(u, r, 2) + diff(u, r)/r + diff(u, th, 2)/r**2 + k**2*u
-    print(sympy_f_expr)
     sympy_f_lambda = lambdify(args, sympy_f_expr)
 
     manual_f_lambda = lambdify(args, manual_f_expr)
@@ -47,7 +46,7 @@ if problem_name == 'jump-reg0':
     th_interval = jump_reg_th_interval
     
 elif problem_name == 'jump-reg1':
-    u = -jump.get_u04_sng_expr()
+    u = jump.get_u04_sng_expr()
     manual_f_expr = jump.get_reg_f_sng_expr()
     th_interval = jump_reg_th_interval
     

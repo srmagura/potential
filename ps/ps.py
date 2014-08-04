@@ -32,7 +32,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
     def is_interior(self, i, j):
         r, th = self.get_polar(i, j)
-        return r <= self.R and (th >= self.a or th == 0) 
+        return r <= self.R and th >= self.a 
 
     def get_Q(self, index, ext_only=False):
         columns = []
@@ -348,7 +348,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         self.c1_test()
         #self.print_c1()
         #self.test_extend_basis_not()
-        #self.plot_gamma()
+        self.plot_gamma()
         #self.test_with_c1_exact()
 
         ext = self.extend_boundary()

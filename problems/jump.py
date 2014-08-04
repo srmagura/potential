@@ -50,7 +50,7 @@ class JumpReg(Pizza, Problem):
         
     def eval_bc(self, x, y):
         r, th = cart_to_polar(x, y)
-        sid = Pizza.get_sid(th)
+        sid = self.get_sid(th)
         return self.eval_bc_extended(x, y, sid)
         
     def eval_bc_extended(self, x, y, sid):

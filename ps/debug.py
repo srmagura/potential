@@ -129,6 +129,8 @@ class PsDebug:
         plt.legend(loc=0)
         #plt.ylim(-1, 1)
         plt.title('c0')
+        plt.xlabel('Arclength s')
+        plt.ylabel('Dirichlet data')
         plt.show()
         
     def print_c1(self):
@@ -178,6 +180,8 @@ class PsDebug:
         plt.legend(loc=4)
         #plt.ylim(-1.5, 1.5)
         plt.title('c1')
+        plt.xlabel('Arclength s')
+        plt.ylabel('Reconstructed Neumann data')
         plt.show()
 
     def plot_Gamma(self):
