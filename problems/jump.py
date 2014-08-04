@@ -10,11 +10,11 @@ import problems.sympy_problem as sympy_problem
 def get_L(R):
     return 2*R + 11/6*pi*R
 
-def eval_bc_extended(R, r, th, sid): 
+def eval_bc_extended(a, R, r, th, sid): 
     L = get_L(R)
 
     if sid == 0:
-        return R / L * (1 + th - pi/6)
+        return R / L * (1 + th - a)
     elif sid == 1:
         return 1 - r / L
     elif sid == 2:
@@ -33,11 +33,47 @@ class JumpNoCorrection(Pizza, Problem):
     def eval_bc(self, x, y):
         r, th = cart_to_polar(x, y)
         sid = Pizza.get_sid(th)
-        return eval_bc_extended(self.R, r, th, sid)
+        return eval_bc_extended(self.a, self.R, r, th, sid)
         
     def eval_bc_extended(self, x, y, sid):
         r, th = cart_to_polar(x, y)
-        return eval_bc_extended(self.R, r, th, sid)
+        return eval_bc_extended(self.a, self.R, r, th, sid)
+
+        
+class JumpReg(Pizza, Problem):
+    k = 1
+
+    expected_known = False
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        
+    def eval_bc(self, x, y):
+        r, th = cart_to_polar(x, y)
+        sid = Pizza.get_sid(th)
+        return self.eval_bc_extended(x, y, sid)
+        
+    def eval_bc_extended(self, x, y, sid):
+        a = self.a
+        r, th = cart_to_polar(x, y)
+        
+        if sid != 1 and not 'from1':
+            return 1
+        
+        if sid == 0 and th < a/2:
+            th += 2*pi 
+        elif sid == 1 and x < 0:    
+            return self.eval_bc_extended(-x*cos(a), -x*sin(a), 2)
+        elif sid == 2 and x < 0:
+            return self.eval_bc_extended(r, 0, 1)
+        
+        bc_nc = eval_bc_extended(a, self.R, r, th, sid)
+        u04 = self.u04_lambda(self.k, self.R, r, th)
+
+        return float(bc_nc - u04)
+        #return bc_nc
+        #return u04
+
 
 def get_u04_expr():
     k, R, r, th = symbols('k R r th')
@@ -78,44 +114,9 @@ def get_reg_f_expr():
     f += 72*pi*cos(phi)*l
 
     f *= - k2*r/(72*pi)
-    return f
-    
-        
-class JumpReg(Pizza, Problem):
-    k = 1
+    return f     
 
-    expected_known = False
-    
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        
-    def eval_bc(self, x, y):
-        r, th = cart_to_polar(x, y)
-        sid = Pizza.get_sid(th)
-        return self.eval_bc_extended(x, y, sid)
-        
-    def eval_bc_extended(self, x, y, sid):
-        a = self.a
-        r, th = cart_to_polar(x, y)
-        
-        if sid != 1 and not 'from1':
-            return 1
-        
-        if sid == 0 and th < a/2:
-            th += 2*pi 
-        elif sid == 1 and x < 0:    
-            return self.eval_bc_extended(-x*cos(a), -x*sin(a), 2)
-        elif sid == 2 and x < 0:
-            return self.eval_bc_extended(r, 0, 1)
-        
-        bc_nc = eval_bc_extended(self.R, r, th, sid)
-        u04 = self.u04_lambda(self.k, self.R, r, th)
-
-        return float(bc_nc - u04)
-        #return bc_nc
-        #return u04
-                 
-        
+      
 class JumpReg0(sympy_problem.SympyProblem, JumpReg):
 
     def __init__(self, **kwargs): 
@@ -124,3 +125,16 @@ class JumpReg0(sympy_problem.SympyProblem, JumpReg):
         
         self.u04_lambda = lambdify(symbols('k R r th'), get_u04_expr())
 
+    
+def get_u04_sng_expr():
+    k, r, th = symbols('k r th')             
+    u04 = (th-pi/6)*(k**2*r**2-8)**2
+    u04 *= -3/(352*pi)
+    return u04 
+      
+    
+def get_reg_f_sng_expr():
+    k, r, th = symbols('k r th')             
+    f = (th-pi/6)*k**6*r**4
+    f *= -3/(352*pi)
+    return f

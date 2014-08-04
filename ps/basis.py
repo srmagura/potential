@@ -189,5 +189,4 @@ class PsBasis:
             elif etype == self.etypes['outer2']:
                 ext[l] = self.do_extend_outer(i, j, 2, JJ, index)
                 
-
         return ext

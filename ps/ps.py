@@ -34,7 +34,7 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         r, th = self.get_polar(i, j)
         return r <= self.R and (th >= self.a or th == 0) 
 
-    def get_Q(self, index):
+    def get_Q(self, index, ext_only=False):
         columns = []
 
         for JJ in range(len(self.B_desc)):
@@ -42,19 +42,12 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
             potential = self.get_potential(ext)
             projection = self.get_trace(potential)
 
-            columns.append(projection - ext)
-            #FIXME
-            #columns.append(ext)
+            if not ext_only:
+                columns.append(projection - ext)
+            else:
+                columns.append(ext)
         
         Q = np.column_stack(columns)
-            
-        #for JJ in range(len(self.B_desc)):
-        #    for l in range(len(self.gamma)):
-        #        JJ_sid = self.sid_by_JJ[JJ]
-        #        l_sid = self.sid_by_gamma_l[l]
-                
-        #        if JJ_sid != l_sid:
-        #            Q[l, JJ] = 0
                     
         return Q
 
@@ -352,10 +345,11 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         self.calc_c0()
         #self.c0_test()
         self.calc_c1()
-        #self.c1_test()
+        self.c1_test()
         #self.print_c1()
-        #self.test_Q()
+        #self.test_extend_basis_not()
         #self.plot_gamma()
+        #self.test_with_c1_exact()
 
         ext = self.extend_boundary()
         u_act = self.get_potential(ext) + self.ap_sol_f

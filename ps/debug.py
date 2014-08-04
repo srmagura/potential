@@ -71,13 +71,13 @@ class PsDebug:
                 elif index == 1:
                     self.c1[JJ] = 1
 
-                ext2 = self.extend_boundary()
+                ext2 = self.extend_boundary() - self.extend_inhomo_f()
                 diff = np.abs(ext1-ext2)
                 error.append(np.max(diff))
                 print('index={}  JJ={}  error={}'.format(index, JJ, error[-1]))
                 
                 for l in range(len(self.gamma)):
-                    if diff[l] != 0:
+                    if diff[l] > 1e-13:
                         i, j = self.gamma[l]
                         x, y = self.get_coord(i, j)
                         print('at {}   ext1={}    ext2={}'.format((x, y), ext1[l], ext2[l]))
@@ -314,8 +314,8 @@ class PsDebug:
         self.plot_Gamma()
         plt.show()
         
-    def test_Q(self):
-        Q = self.get_Q(0)
+    def _test_extend_basis_not(self, index):
+        Q = self.get_Q(index, ext_only=True)
         error = []
         
         for JJ in range(len(self.B_desc)):
@@ -323,15 +323,51 @@ class PsDebug:
                 JJ_sid = self.sid_by_JJ[JJ]
                 l_sid = self.sid_by_gamma_l[l]
                 
+                i, j = self.gamma[l]
+                etype = self.get_etype(i,j)
+                x, y = self.get_coord(i, j)
+                
                 if JJ_sid != l_sid:
                     if abs(Q[l, JJ]) > 1e-5:
                         print('Basis on {}, node on {}'.format(JJ_sid, l_sid))
-                        i, j = self.gamma[l]
-                        print(i, j)
-                        print('etype: {}'.format(self.get_etype(i,j)))
-                        print(self.get_coord(i, j))
+                        
                     error.append(abs(Q[l, JJ]))
+                else:
+                    if abs(Q[l, JJ]) < 1e-15 and index != 1:
+                        print('sid={}  x,y={}'.format(JJ_sid, (x,y)))
                     
-        print('Q{} error: ', max(error))
+        print('Q{} error: {}'.format(index, max(error)))
+           
+    def test_extend_basis_not(self):
+        self._test_extend_basis_not(0)
+        self._test_extend_basis_not(1)
+        
+    def _test_with_c1(self):
+        Q0 = self.get_Q(0)
+        Q1 = self.get_Q(1)
+        
+        result = Q0.dot(self.c0) + Q1.dot(self.c1)
+        result = np.abs(result)
+        
+        return result
+        
+    def test_with_c1_exact(self):
+        self.calc_c1_exact()       
+        result_exact = self._test_with_c1()
+        
+        self.calc_c1()
+        result_actual = self._test_with_c1()
+       
+        for l in range(len(self.gamma)):
+            i, j = self.gamma[l]
+            x, y = self.get_coord(i, j)
+            etype = self.get_etype(i, j)
+            etypes = {self.etypes['radius2'], self.etypes['outer2']}
+            
+            if etype in etypes and result_exact[l] > 1e-4:
+                print('error={}   at {}'.format(result_exact[l], (x,y)))
+        
+        print('test_with_c1 exact error: {}'.format(np.max(result_exact)))
+        print('test_with_c1 actual error: {}'.format(np.max(result_actual)))
                 
         
