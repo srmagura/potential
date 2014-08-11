@@ -9,6 +9,63 @@ class CircleSolver(Solver):
     def __init__(self, problem, N, scheme_order, **kwargs):
         super().__init__(problem, N, scheme_order, **kwargs)
         problem.R = self.R
+        self.construct_gamma()
+
+    def construct_gamma(self):
+        self.Nplus = set()
+        self.Nminus = set()
+               
+        for i, j in self.M0:
+            Nm = set([(i, j), (i-1, j), (i+1, j), (i, j-1), (i, j+1)])
+
+            if self.scheme_order > 2:
+                Nm |= set([(i-1, j-1), (i+1, j-1), (i-1, j+1),
+                    (i+1, j+1)])
+
+            if (i, j) in self.Mplus:
+                self.Nplus |= Nm
+            else:
+                self.Nminus |= Nm
+
+        gamma_set = self.Nplus & self.Nminus
+        self.gamma = list(gamma_set)
+
+
+    # Calculate the difference potential of a function xi 
+    # that is defined on gamma.
+    def get_potential(self, xi):
+        w = np.zeros([(self.N-1)**2], dtype=complex)
+
+        for l in range(len(self.gamma)):
+            w[matrices.get_index(self.N, *self.gamma[l])] = xi[l]
+
+        Lw = np.ravel(self.L.dot(w))
+
+        for i,j in self.Mminus:
+            Lw[matrices.get_index(self.N, i, j)] = 0
+
+        return w - self.LU_factorization.solve(Lw)
+
+    def get_trace(self, data):
+        projection = np.zeros(len(self.gamma), dtype=complex)
+
+        for l in range(len(self.gamma)):
+            index = matrices.get_index(self.N, *self.gamma[l])
+            projection[l] = data[index]
+
+        return projection
+
+
+    def calc_c1(self):
+        Q0 = self.get_Q(0)
+        Q1 = self.get_Q(1)
+
+        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+        ext_f = self.extend_inhomo_f()    
+        proj_f = self.get_trace(self.get_potential(ext_f))
+
+        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f        
+        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def is_interior(self, i, j):
         return self.get_polar(i, j)[0] <= self.R

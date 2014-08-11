@@ -50,14 +50,14 @@ class Interface:
         parser.add_argument('-N', type=int, default=16)
         parser.add_argument('-c', type=int, nargs='?', const=128)
         parser.add_argument('-o', type=int, default=4)
-        parser.add_argument('-s', choices=solver.solver_dict.keys())
+        #parser.add_argument('-s', choices=solver.solver_dict.keys())
         self.args = parser.parse_args()
 
         self.problem = problems.problem_dict[self.args.p](scheme_order=self.args.o)
 
-        if self.args.s is not None:
-            self.problem.solver_class =\
-                solver.solver_dict[self.args.s]
+        #if self.args.s is not None:
+        #    self.problem.solver_class =\
+        #        solver.solver_dict[self.args.s]
 
         if self.args.c is None:
             my_solver = self.problem.get_solver(self.args.N, 

@@ -3,7 +3,6 @@ from numpy import cos, sin
 
 from solver import cart_to_polar
 from cs.csf import CsFourier
-from cs.cs3 import CsChebyshev3
 
 from .problem import Problem, Pizza
 

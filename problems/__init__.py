@@ -1,4 +1,3 @@
-from .mountain import Mountain
 from .sine import Sine, SinePizza
 from .wave import Wave, WavePizza
 from .ripple import Ripple, RipplePizza, RipplePizzaSympy
@@ -7,7 +6,6 @@ from .jump import JumpNoCorrection, JumpReg0
 
 
 problem_dict = {
-    'mountain': Mountain,
     'sine': Sine,
     'sine-pizza': SinePizza,
     'wave': Wave,

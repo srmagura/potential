@@ -82,36 +82,6 @@ class Solver(SolverExtend, SolverDebug):
                 self.Mplus.add((i, j))
 
         self.Mminus = self.M0 - self.Mplus
-        self.Nplus = set()
-        self.Nminus = set()
-               
-        for i, j in self.M0:
-            Nm = set([(i, j), (i-1, j), (i+1, j), (i, j-1), (i, j+1)])
-
-            if self.scheme_order > 2:
-                Nm |= set([(i-1, j-1), (i+1, j-1), (i-1, j+1),
-                    (i+1, j+1)])
-
-            if (i, j) in self.Mplus:
-                self.Nplus |= Nm
-            else:
-                self.Nminus |= Nm
-
-        gamma_set = self.Nplus & self.Nminus
-        self.gamma = []
-
-        while len(gamma_set) > 0:
-            min_th = float('inf')
-            for i, j in gamma_set:
-                r, th = self.get_polar(i, j)
-                if th < min_th:
-                    min_th = th
-                    min_th_gamma = i, j
-
-            gamma_set.remove(min_th_gamma)
-            self.gamma.append(min_th_gamma)
-
-        self.gamma = np.array(self.gamma)
 
         self.Kplus = set()
         for i, j in self.Mplus:
@@ -121,41 +91,6 @@ class Solver(SolverExtend, SolverDebug):
                 Nm |= set([(i-1, j), (i+1, j), (i, j-1), (i, j+1)])
             
             self.Kplus |= Nm
-
-    # Calculate the difference potential of a function xi 
-    # that is defined on gamma.
-    def get_potential(self, xi):
-        w = np.zeros([(self.N-1)**2], dtype=complex)
-
-        for l in range(len(self.gamma)):
-            w[matrices.get_index(self.N, *self.gamma[l])] = xi[l]
-
-        Lw = np.ravel(self.L.dot(w))
-
-        for i,j in self.Mminus:
-            Lw[matrices.get_index(self.N, i, j)] = 0
-
-        return w - self.LU_factorization.solve(Lw)
-
-    def get_trace(self, data):
-        projection = np.zeros(len(self.gamma), dtype=complex)
-
-        for l in range(len(self.gamma)):
-            index = matrices.get_index(self.N, *self.gamma[l])
-            projection[l] = data[index]
-
-        return projection
-
-    def calc_c1(self):
-        Q0 = self.get_Q(0)
-        Q1 = self.get_Q(1)
-
-        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
-        ext_f = self.extend_inhomo_f()    
-        proj_f = self.get_trace(self.get_potential(ext_f))
-
-        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f        
-        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def setup_src_f(self):
         self.src_f = np.zeros((self.N-1)**2, dtype=complex)
@@ -203,30 +138,3 @@ class Solver(SolverExtend, SolverDebug):
                 diff01.append(abs(u0[k0] - u1[k1]))
                 
         return np.log2(max(diff12) / max(diff01))
-           
-
-class SquareSolver(Solver):
-
-    AD_len = 2*np.pi
-
-    # Get the rectangular coordinates of grid point (i,j)
-    def get_coord(self, i, j):
-        x = (self.AD_len * i / self.N - self.AD_len/2, 
-            self.AD_len * j / self.N - self.AD_len/2)
-        return x
-
-    def is_interior(self, i, j):
-        return (i != 0 and i != self.N and j != 0 and j != self.N)
-
-    def run(self):
-        u_act = self.LU_factorization.solve(self.B_src_f)
-        return self.eval_error(u_act)
-
-
-from cs.csf import CsFourier
-from cs.cs3 import CsChebyshev3
-
-solver_dict = {
-    'csf': CsFourier,
-    'cs3': CsChebyshev3,
-}
