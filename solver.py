@@ -51,7 +51,7 @@ class Solver(SolverExtend, SolverDebug):
             self.AD_len, self.k)
         self.B_src_f = self.B.dot(self.src_f)
 
-        for i,j in self.Mminus:
+        for i,j in self.global_Mminus:
             self.B_src_f[matrices.get_index(N,i,j)] = 0
 
     # Get the rectangular coordinates of grid point (i,j)
@@ -76,15 +76,15 @@ class Solver(SolverExtend, SolverDebug):
         self.N0 = set(it.product(range(0, self.N+1), repeat=2))
         self.M0 = set(it.product(range(1, self.N), repeat=2))
 
-        self.Mplus = set()
+        self.global_Mplus = set()
         for i, j  in self.M0:
             if self.is_interior(i, j): 
-                self.Mplus.add((i, j))
+                self.global_Mplus.add((i, j))
 
-        self.Mminus = self.M0 - self.Mplus
+        self.global_Mminus = self.M0 - self.global_Mplus
 
         self.Kplus = set()
-        for i, j in self.Mplus:
+        for i, j in self.global_Mplus:
             Nm = set([(i, j)])
 
             if self.scheme_order > 2:
@@ -95,7 +95,7 @@ class Solver(SolverExtend, SolverDebug):
     def setup_src_f(self):
         self.src_f = np.zeros((self.N-1)**2, dtype=complex)
 
-        for i,j in self.Mplus:
+        for i,j in self.global_Mplus:
             self.src_f[matrices.get_index(self.N, i, j)] =\
                 self.problem.eval_f(*self.get_coord(i, j))
 
@@ -115,7 +115,7 @@ class Solver(SolverExtend, SolverDebug):
                 self.problem.eval_expected(x, y)
 
         error = []
-        for i,j in self.Mplus:
+        for i,j in self.global_Mplus:
             l = matrices.get_index(self.N, i,j)
             error.append(abs(u_exp[l] - u_act[l]))
 

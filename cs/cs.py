@@ -12,8 +12,8 @@ class CircleSolver(Solver):
         self.construct_gamma()
 
     def construct_gamma(self):
-        self.Nplus = set()
-        self.Nminus = set()
+        Nplus = set()
+        Nminus = set()
                
         for i, j in self.M0:
             Nm = set([(i, j), (i-1, j), (i+1, j), (i, j-1), (i, j+1)])
@@ -22,12 +22,12 @@ class CircleSolver(Solver):
                 Nm |= set([(i-1, j-1), (i+1, j-1), (i-1, j+1),
                     (i+1, j+1)])
 
-            if (i, j) in self.Mplus:
-                self.Nplus |= Nm
+            if (i, j) in self.global_Mplus:
+                Nplus |= Nm
             else:
-                self.Nminus |= Nm
+                Nminus |= Nm
 
-        gamma_set = self.Nplus & self.Nminus
+        gamma_set = Nplus & Nminus
         self.gamma = list(gamma_set)
 
 
@@ -41,7 +41,7 @@ class CircleSolver(Solver):
 
         Lw = np.ravel(self.L.dot(w))
 
-        for i,j in self.Mminus:
+        for i,j in self.global_Mminus:
             Lw[matrices.get_index(self.N, i, j)] = 0
 
         return w - self.LU_factorization.solve(Lw)
