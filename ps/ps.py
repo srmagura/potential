@@ -83,25 +83,29 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsInhomo, PsDebug):
         r, th = self.get_polar(i, j)
         
         if sid == 0:
-            if th < self.a/2:
+            if th < a/2:
                 return self.etypes['right']
-            elif th < self.a:
+            elif th < a:
                 return self.etypes['left']
             else:
                 return self.etypes['standard']
                 
-        else:
-            if sid == 1:
-                x_max = R
-            elif sid == 2:
-                x_max = R*cos(a)
-        
+        elif sid == 1:
             if x < 0:
                 return self.etypes['left']
-            elif x > x_max:
+            elif x > R:
                 return self.etypes['right']
             else:
                 return self.etypes['standard']
+                
+        elif sid == 2:
+            slope = -1/np.tan(a)
+            if y < slope*x:
+                return self.etypes['left']
+            elif y - R*np.sin(a) > slope*(x - R*np.cos(a)):
+                return self.etypes['right']
+            else:
+                return self.etypes['standard']      
 
     def extend_from_radius(self, Y, xi0, xi1, d2_xi0_X,
         d2_xi1_X, d4_xi0_X):
@@ -142,28 +146,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsInhomo, PsDebug):
             d4_xi0_arg += self.c0[JJ] * d4_B_arg
 
         return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
-
-    def do_extend_circle(self, i, j):
-        r, th = self.get_polar(i, j)       
-        derivs = self.ext_calc_certain_xi_derivs(i, j, self.R, th, sid=0)            
-        return self.extend_circle(r, *derivs)
-        
-    def do_extend_radius1(self, i, j):
-        x, y = self.get_coord(i, j)
-        derivs = self.ext_calc_certain_xi_derivs(i, j, x, 2*np.pi)
-
-        return self.extend_from_radius(y, *derivs)
-
-    def do_extend_radius2(self, i, j):
-        x, y = self.get_coord(i, j)
-        x0, y0 = self.get_radius_point(2, x, y)
-
-        param_r = cart_to_polar(x0, y0)[0]
-        derivs = self.ext_calc_certain_xi_derivs(i, j, param_r, self.a)
-
-        Y = self.signed_dist_to_radius(2, x, y)
-        return self.extend_from_radius(Y, *derivs)
-
+            
     def ext_calc_B_derivs(self, JJ, param_th, segment_sid, index):
         derivs = np.zeros(TAYLOR_N_DERIVS, dtype=complex)
 
@@ -187,40 +170,34 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsInhomo, PsDebug):
 
         return derivs
 
-    def do_extend_outer(self, i, j, radius_sid, JJ=None, index=None):
+    def do_extend_outer(self, i, j, options):
         x, y = self.get_coord(i, j)
         r, th = self.get_polar(i, j)
 
-        dist0 = r - self.R
-
-        if radius_sid == 1:
-            dist1 = y
-        elif radius_sid == 2:
-            dist1 = self.dist_to_radius(radius_sid, x, y)
-
-        if dist0 < dist1:
-            taylor_sid = 0
-
-            if radius_sid == 1:
-                delta_arg = th
-                param_th = 2*np.pi
-            elif radius_sid == 2:
-                delta_arg = th - self.a
-                param_th = self.a
+        taylor_sid = options['taylor_sid']
+        delta_arg = options['delta_arg']
+        param_th = options['param_th']
+        
+        if 'JJ' in options:
+            JJ = options['JJ']
         else:
-            taylor_sid = radius_sid
+            JJ = None
+ 
 
-            if radius_sid == 1:
-                delta_arg = x - self.R
-                param_th = 0
-                Y = y
-            elif radius_sid == 2:
-                x0 = self.R * cos(self.a)
-                y0 = self.R * sin(self.a)
-                x1, y1 = self.get_radius_point(radius_sid, x, y)
-                delta_arg = np.sqrt((x1 - x0)**2 + (y1 - y0)**2)
-                param_th = self.a
-                Y = dist1
+        #else:
+        #    taylor_sid = radius_sid
+
+        #    if radius_sid == 1:
+        #        delta_arg = x - self.R
+        #        param_th = 0
+        ##        Y = y
+        #    elif radius_sid == 2:
+        #        x0 = self.R * cos(self.a)
+        #        y0 = self.R * sin(self.a)
+        #        x1, y1 = self.get_radius_point(radius_sid, x, y)
+        #        delta_arg = np.sqrt((x1 - x0)**2 + (y1 - y0)**2)
+        #        param_th = self.a
+        #        Y = dist1
 
         derivs0 = np.zeros(TAYLOR_N_DERIVS)
         derivs1 = np.zeros(TAYLOR_N_DERIVS)
@@ -238,20 +215,20 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsInhomo, PsDebug):
         d4_xi0_arg = 0
 
         for l in range(len(derivs0)):
-            f = delta_arg**l / math.factorial(l)
-            xi0 += derivs0[l] * f 
-            xi1 += derivs1[l] * f
+            fac = delta_arg**l / math.factorial(l)
+            xi0 += derivs0[l] * fac 
+            xi1 += derivs1[l] * fac
 
             ll = l - 2
             if ll >= 0:
-                f = delta_arg**ll / math.factorial(ll)
-                d2_xi0_arg += derivs0[l] * f
-                d2_xi1_arg += derivs1[l] * f
+                fac = delta_arg**ll / math.factorial(ll)
+                d2_xi0_arg += derivs0[l] * fac
+                d2_xi1_arg += derivs1[l] * fac
 
             ll = l - 4
             if ll >= 0:
-                f = delta_arg**ll / math.factorial(ll)
-                d4_xi0_arg += derivs0[l] * f
+                fac = delta_arg**ll / math.factorial(ll)
+                d4_xi0_arg += derivs0[l] * fac
 
         ext_params = (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
 
@@ -261,6 +238,51 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsInhomo, PsDebug):
             v = self.extend_from_radius(Y, *ext_params)
 
         return v
+
+    def do_extend_0_standard(self, i, j):
+        r, th = self.get_polar(i, j)       
+        derivs = self.ext_calc_certain_xi_derivs(i, j, self.R, th, sid=0)            
+        return self.extend_circle(r, *derivs)
+        
+    def do_extend_0_left(self, i, j):
+        x, y = self.get_coord(i, j)
+        r, th = self.get_polar(i, j)
+
+        options = {
+            'taylor_sid': 0,
+            'delta_arg': th - self.a,
+            'param_th': self.a
+        }
+         
+        return self.do_extend_outer(i, j, options)
+        
+    def do_extend_0_right(self, i, j):
+        x, y = self.get_coord(i, j)
+        r, th = self.get_polar(i, j)
+
+        options = {
+            'taylor_sid': 0,
+            'delta_arg': th,
+            'param_th': 2*np.pi
+        }
+         
+        return self.do_extend_outer(i, j, options)
+        
+    def do_extend_1_standard(self, i, j):
+        x, y = self.get_coord(i, j)
+        derivs = self.ext_calc_certain_xi_derivs(i, j, x, 2*np.pi)
+
+        return self.extend_from_radius(y, *derivs)
+
+    def do_extend_2_standard(self, i, j):
+        x, y = self.get_coord(i, j)
+        x0, y0 = self.get_radius_point(2, x, y)
+
+        param_r = cart_to_polar(x0, y0)[0]
+        derivs = self.ext_calc_certain_xi_derivs(i, j, param_r, self.a, sid=2)
+
+        Y = self.signed_dist_to_radius(2, x, y)
+        return self.extend_from_radius(Y, *derivs)
 
     def extend_boundary(self):
         R = self.R
@@ -282,8 +304,20 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsInhomo, PsDebug):
 
                 if sid == 0:
                     if etype == self.etypes['standard']:
-                        ext[l] = self.do_extend_circle(i, j)            
-
+                        ext[l] = self.do_extend_0_standard(i, j)
+                    elif etype == self.etypes['left']:
+                        ext[l] = self.do_extend_0_left(i, j)
+                    elif etype == self.etypes['right']:
+                        ext[l] = self.do_extend_0_right(i, j)
+                        
+                elif sid == 1:
+                    if etype == self.etypes['standard']:
+                        ext[l] = self.do_extend_1_standard(i, j)
+                        
+                elif sid == 2:
+                    if etype == self.etypes['standard']:
+                        ext[l] = self.do_extend_2_standard(i, j)
+                        
         #boundary += self.extend_inhomo_f(nodes)
         return all_ext
         
@@ -292,7 +326,13 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsInhomo, PsDebug):
         #print('n_basis_tuple: {}'.format(n_basis_tuple))
         self.setup_B_desc(*n_basis_tuple)
         
-        return self.test_extend_boundary({0}, {self.etypes['standard']})
+        return self.test_extend_boundary({
+            (0, 'standard'),
+            (0, 'left'),
+            (0, 'right'),
+            (1, 'standard'),
+            (2, 'standard'),
+        })
         #return self.test_extend_basis()
 
         #self.calc_c0()

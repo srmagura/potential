@@ -37,11 +37,16 @@ class PsDebug:
 
         return result
 
-    def test_extend_boundary(self, sids=None, etypes=None):
-        if sids is None:
-            sids = range(3)
-        if etypes is None:
-            etypes = self.etypes.values()
+    def test_extend_boundary(self, _pairs=None):
+        pairs = set()
+    
+        if _pairs is None:
+            for sid in range(3):
+                for etype in self.etypes.values():
+                    pairs.add((sid, etype))
+        else:
+            for sid, etype_name in _pairs:
+                pairs.add((sid, self.etypes[etype_name]))
 
         self.calc_c0()
         self.calc_c1_exact()
@@ -49,7 +54,7 @@ class PsDebug:
         all_error = 0
         all_ext = self.extend_boundary()
 
-        for sid in sids:
+        for sid, pair_etype in pairs:
             gamma = self.all_gamma[sid]
             ext = all_ext[sid]
             error = np.zeros(len(gamma), dtype=complex)
@@ -59,7 +64,7 @@ class PsDebug:
                 x, y = self.get_coord(i, j)
                 etype = self.get_etype(sid, i, j)
                 
-                if etype in etypes:
+                if etype == pair_etype:
                     error[l] = self.problem.eval_expected(x, y) - ext[l]
                 
             segment_error = np.max(np.abs(error))
