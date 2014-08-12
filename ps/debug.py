@@ -29,31 +29,46 @@ class PsDebug:
             self.c1.extend(np.polynomial.chebyshev.chebfit(
                 t_data, boundary_data, n_basis-1))
 
-    def gamma_filter(self, etypes):
+    def etype_filter(self, sid, nodes, etypes):
         result = []
-        for i, j in self.gamma:
-            if self.get_etype(i, j) in etypes:
+        for i, j in nodes:
+            if self.get_etype(sid, i, j) in etypes:
                 result.append((i, j))
 
         return result
 
-    def test_extend_boundary(self, etypes=None):
+    def test_extend_boundary(self, sids=None, etypes=None):
+        if sids is None:
+            sids = range(3)
         if etypes is None:
             etypes = self.etypes.values()
 
         self.calc_c0()
         self.calc_c1_exact()
+        
+        all_error = 0
+        all_ext = self.extend_boundary()
 
-        nodes = self.gamma_filter(etypes)
-        ext = self.extend_boundary(nodes)
-
-        error = np.zeros(len(nodes), dtype=complex)
-        for l in range(len(nodes)):
-            x, y = self.get_coord(*nodes[l])
-            error[l] = self.problem.eval_expected(x, y) - ext[l]
+        for sid in sids:
+            gamma = self.all_gamma[sid]
+            ext = all_ext[sid]
+            error = np.zeros(len(gamma), dtype=complex)
+            
+            for l in range(len(gamma)):
+                i, j = gamma[l]
+                x, y = self.get_coord(i, j)
+                etype = self.get_etype(sid, i, j)
+                
+                if etype in etypes:
+                    error[l] = self.problem.eval_expected(x, y) - ext[l]
+                
+            segment_error = np.max(np.abs(error))
+            
+            if segment_error > all_error:
+                all_error = segment_error
 
         result = Result()
-        result.error = np.max(np.abs(error))
+        result.error = all_error
         result.u_act = None
         return result
 
@@ -212,12 +227,22 @@ class PsDebug:
     def plot_gamma(self, plot_rpoints=False):
         self.plot_Gamma()
 
-        for etype_name, etype_int in self.etypes.items():
-            nodes = self.gamma_filter({etype_int})
-            x_data, y_data = self.nodes_to_plottable(nodes)
-            plt.plot(x_data, y_data, 'o', label=etype_name)
+        #for etype_name, etype_int in self.etypes.items():
+        #    nodes = self.gamma_filter({etype_int})
+        
+        colors = ('red', 'green', 'blue')
+        markers = ('o', 'x', '^')
+        
+        for sid in range(3):
+            gamma = self.all_gamma[sid]
+            x_data, y_data = self.nodes_to_plottable(gamma)
+            
+            label_text = '$\gamma$ seg{}'.format(sid)
+            plt.plot(x_data, y_data, markers[sid], label=label_text,
+                mfc='none', mec=colors[sid], mew=1)
 
 
+        plt.title('$\gamma$ nodes')
         plt.xlim(-4,4)
         plt.ylim(-4,4)
         plt.legend(loc=3)

@@ -6,20 +6,19 @@ from solver import Solver, Result, cart_to_polar
 import matrices
 
 from ps.basis import PsBasis
+from ps.grid import PsGrid
 from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
 
-ETYPE_NAMES = ('circle', 'radius1', 'radius2', 
-    'outer1', 'outer2', 'inner')
+ETYPE_NAMES = ('standard', 'left', 'right')
 
 TAYLOR_N_DERIVS = 6
 
-class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
+class PizzaSolver(Solver, PsBasis, PsGrid, PsInhomo, PsDebug):
     AD_len = 2*np.pi
     R = 2.3
 
     etypes = dict(zip(ETYPE_NAMES, range(len(ETYPE_NAMES))))
-
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
@@ -27,6 +26,8 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         
         super().__init__(problem, N, scheme_order, **kwargs)
         
+        self.ps_construct_grids()
+           
     def get_sid(self, th):
         return self.problem.get_sid(th)
 
@@ -74,35 +75,33 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
         else:
             return unsigned
 
-    def get_etype(self, i, j):
+    def get_etype(self, sid, i, j):
+        a = self.a
+        R = self.R
+    
         x, y = self.get_coord(i, j)
         r, th = self.get_polar(i, j)
-
-        dist0 = abs(self.R - r)
-        dist1 = abs(y)
-        dist2 = self.dist_to_radius(2, x, y)
-
-        if r > self.R:
+        
+        if sid == 0:
             if th < self.a/2:
-                return self.etypes['outer1']
+                return self.etypes['right']
             elif th < self.a:
-                return self.etypes['outer2']
+                return self.etypes['left']
             else:
-                return self.etypes['circle']
-        elif th > self.a + np.pi/2 and th < 3/2*np.pi:
-            if r < dist0:
-                raise Exception('EXTEND_INNER')
-                return EXTEND_INNER
-            else:
-                return self.etypes['circle']
-        elif th > self.a and dist0 < min(dist1, dist2):
-            return self.etypes['circle']
-        elif dist1 < dist2:
-            return self.etypes['radius1']
+                return self.etypes['standard']
+                
         else:
-            return self.etypes['radius2']
-
-        raise Exception('Did not match any etype')
+            if sid == 1:
+                x_max = R
+            elif sid == 2:
+                x_max = R*cos(a)
+        
+            if x < 0:
+                return self.etypes['left']
+            elif x > x_max:
+                return self.etypes['right']
+            else:
+                return self.etypes['standard']
 
     def extend_from_radius(self, Y, xi0, xi1, d2_xi0_X,
         d2_xi1_X, d4_xi0_X):
@@ -146,9 +145,9 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
     def do_extend_circle(self, i, j):
         r, th = self.get_polar(i, j)       
-        derivs = self.ext_calc_certain_xi_derivs(i, j, self.R, th, sid=0)
+        derivs = self.ext_calc_certain_xi_derivs(i, j, self.R, th, sid=0)            
         return self.extend_circle(r, *derivs)
-
+        
     def do_extend_radius1(self, i, j):
         x, y = self.get_coord(i, j)
         derivs = self.ext_calc_certain_xi_derivs(i, j, x, 2*np.pi)
@@ -263,100 +262,54 @@ class PizzaSolver(Solver, PsBasis, PsInhomo, PsDebug):
 
         return v
 
-    def extend_boundary(self, nodes=None): 
-        if nodes is None:
-            nodes = self.gamma
-
+    def extend_boundary(self):
         R = self.R
         k = self.problem.k
 
-        boundary = np.zeros(len(nodes), dtype=complex)
-
-        for l in range(len(nodes)):
-            i, j = nodes[l]
-            x, y = self.get_coord(i, j)
-            r, th = self.get_polar(i, j)
-            etype = self.get_etype(i, j)
-
-            if etype == self.etypes['circle']:
-                boundary[l] = self.do_extend_circle(i, j)
-
-            elif etype == self.etypes['radius1']:
-                boundary[l] = self.do_extend_radius1(i, j)
-
-            elif etype == self.etypes['radius2']:
-                boundary[l] = self.do_extend_radius2(i, j)
-
-            elif etype == self.etypes['outer1']:
-                boundary[l] = self.do_extend_outer(i, j, 1)
-
-            elif etype == self.etypes['outer2']:
-                boundary[l] = self.do_extend_outer(i, j, 2)
-
-        boundary += self.extend_inhomo_f(nodes)
-        return boundary
+        all_ext = {} 
         
-    def sort_gamma(self):
-        s_list = ('outer1', 'circle', 'outer2', 'radius1', 'radius2')
-        etype_list = [self.etypes[s] for s in s_list]
-        
-        def sort_key(ij):
-            i, j = ij
-            etype = self.get_etype(i, j)
-            return etype_list.index(etype)
-        
-        self.gamma = sorted(self.gamma, key=sort_key)
-        
-        self.sid_by_gamma_l = {}          
-        for l in range(len(self.gamma)):
-            i, j = self.gamma[l]
-            x, y = self.get_coord(i, j)
-            r, th = self.get_polar(i, j)
-            etype = self.get_etype(i, j)
-                
-            if etype == self.etypes['radius1']:
-                sid = 1
-            elif etype == self.etypes['radius2']:
-                sid = 2
-            elif etype == self.etypes['outer1']:
-                if r - self.R < y:
-                    sid = 0
-                else:
-                    sid = 1
-            elif etype == self.etypes['outer2']:
-                if r - self.R < self.dist_to_radius(2, x, y):
-                    sid = 0
-                else:
-                    sid = 2
-            else:
-                sid = 0                   
-        
-            self.sid_by_gamma_l[l] = sid
+        for sid in range(3):
+            gamma = self.all_gamma[sid]
+            
+            ext = np.zeros(len(gamma), dtype=complex)
+            all_ext[sid] = ext
 
+            for l in range(len(gamma)):
+                i, j = gamma[l]
+                #x, y = self.get_coord(i, j)
+                #r, th = self.get_polar(i, j)
+                etype = self.get_etype(sid, i, j)
+
+                if sid == 0:
+                    if etype == self.etypes['standard']:
+                        ext[l] = self.do_extend_circle(i, j)            
+
+        #boundary += self.extend_inhomo_f(nodes)
+        return all_ext
+        
     def run(self):
         n_basis_tuple = self.problem.get_n_basis(self.N)
         #print('n_basis_tuple: {}'.format(n_basis_tuple))
         self.setup_B_desc(*n_basis_tuple)
         
-        self.sort_gamma()
-        #return self.test_extend_boundary()
+        return self.test_extend_boundary({0}, {self.etypes['standard']})
         #return self.test_extend_basis()
 
-        self.calc_c0()
+        #self.calc_c0()
         #self.c0_test()
-        self.calc_c1()
-        self.c1_test()
+        #self.calc_c1()
+        #self.c1_test()
         #self.print_c1()
         #self.test_extend_basis_not()
-        self.plot_gamma()
+        return self.plot_gamma()
         #self.test_with_c1_exact()
 
-        ext = self.extend_boundary()
-        u_act = self.get_potential(ext) + self.ap_sol_f
+        #ext = self.extend_boundary()
+        #u_act = self.get_potential(ext) + self.ap_sol_f
         
         #self.plot_contour(u_act)
 
-        error = self.eval_error(u_act)
+        #error = self.eval_error(u_act)
         
         result = Result()
         result.error = error
