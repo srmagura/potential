@@ -222,18 +222,17 @@ class PsDebug:
         x_data = np.zeros(len(nodes))
         y_data = np.zeros(len(nodes))
 
-        for l in range(len(nodes)):
-            x, y = self.get_coord(*nodes[l])
+        l = 0
+        for i, j in nodes:
+            x, y = self.get_coord(i, j)
             x_data[l] = x
             y_data[l] = y
+            l += 1
 
         return x_data, y_data
 
-    def plot_gamma(self, plot_rpoints=False):
+    def plot_gamma(self):
         self.plot_Gamma()
-
-        #for etype_name, etype_int in self.etypes.items():
-        #    nodes = self.gamma_filter({etype_int})
         
         colors = ('red', 'green', 'blue')
         markers = ('o', 'x', '^')
@@ -246,10 +245,26 @@ class PsDebug:
             plt.plot(x_data, y_data, markers[sid], label=label_text,
                 mfc='none', mec=colors[sid], mew=1)
 
-
         plt.title('$\gamma$ nodes')
         plt.xlim(-4,4)
         plt.ylim(-4,4)
+        plt.legend(loc=3)
+        plt.show()
+        
+    def plot_rhs_nodes(self, rhs_nodes):
+        self.plot_Gamma()
+        
+        colors = ('red', 'green', 'blue')
+        labels = ('Lww', 'radius_Lw[1]', 'radius_Lw[2]')
+        
+        for sid in range(3):
+            nodes = rhs_nodes[sid]
+            x_data, y_data = self.nodes_to_plottable(nodes)
+            
+            plt.plot(x_data, y_data, 'o', mfc='none', mec=colors[sid], mew=1,
+                label=labels[sid])
+
+        plt.title('RHS nodes')
         plt.legend(loc=3)
         plt.show()
 

@@ -31,9 +31,9 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         r, th = self.get_polar(i, j)
         return r <= self.R and th >= self.a 
         
-    def get_w2(self, all_ext):
-        w2 = np.zeros([(self.N-1)**2], dtype=complex)
-        test_w2_set = {}
+    def get_ww(self, all_ext):
+        ww = np.zeros([(self.N-1)**2], dtype=complex)
+        test_ww_set = {}
                
         for sid in range(3):
             gamma = self.all_gamma[sid]
@@ -62,34 +62,26 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
                     do_set = True
                 
                 if do_set:
-                    w2[index] = ext[l]
-                    test_w2_set[index] = True
+                    ww[index] = ext[l]
+                    test_ww_set[index] = True
        
         error = []
         for gamma in self.all_gamma.values():
             for i, j in gamma:
                 index = matrices.get_index(self.N, i, j)
                 x, y = self.get_coord(i, j)
-                assert index in test_w2_set
+                assert index in test_ww_set
                 
-                error.append(abs(w2[index]-self.problem.eval_expected(x, y)))
+                error.append(abs(ww[index]-self.problem.eval_expected(x, y)))
         
-        print('w2 error: {}'.format(max(error)))
-        return w2
+        print('ww error: {}'.format(max(error)))
+        return ww
         
         
     def get_potential(self, all_ext):
-        union_w = np.zeros((self.N-1)**2, dtype=complex)
-        for sid in range(3):                    
-            gamma = self.all_gamma[sid]
-            ext = all_ext[sid]
-                      
-            for l in range(len(gamma)):
-                i, j = gamma[l]
-                index = matrices.get_index(self.N, i, j) 
-                union_w[index] = ext[l]
-
-        union_Lw = np.ravel(self.L.dot(union_w))
+        ww = self.get_ww(all_ext)
+        Lww = np.ravel(self.L.dot(ww))
+        
         radius_Lw = {}
         
         for rsid in (1, 2):
@@ -107,27 +99,43 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             
         rhs = np.zeros((self.N-1)**2, dtype=complex)
         
+        rhs_nodes = {0: set(), 1: set(), 2: set()}
+        matchup_error = []
+        
         for i, j in self.global_Mplus:
             index = matrices.get_index(self.N, i, j)
-            r, th = self.get_coord(i, j)
+            r, th = self.get_polar(i, j)
             
-            if r < self.R/2:
+            if r < 2*self.R/3:
                 in_Mplus1 = (i, j) in self.all_Mplus[1]
                 in_Mplus2 = (i, j) in self.all_Mplus[2]
             
                 if in_Mplus1 and not in_Mplus2:
                     rhs[index] = radius_Lw[1][index]
+                    
+                    if r > self.R/4:
+                        matchup_error.append(abs(rhs[index]-Lww[index]))
+                       
+                    rhs_nodes[1].add((i, j))
                 elif not in_Mplus1 and in_Mplus2:
                     rhs[index] = radius_Lw[2][index]
+                    
+                    if r > self.R/4:
+                        matchup_error.append(abs(rhs[index]-Lww[index]))
+                    
+                    rhs_nodes[2].add((i, j))
                 elif not in_Mplus1 and not in_Mplus2:
-                    rhs[index] = union_Lw[index]
+                    pass
                 else:
                     raise Exception('{}'.format((i, j)))
             else:
-                rhs[index] = union_Lw[index]
+                rhs[index] = Lww[index]
+                rhs_nodes[0].add((i, j))
 
-        w2 = self.get_w2(all_ext)                           
-        return w2 - self.LU_factorization.solve(rhs)
+        print('Matchup error: {}'.format(max(matchup_error)))
+        self.plot_rhs_nodes(rhs_nodes)
+                        
+        return ww - self.LU_factorization.solve(rhs)
 
     def get_Q(self, index, ext_only=False):
         columns = []
@@ -195,7 +203,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #self.c1_test()
         #self.print_c1()
         #self.test_extend_basis_not()
-        self.plot_gamma()
+        #self.plot_gamma()
         #self.test_with_c1_exact()
 
         all_ext = self.extend_boundary()

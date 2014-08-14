@@ -121,10 +121,10 @@ class Solver(SolverExtend, SolverDebug):
             l = matrices.get_index(self.N, i,j)
             error.append(abs(u_exp[l] - u_act[l]))
             
-            if error[-1] > max_error:
-                print('i={}    j={}    error={}'.format(i,j,error[-1]))
-                print(self.get_coord(i,j))
-                max_error = error[-1]
+        #    if error[-1] > max_error:
+        #        print('i={}    j={}    error={}'.format(i,j,error[-1]))
+        #        print(self.get_coord(i,j))
+        #        max_error = error[-1]
 
         return max(error)
         
