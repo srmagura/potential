@@ -73,13 +73,13 @@ class PsExtend:
             d2_B_arg = self.eval_dn_B_arg(2, JJ, param_r, param_th, sid)
             d4_B_arg = self.eval_dn_B_arg(4, JJ, param_r, param_th, sid)
 
-            xi0 += self.c0[JJ] * B
-            xi1 += self.c1[JJ] * B
+            xi0 += self._c0[JJ] * B
+            xi1 += self._c1[JJ] * B
 
-            d2_xi0_arg += self.c0[JJ] * d2_B_arg
-            d2_xi1_arg += self.c1[JJ] * d2_B_arg
+            d2_xi0_arg += self._c0[JJ] * d2_B_arg
+            d2_xi1_arg += self._c1[JJ] * d2_B_arg
 
-            d4_xi0_arg += self.c0[JJ] * d4_B_arg
+            d4_xi0_arg += self._c0[JJ] * d4_B_arg
 
         return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
             
@@ -95,9 +95,9 @@ class PsExtend:
         derivs = np.zeros(TAYLOR_N_DERIVS, dtype=complex)
 
         if index == 0:
-            c = self.c0
+            c = self._c0
         elif index == 1:
-            c = self.c1
+            c = self._c1
 
         for n in range(TAYLOR_N_DERIVS):
             for JJ in range(len(self.B_desc)):
@@ -273,7 +273,7 @@ class PsExtend:
          
         return self.do_extend_outer(i, j, options)
 
-    def extend_boundary(self):
+    def _extend_boundary(self):
         R = self.R
         k = self.problem.k
 
@@ -312,6 +312,13 @@ class PsExtend:
                         ext[l] = self.do_extend_2_left(i, j)
                     elif etype == self.etypes['right']:
                         ext[l] = self.do_extend_2_right(i, j)
-                        
-        #boundary += self.extend_inhomo_f(nodes)
+
+        return all_ext
+        
+    def extend_boundary(self):
+        self._c0 = self.c0
+        self._c1 = self.c1
+        
+        all_ext = self._extend_boundary()
+        # add inhomogeneous part
         return all_ext

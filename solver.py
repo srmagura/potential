@@ -115,9 +115,16 @@ class Solver(SolverExtend, SolverDebug):
                 self.problem.eval_expected(x, y)
 
         error = []
+        max_error = 0
+        
         for i,j in self.global_Mplus:
             l = matrices.get_index(self.N, i,j)
             error.append(abs(u_exp[l] - u_act[l]))
+            
+            if error[-1] > max_error:
+                print('i={}    j={}    error={}'.format(i,j,error[-1]))
+                print(self.get_coord(i,j))
+                max_error = error[-1]
 
         return max(error)
         

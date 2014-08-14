@@ -29,7 +29,7 @@ class PsGrid:
                 
                 if min_x <= x and x <= max_x:
                     if((sid == 1 and y <= slope*x) or
-                        (sid == 2 and y >= slope*x)):
+                        (sid == 2 and y >= slope*x and not (x == 0 and y == 0))):
                         self.all_Mplus[sid].add((i, j))
                     else:
                         self.all_Mminus[sid].add((i, j))
