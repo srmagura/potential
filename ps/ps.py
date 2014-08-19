@@ -10,6 +10,7 @@ from ps.grid import PsGrid
 from ps.extend import PsExtend
 from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
+from ps.multivalue import Multivalue
 
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
@@ -31,22 +32,20 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         r, th = self.get_polar(i, j)
         return r <= self.R and th >= self.a         
         
-    def get_potential(self, all_ext):
-        ww = self.get_ww(all_ext)
+    def get_potential(self, ext):
+        ww = ext.force_single_value_array()
         Lww = np.ravel(self.L.dot(ww))
         
         radius_Lw = {}
         
         for rsid in (1, 2):
-            w = np.zeros((self.N-1)**2, dtype=complex)
-            
+            w = np.zeros((self.N-1)**2, dtype=complex)           
             gamma = self.all_gamma[rsid]
-            ext = all_ext[rsid]
             
             for l in range(len(gamma)):
                 i, j = gamma[l]
                 index = matrices.get_index(self.N, i, j) 
-                w[index] = ext[l]
+                w[index] = ext.get(gamma[l], rsid)
                 
             radius_Lw[rsid] = np.ravel(self.L.dot(w))
             
@@ -80,7 +79,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             else:
                 rhs[index] = Lww[index]
                        
-        return ww - self.LU_factorization.solve(rhs)
+        return ext.add_array(-self.LU_factorization.solve(rhs))
 
     def get_Q(self, index, ext_only=False):
         columns = []
@@ -151,8 +150,9 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #self.plot_gamma()
         #self.test_with_c1_exact()
 
-        all_ext = self.extend_boundary()
-        u_act = self.get_potential(all_ext) #+ self.ap_sol_f
+        ext = self.extend_boundary()
+        potential = self.get_potential(ext) #+ self.ap_sol_f
+        u_act = potential.get_interior_array()
         
         #self.plot_contour(u_act)
 

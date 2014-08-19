@@ -4,6 +4,8 @@ import math
 
 from solver import cart_to_polar
 
+from ps.multivalue import Multivalue
+
 ETYPE_NAMES = ('standard', 'left', 'right')
 TAYLOR_N_DERIVS = 6
 
@@ -273,11 +275,11 @@ class PsExtend:
          
         return self.do_extend_outer(i, j, options)
 
-    def _extend_boundary(self):
+    def get_all_ext(self):
         R = self.R
         k = self.problem.k
 
-        all_ext = {} 
+        all_ext = {}
         
         for sid in range(3):
             gamma = self.all_gamma[sid]
@@ -315,10 +317,27 @@ class PsExtend:
 
         return all_ext
         
+    def _extend_boundary(self):                
+        all_ext = self.get_all_ext()
+        ext = Multivalue(self)
+        
+        for sid in (1, 2):
+            gamma = self.all_gamma[sid]
+            
+            for l in range(len(gamma)):
+                ext.set(gamma[l], sid, all_ext[sid][l])
+                
+        gamma = self.all_gamma[0]
+        for l in range(len(gamma)):
+            if not ext.has(gamma[l]):
+                ext.set(gamma[l], 0, all_ext[0][l])
+        
+        return ext
+        
     def extend_boundary(self):
         self._c0 = self.c0
         self._c1 = self.c1
-        
-        all_ext = self._extend_boundary()
+
+        ext = self._extend_boundary()
         # add inhomogeneous part
-        return all_ext
+        return ext
