@@ -47,6 +47,8 @@ class PsGrid:
                 else:
                     self.all_Mminus[0].add((i, j))
         
+              
+        union_gamma_set = set()
         
         for sid in range(3):                
             Nplus = set()
@@ -64,4 +66,8 @@ class PsGrid:
                 elif (i, j) in self.all_Mminus[sid]:
                     Nminus |= Nm
 
-            self.all_gamma[sid] = list(Nplus & Nminus)
+            gamma_set = Nplus & Nminus
+            self.all_gamma[sid] = list(gamma_set)
+            union_gamma_set |= gamma_set
+        
+        self.union_gamma = list(union_gamma_set)

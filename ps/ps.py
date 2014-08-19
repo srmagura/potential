@@ -81,22 +81,30 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
                        
         return ext.add_array(-self.LU_factorization.solve(rhs))
 
-    def get_Q(self, index, ext_only=False):
+    def get_Q(self, index):
         columns = []
 
         for JJ in range(len(self.B_desc)):
             ext = self.extend_basis(JJ, index)
             potential = self.get_potential(ext)
-            projection = self.get_trace(potential)
+            projection = potential.get_gamma_array()
 
-            if not ext_only:
-                columns.append(projection - ext)
-            else:
-                columns.append(ext)
+            columns.append(projection - ext.get_gamma_array())
         
         Q = np.column_stack(columns)
                     
         return Q
+        
+    def calc_c1(self):
+        Q0 = self.get_Q(0)
+        Q1 = self.get_Q(1)
+
+        #self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+        #ext_f = self.extend_inhomo_f()    
+        #proj_f = self.get_trace(self.get_potential(ext_f))
+
+        rhs = -Q0.dot(self.c0) #- self.get_trace(self.ap_sol_f) - proj_f + ext_f        
+        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def get_radius_point(self, sid, x, y):
         assert sid == 2
@@ -127,17 +135,17 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.setup_B_desc(*n_basis_tuple)
         
         #return self.test_extend_boundary()
-        #return self.test_extend_boundary({
-        #    (0, 'standard'),
-        #    (0, 'left'),
-        #    (0, 'right'),
-        #    (1, 'standard'),
-        #    (1, 'left'),
-        #    (1, 'right'),
-        #    (2, 'standard'),
-        #    (2, 'left'),
-        #    (2, 'right'),
-        #})
+        return self.test_extend_boundary({
+            (0, 'standard'),
+            (0, 'left'),
+            (0, 'right'),
+            (1, 'standard'),
+            (1, 'left'),
+            (1, 'right'),
+            (2, 'standard'),
+            (2, 'left'),
+            (2, 'right'),
+        })
         #return self.test_extend_basis()
 
         self.calc_c0()

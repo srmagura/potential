@@ -52,12 +52,11 @@ class PsDebug:
         self.calc_c1_exact()
         
         all_error = 0
-        all_ext = self.extend_boundary()
+        ext = self.extend_boundary()
 
         for sid, pair_etype in pairs:
             gamma = self.all_gamma[sid]
-            ext = all_ext[sid]
-            error = np.zeros(len(gamma), dtype=complex)
+            error = [0]
             
             for l in range(len(gamma)):
                 i, j = gamma[l]
@@ -65,7 +64,11 @@ class PsDebug:
                 etype = self.get_etype(sid, i, j)
                 
                 if etype == pair_etype:
-                    error[l] = self.problem.eval_expected(x, y) - ext[l]
+                    exp = self.problem.eval_expected(x, y) 
+                    act = ext.get((i, j), sid)
+                    
+                    if act is not None:
+                        error.append(exp - act)
                 
             segment_error = np.max(np.abs(error))
             
@@ -267,58 +270,6 @@ class PsDebug:
         plt.title('RHS nodes')
         plt.legend(loc=3)
         plt.show()
-
-    def gen_fake_gamma(self):
-        def ap():
-            self.gamma.append(self.get_coord_inv(x, y))
-
-        self.gamma = []
-        h = self.AD_len / self.N
-        a = self.a
-        
-        for r in np.arange(.1, self.R, .2):
-            x = r
-            y = h/5
-            ap()
-
-            y = -h/5
-            ap()
-
-            x = r*cos(a) + h*sin(a)
-            y = r*sin(a) + h*cos(a)
-            ap()
-
-            x = r*cos(a) - h*sin(a)/5
-            y = r*sin(a) - h*cos(a)/5
-            ap()
-
-        for th in np.arange(self.a+.001, 2*np.pi, .1):
-            r = self.R + h/2
-            x = r*cos(th)
-            y = r*sin(th)
-            ap()
-
-            r = self.R - h/2
-            x = r*cos(th)
-            y = r*sin(th)
-            ap()
-        
-        for t in (True, False):
-            r = self.R + h
-            b = np.pi*h/10
-            if t:
-                b = self.a - b 
-            x = r*cos(b)
-            y = r*sin(b)
-            ap()
-
-            r = self.R + h
-            b = np.pi*h/5
-            if t:
-                b = self.a - b 
-            x = r*cos(b)
-            y = r*sin(b)
-            ap()
             
     def optimize_n_basis(self):
         min_error = float('inf')
@@ -362,61 +313,3 @@ class PsDebug:
         
         self.plot_Gamma()
         plt.show()
-        
-    def _test_extend_basis_not(self, index):
-        Q = self.get_Q(index, ext_only=True)
-        error = []
-        
-        for JJ in range(len(self.B_desc)):
-            for l in range(len(self.gamma)):
-                JJ_sid = self.sid_by_JJ[JJ]
-                l_sid = self.sid_by_gamma_l[l]
-                
-                i, j = self.gamma[l]
-                etype = self.get_etype(i,j)
-                x, y = self.get_coord(i, j)
-                
-                if JJ_sid != l_sid:
-                    if abs(Q[l, JJ]) > 1e-5:
-                        print('Basis on {}, node on {}'.format(JJ_sid, l_sid))
-                        
-                    error.append(abs(Q[l, JJ]))
-                else:
-                    if abs(Q[l, JJ]) < 1e-15 and index != 1:
-                        print('sid={}  x,y={}'.format(JJ_sid, (x,y)))
-                    
-        print('Q{} error: {}'.format(index, max(error)))
-           
-    def test_extend_basis_not(self):
-        self._test_extend_basis_not(0)
-        self._test_extend_basis_not(1)
-        
-    def _test_with_c1(self):
-        Q0 = self.get_Q(0)
-        Q1 = self.get_Q(1)
-        
-        result = Q0.dot(self.c0) + Q1.dot(self.c1)
-        result = np.abs(result)
-        
-        return result
-        
-    def test_with_c1_exact(self):
-        self.calc_c1_exact()       
-        result_exact = self._test_with_c1()
-        
-        self.calc_c1()
-        result_actual = self._test_with_c1()
-       
-        for l in range(len(self.gamma)):
-            i, j = self.gamma[l]
-            x, y = self.get_coord(i, j)
-            etype = self.get_etype(i, j)
-            etypes = {self.etypes['radius2'], self.etypes['outer2']}
-            
-            if etype in etypes and result_exact[l] > 1e-4:
-                print('error={}   at {}'.format(result_exact[l], (x,y)))
-        
-        print('test_with_c1 exact error: {}'.format(np.max(result_exact)))
-        print('test_with_c1 actual error: {}'.format(np.max(result_actual)))
-                
-        

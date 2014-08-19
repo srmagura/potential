@@ -22,7 +22,30 @@ class Multivalue:
         
         for sid1, value in _dict.items():
             if sid is None or sid1 == sid:
-                return value 
+                return value
+                
+        return None
+                
+    def get_gamma_array(self):
+        union_gamma = self.solver.union_gamma
+        array = np.zeros(2*len(union_gamma), dtype=complex)
+        
+        l = 0
+        for ij in union_gamma:
+            if ij not in self.data:
+                l += 2
+                continue
+                
+            _dict = self.data[ij]
+            ll = 0
+            
+            for sid in sorted(_dict.keys()):
+                array[l + ll] = _dict[sid]
+                ll += 1
+            
+            l += 2
+            
+        return array
         
     def force_single_value_array(self):
         N = self.solver.N
