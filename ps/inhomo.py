@@ -34,6 +34,21 @@ class PsInhomo:
                 ext[l] += self.extend_inhomo_outer(x, y, 2)
 
         return ext
+        
+    def _extend_src_f_get_sid(self, i, j):
+        R = self.R
+        a = self.a
+        
+        r, th = self.get_polar(i, j)
+
+        if self.get_etype(0, i, j) == self.etypes['standard']:
+            return 0
+        elif th < a/2 and r < self.R:
+            return 1
+        elif th >= a/2 and r < self.R:
+            return 2
+        else:
+             return 0   
 
     def extend_src_f(self):
         R = self.R
@@ -43,27 +58,28 @@ class PsInhomo:
         if p.homogeneous:
             return
 
-        for i,j in self.Kplus - self.Mplus:
+        for i,j in self.Kplus - self.global_Mplus:
             x, y = self.get_coord(i, j)
-            r, th = self.get_polar(i, j)
-            etype = self.get_etype(i, j)
+            r, th = self.get_coord(i, j)
+            
+            sid = self._extend_src_f_get_sid(i, j)     
+            etype = self.get_etype(sid, i, j)
 
-            if etype == self.etypes['circle']:
-                x0 = R * np.cos(th)
-                y0 = R * np.sin(th)
-            elif etype == self.etypes['radius1']:
+            if sid == 1:
                 x0 = x
                 y0 = 0
-            elif etype == self.etypes['radius2']:
+            elif sid == 2:
                 x0, y0 = self.get_radius_point(2, x, y)
-
-            elif etype == self.etypes['outer1']:
-                x0 = R
-                y0 = 0
-
-            elif etype == self.etypes['outer2']:
-                x0 = R * np.cos(a)
-                y0 = R * np.sin(a)
+            elif sid == 0:
+                if etype == self.etypes['standard']:
+                    x0 = R * np.cos(th)
+                    y0 = R * np.sin(th)
+                elif etype == self.etypes['left']:
+                    x0 = R * np.cos(a)
+                    y0 = R * np.sin(a)
+                elif etype == self.etypes['right']:
+                    x0 = R
+                    y0 = 0
 
             vec = np.array((x-x0, y-y0))
             delta = np.linalg.norm(vec)

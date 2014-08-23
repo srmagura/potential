@@ -56,7 +56,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             x, y = self.get_coord(i, j)
             r, th = self.get_polar(i, j)
             
-            if r < 2*self.R/3:
+            # N must be at least 32. This may be invalid if a != pi/6
+            if r < .6*self.R:
                 in_Mplus1 = (i, j) in self.all_Mplus[1]
                 in_Mplus2 = (i, j) in self.all_Mplus[2]
             
@@ -133,7 +134,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         n_basis_tuple = self.problem.get_n_basis(self.N)
         #print('n_basis_tuple: {}'.format(n_basis_tuple))
         self.setup_B_desc(*n_basis_tuple)
+        #print('n_basis: {}'.format(n_basis_tuple))
         
+        return self.ps_test_extend_src_f({
+            (0, 'standard'),
+            (0, 'left'),
+            (0, 'right'),
+            #(1, 'standard'),
+        })
         #return self.test_extend_boundary()
         return self.test_extend_boundary({
             (0, 'standard'),
@@ -149,19 +157,18 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #return self.test_extend_basis()
 
         self.calc_c0()
-        self.calc_c1_exact()
+        #self.calc_c1_exact()
         #self.c0_test()
-        #self.calc_c1()
+        self.calc_c1()
         #self.c1_test()
         #self.print_c1()
-        #self.test_extend_basis_not()
         #self.plot_gamma()
-        #self.test_with_c1_exact()
+        #self.test_Q_system_residual()
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) #+ self.ap_sol_f
         u_act = potential.get_interior_array()
-        
+
         #self.plot_contour(u_act)
 
         error = self.eval_error(u_act)

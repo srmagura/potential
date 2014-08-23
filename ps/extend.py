@@ -101,11 +101,11 @@ class PsExtend:
 
         return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
             
-    def ext_calc_B_derivs(self, JJ, param_th, segment_sid, index):
+    def ext_calc_B_derivs(self, JJ, sid, param_r, param_th):
         derivs = np.zeros(TAYLOR_N_DERIVS, dtype=complex)
 
         for n in range(TAYLOR_N_DERIVS):
-            derivs[n] = self.eval_dn_B_arg(n, JJ, self.R, param_th, segment_sid)
+            derivs[n] = self.eval_dn_B_arg(n, JJ, param_r, param_th, sid)
 
         return derivs
 
@@ -151,9 +151,9 @@ class PsExtend:
             derivs0 = self.ext_calc_xi_derivs(param_r, param_th, taylor_sid, 0) 
             derivs1 = self.ext_calc_xi_derivs(param_r, param_th, taylor_sid, 1) 
         elif index == 0:
-            derivs0 = self.ext_calc_B_derivs(JJ, param_th, taylor_sid, 0) 
+            derivs0 = self.ext_calc_B_derivs(JJ, taylor_sid, param_r, param_th) 
         elif index == 1:
-            derivs1 = self.ext_calc_B_derivs(JJ, param_th, taylor_sid, 1) 
+            derivs1 = self.ext_calc_B_derivs(JJ, taylor_sid, param_r, param_th) 
 
         xi0 = xi1 = 0
         d2_xi0_arg = d2_xi1_arg = 0

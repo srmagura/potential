@@ -17,7 +17,7 @@ def cart_to_polar(x, y):
     return r, th
     
 class Result:
-    pass
+    u_act = None
     
 
 class Solver(SolverExtend, SolverDebug): 
@@ -56,8 +56,8 @@ class Solver(SolverExtend, SolverDebug):
 
     # Get the rectangular coordinates of grid point (i,j)
     def get_coord(self, i, j):
-        x = self.AD_len * (i / self.N - 1/2) 
-        y = self.AD_len * (j / self.N - 1/2) 
+        x = self.AD_len * (i / self.N - 1/2)
+        y = self.AD_len * (j / self.N - 1/2)
         return x, y
 
     # For testing
@@ -88,7 +88,7 @@ class Solver(SolverExtend, SolverDebug):
             Nm = set([(i, j)])
 
             if self.scheme_order > 2:
-                Nm |= set([(i-1, j), (i+1, j), (i, j-1), (i, j+1)])
+              Nm |= set([(i-1, j), (i+1, j), (i, j-1), (i, j+1)])
             
             self.Kplus |= Nm
 

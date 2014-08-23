@@ -84,7 +84,7 @@ class PsDebug:
         error = []
         for index in (0, 1):
             for JJ in range(len(self.B_desc)):
-                ext1 = self.extend_basis(JJ, index)
+                ext1_array = self.extend_basis(JJ, index).get_gamma_array()
 
                 self.c0 = np.zeros(len(self.B_desc))
                 self.c1 = np.zeros(len(self.B_desc))
@@ -94,40 +94,48 @@ class PsDebug:
                 elif index == 1:
                     self.c1[JJ] = 1
 
-                ext2 = self.extend_boundary() - self.extend_inhomo_f()
-                diff = np.abs(ext1-ext2)
+                ext2_array = self.extend_boundary().get_gamma_array() #- self.extend_inhomo_f()
+                diff = np.abs(ext1_array - ext2_array)
                 error.append(np.max(diff))
                 print('index={}  JJ={}  error={}'.format(index, JJ, error[-1]))
                 
-                for l in range(len(self.gamma)):
+                for l in range(2*len(self.union_gamma)):
                     if diff[l] > 1e-13:
-                        i, j = self.gamma[l]
+                        i, j = self.union_gamma[l//2]
                         x, y = self.get_coord(i, j)
-                        print('at {}   ext1={}    ext2={}'.format((x, y), ext1[l], ext2[l]))
+                        print('at {}   ext1={}    ext2={}'.format((x, y), ext1_array[l], ext2_array[l]))
 
         error = np.array(error)
         
         result = Result()
         result.error = np.max(np.abs(error))
-        result.u_act = None
         return result
-
-    def test_extend_src_f_etype(self, etypes=None):
-        if etypes is None:
-            etypes = self.etypes.values()
-
-        errors = []
-        for i, j in self.Kplus - self.Mplus:
-            x, y = self.get_coord(i, j)
-            etype = self.get_etype(i, j)
-
-            l = matrices.get_index(self.N, i, j)
-            if etype in etypes:
-                a = self.problem.eval_f(x, y)
-                b = self.src_f[l]
-                errors.append(abs(a-b))
-
-        return max(errors)
+        
+    def ps_test_extend_src_f(self, pairs):
+        error = []
+        
+        for sid, etype_name in pairs:
+            etype = self.etypes[etype_name]
+        
+            for i, j in self.Kplus:
+                x, y = self.get_coord(i, j)
+                
+                sid1 = self._extend_src_f_get_sid(i, j)
+                etype1 = self.get_etype(sid, i, j)
+                
+                if sid1 == sid and etype1 == etype:
+                    l = matrices.get_index(self.N, i, j)         
+                    diff = abs(self.problem.eval_f(x, y) - self.src_f[l])
+                    error.append(diff)
+                    
+                    if diff > .25:
+                        print(self.problem.eval_f(x,y), self.src_f[l])
+                        print('x={}  y={}  diff={}'.format(x,y,diff))
+                        pass
+                        
+        result = Result()
+        result.error = max(error)
+        return result
 
     def c0_test(self):
         sample = self.get_boundary_sample()
@@ -313,3 +321,10 @@ class PsDebug:
         
         self.plot_Gamma()
         plt.show()
+        
+    def test_Q_system_residual(self):
+        Q0 = self.get_Q(0)
+        Q1 = self.get_Q(1)
+        
+        result = Q0.dot(self.c0) + Q1.dot(self.c1)
+        print('Q system residual:', np.max(np.abs(result)))

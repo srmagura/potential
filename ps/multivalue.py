@@ -37,14 +37,19 @@ class Multivalue:
                 continue
                 
             _dict = self.data[ij]
-            ll = 0
             
-            for sid in sorted(_dict.keys()):
-                array[l + ll] = _dict[sid]
-                ll += 1
+            if len(_dict) == 2:
+                assert set(_dict.keys()) == {1,2}
+ 
+                for sid in _dict:
+                    array[l + sid - 1] = _dict[sid]
+            else:
+                array[l] = tuple(_dict.values())[0]
             
             l += 2
-            
+        #print(array)
+        #print(self.data)
+        #raise Exception()
         return array
         
     def force_single_value_array(self):
@@ -62,18 +67,21 @@ class Multivalue:
         
         for i, j in self.solver.M0:
             index = matrices.get_index(N, i, j)
+            sids = []
+            values = []
             
             if (i, j) in self.data:
                 _dict = self.data[(i, j)]
 
-                for sid1, value1 in _dict.items():
-                    value = value1
-                    sid = sid1
+                for sid, value in _dict.items():
+                    values.append(value)
+                    sids.append(sid)
             else:
-                value = 0
-                sid = 0
+                values.append(0)
+                sids.append(0)
                         
-            result.set((i, j), sid, value + array[index])
+            for sid, value in zip(sids, values):
+                result.set((i, j), sid, value + array[index])
                 
         return result
         
