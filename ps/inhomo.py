@@ -60,7 +60,7 @@ class PsInhomo:
 
         for i,j in self.Kplus - self.global_Mplus:
             x, y = self.get_coord(i, j)
-            r, th = self.get_coord(i, j)
+            r, th = self.get_polar(i, j)
             
             sid = self._extend_src_f_get_sid(i, j)     
             etype = self.get_etype(sid, i, j)

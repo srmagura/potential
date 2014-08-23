@@ -135,13 +135,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #print('n_basis_tuple: {}'.format(n_basis_tuple))
         self.setup_B_desc(*n_basis_tuple)
         #print('n_basis: {}'.format(n_basis_tuple))
-        
-        return self.ps_test_extend_src_f({
-            (0, 'standard'),
-            (0, 'left'),
-            (0, 'right'),
-            #(1, 'standard'),
-        })
+
         #return self.test_extend_boundary()
         return self.test_extend_boundary({
             (0, 'standard'),
