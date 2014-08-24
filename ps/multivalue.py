@@ -18,10 +18,14 @@ class Multivalue:
         return ij in self.data
         
     def get(self, ij, sid=None):
+        if ij not in self.data:
+            return None
+    
         _dict = self.data[ij]
+        return_first = sid is None
         
         for sid1, value in _dict.items():
-            if sid is None or sid1 == sid:
+            if return_first or sid1 == sid:
                 return value
                 
         return None
@@ -47,9 +51,7 @@ class Multivalue:
                 array[l] = tuple(_dict.values())[0]
             
             l += 2
-        #print(array)
-        #print(self.data)
-        #raise Exception()
+
         return array
         
     def force_single_value_array(self):
@@ -82,6 +84,29 @@ class Multivalue:
                         
             for sid, value in zip(sids, values):
                 result.set((i, j), sid, value + array[index])
+                
+        return result
+        
+    def add_multivalue(self, other):
+        result = Multivalue(self.solver)
+        
+        for i, j in self.data:
+            _dict = self.data[(i, j)]
+
+            for sid, value in _dict.items():
+                other_value = other.get((i, j), sid)
+                
+                if other_value is None:
+                    other_value = 0
+                    
+                result.set((i, j), sid, value + other_value)
+                
+        for i, j in other.data:
+            _dict = other.data[(i, j)]
+
+            for sid, value in _dict.items():
+                if result.get((i, j), sid) is None:
+                    result.set((i, j), sid, value)
                 
         return result
         

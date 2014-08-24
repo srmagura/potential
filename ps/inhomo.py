@@ -3,37 +3,9 @@ import math
 
 import matrices
 from solver import cart_to_polar
+from ps.multivalue import Multivalue
 
 class PsInhomo:
-
-    def extend_inhomo_f(self, nodes=None):
-        if nodes is None:
-            nodes = self.gamma
-    
-        ext = np.zeros(len(nodes), dtype=complex)
-
-        for l in range(len(nodes)):
-            i, j = nodes[l]
-            x, y = self.get_coord(i, j)
-            r, th = self.get_polar(i, j)
-            etype = self.get_etype(i, j)
-
-            if etype == self.etypes['circle']:
-                ext[l] += self.calc_inhomo_circle(r, th)
-
-            elif etype == self.etypes['radius1']:
-                ext[l] += self.extend_inhomo_radius(x, y, 1)
-
-            elif etype == self.etypes['radius2']:
-                ext[l] += self.extend_inhomo_radius(x, y, 2)
-
-            elif etype == self.etypes['outer1']:
-                ext[l] += self.extend_inhomo_outer(x, y, 1)
-
-            elif etype == self.etypes['outer2']:
-                ext[l] += self.extend_inhomo_outer(x, y, 2)
-
-        return ext
         
     def _extend_src_f_get_sid(self, i, j):
         R = self.R
@@ -278,3 +250,27 @@ class PsInhomo:
         else:
             return self._extend_inhomo_outer_taylor12(
                 x, y, radius_sid)
+                
+    def do_extend_inhomo_0_standard(self, i, j):
+        r, th = self.get_polar(i, j)
+        return self.calc_inhomo_circle(r, th)
+
+    def extend_inhomo_f(self):    
+        ext = Multivalue(self)
+
+        for sid in range(3):
+            gamma = self.all_gamma[sid]
+            
+            for i, j in gamma:
+                v = None
+                
+                etype = self.get_etype(sid, i, j)
+
+                if sid == 0:
+                    set_sid = 1
+                    if etype == self.etypes['standard']:
+                        v = self.do_extend_inhomo_0_standard(i, j)
+                        
+                ext.set((i, j), sid, v)
+
+        return ext

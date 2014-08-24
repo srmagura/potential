@@ -39,7 +39,7 @@ class SolverExtend:
         y = R * np.sin(th)
 
         f = p.eval_f(x, y)
-        
+
         if self.scheme_order == 4:
             d_f_r = p.eval_d_f_r(R, th)
             d2_f_r = p.eval_d2_f_r(R, th)

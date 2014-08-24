@@ -350,8 +350,7 @@ class PsExtend:
                 
         gamma = self.all_gamma[0]
         for l in range(len(gamma)):
-            if not ext.has(gamma[l]):
-                ext.set(gamma[l], 0, all_ext[0][l])
-        
-        # add inhomo part
-        return ext
+            ext.set(gamma[l], 0, all_ext[0][l])
+               
+        inhomo_f = self.extend_inhomo_f()
+        return ext.add_multivalue(inhomo_f)

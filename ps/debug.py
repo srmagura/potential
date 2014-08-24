@@ -68,7 +68,13 @@ class PsDebug:
                     act = ext.get((i, j), sid)
                     
                     if act is not None:
-                        error.append(exp - act)
+                        diff = abs(exp-act)
+                        error.append(diff)
+                        
+                        if diff > .1:
+                            #print('i={}   j={}'.format(i, j))
+                            print('x={}   y={}   exp={}   act={}'.format(x,y,exp,act))
+                            pass
                 
             segment_error = np.max(np.abs(error))
             
@@ -77,7 +83,6 @@ class PsDebug:
 
         result = Result()
         result.error = all_error
-        result.u_act = None
         return result
 
     def test_extend_basis(self):
@@ -126,12 +131,7 @@ class PsDebug:
                 if sid1 == sid and etype1 == etype:
                     l = matrices.get_index(self.N, i, j)         
                     diff = abs(self.problem.eval_f(x, y) - self.src_f[l])
-                    error.append(diff)
-                    
-                    if diff > .25:
-                        print(self.problem.eval_f(x,y), self.src_f[l])
-                        print('x={}  y={}  diff={}'.format(x,y,diff))
-                        pass
+                    error.append(diff)                   
                         
         result = Result()
         result.error = max(error)
