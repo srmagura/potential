@@ -50,6 +50,7 @@ class PsDebug:
 
         self.calc_c0()
         self.calc_c1_exact()
+        #self.c1_test()
         
         all_error = 0
         ext = self.extend_boundary()
@@ -73,7 +74,7 @@ class PsDebug:
                         
                         if diff > .1:
                             #print('i={}   j={}'.format(i, j))
-                            print('x={}   y={}   exp={}   act={}'.format(x,y,exp,act))
+                            #print('x={}   y={}   exp={}   act={}'.format(x,y,exp,act))
                             pass
                 
             segment_error = np.max(np.abs(error))

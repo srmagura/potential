@@ -141,10 +141,10 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             (0, 'standard'),
             (0, 'left'),
             (0, 'right'),
-            #(1, 'standard'),
-            #(1, 'left'),
+            (1, 'standard'),
+            (1, 'left'),
             #(1, 'right'),
-            #(2, 'standard'),
+            (2, 'standard'),
             #(2, 'left'),
             #(2, 'right'),
         })

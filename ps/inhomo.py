@@ -96,41 +96,6 @@ class PsInhomo:
 
         return dir_X, dir_Y
 
-    def _calc_inhomo_radius(self, x0, y0, dir_X, dir_Y, Y):
-        p = self.problem
-        if p.homogeneous:
-            return 0
-
-        f = p.eval_f(x0, y0)
-
-        if self.scheme_order == 4:
-            grad_f = p.eval_grad_f(x0, y0)
-            hessian_f = p.eval_hessian_f(x0, y0)
-        else:
-            grad_f = np.zeros(2)
-            hessian_f = np.zeros((2, 2))
-        
-        d_f_Y = grad_f.dot(dir_Y)
-
-        d2_f_X = hessian_f.dot(dir_X).dot(dir_X)
-        d2_f_Y = hessian_f.dot(dir_Y).dot(dir_Y)
-        return self.inhomo_extend_from_radius(
-            Y, f, d_f_Y, d2_f_X, d2_f_Y)
-
-    def extend_inhomo_radius(self, x, y, radius_sid):
-        if self.problem.homogeneous:
-            return 0
-
-        if radius_sid == 1:
-            x0, y0 = (x, 0)
-            Y = y
-        elif radius_sid == 2: 
-            x0, y0 = self.get_radius_point(radius_sid, x, y) 
-            Y = self.signed_dist_to_radius(radius_sid, x, y)
-
-        dir_X, dir_Y = self.get_dir_XY(radius_sid)
-        return self._calc_inhomo_radius(x0, y0, dir_X, dir_Y, Y)
-
     def _extend_inhomo_outer_taylor12(self, x, y, radius_sid):
         p = self.problem
         R = self.R
@@ -261,6 +226,55 @@ class PsInhomo:
         
     def do_extend_inhomo_0_right(self, i, j):
         return self._extend_inhomo_0_outer(i, j, 1)
+        
+    def _calc_inhomo_radius(self, x0, y0, dir_X, dir_Y, Y):
+        p = self.problem
+        f = p.eval_f(x0, y0)
+
+        if self.scheme_order == 4:
+            grad_f = p.eval_grad_f(x0, y0)
+            hessian_f = p.eval_hessian_f(x0, y0)
+        else:
+            grad_f = np.zeros(2)
+            hessian_f = np.zeros((2, 2))
+        
+        d_f_Y = grad_f.dot(dir_Y)
+
+        d2_f_X = hessian_f.dot(dir_X).dot(dir_X)
+        d2_f_Y = hessian_f.dot(dir_Y).dot(dir_Y)
+        return self.inhomo_extend_from_radius(
+            Y, f, d_f_Y, d2_f_X, d2_f_Y)
+            
+    def _extend_inhomo_radius(self, i, j, radius_sid):
+        x, y = self.get_coord(i, j)
+
+        if radius_sid == 1:
+            x0, y0 = (x, 0)
+            Y = y
+        elif radius_sid == 2: 
+            x0, y0 = self.get_radius_point(radius_sid, x, y) 
+            Y = self.signed_dist_to_radius(radius_sid, x, y)
+
+        dir_X, dir_Y = self.get_dir_XY(radius_sid)
+        return self._calc_inhomo_radius(x0, y0, dir_X, dir_Y, Y)
+        
+    def do_extend_inhomo_1_standard(self, i, j):
+        return self._extend_inhomo_radius(i, j, 1)
+
+    def do_extend_inhomo_1_left(self, i, j):
+        return 0
+
+    def do_extend_inhomo_1_right(self, i, j):
+        return 0
+
+    def do_extend_inhomo_2_standard(self, i, j):
+        return self._extend_inhomo_radius(i, j, 2)
+
+    def do_extend_inhomo_2_left(self, i, j):
+        return 0
+
+    def do_extend_inhomo_2_right(self, i, j):
+        return 0
 
     def extend_inhomo_f(self):    
         ext = Multivalue(self)
@@ -272,7 +286,7 @@ class PsInhomo:
             gamma = self.all_gamma[sid]
             
             for i, j in gamma:
-                v = None               
+                v = None    #TODO           
                 etype = self.get_etype(sid, i, j)
 
                 if sid == 0:
@@ -282,6 +296,23 @@ class PsInhomo:
                         v = self.do_extend_inhomo_0_left(i, j)
                     elif etype == self.etypes['right']:
                         v = self.do_extend_inhomo_0_right(i, j)
+                        
+                elif sid == 1:
+                    if etype == self.etypes['standard']:
+                        v = self.do_extend_inhomo_1_standard(i, j)
+                    elif etype == self.etypes['left']:
+                        v = self.do_extend_inhomo_1_left(i, j)
+                    elif etype == self.etypes['right']:
+                        v = self.do_extend_inhomo_1_right(i, j)
+                        
+                elif sid == 2:
+                    if etype == self.etypes['standard']:
+                        v = self.do_extend_inhomo_2_standard(i, j)
+                    elif etype == self.etypes['left']:
+                        v = self.do_extend_inhomo_2_left(i, j)
+                    elif etype == self.etypes['right']:
+                        v = self.do_extend_inhomo_2_right(i, j)
+                        
                         
                 ext.set((i, j), sid, v)
 

@@ -13,6 +13,15 @@ class YCosine(Problem):
     def eval_expected(self, x, y):
         k = self.k
         return y*cos(x)
+        
+    def eval_d_u_r(self, th):
+        R = self.R
+        x = R*cos(th)
+        y = R*sin(th)
+        
+        d_u_x = -y*sin(x)
+        d_u_y = cos(x)
+        return d_u_x*cos(th) + d_u_y*sin(th)
 
     def eval_f(self, x, y):
         k = self.k
@@ -47,5 +56,26 @@ class YCosine(Problem):
         return np.array(((y*(-k**2 + 1)*cos(x), (-k**2 + 1)*sin(x)), ((-k**2 + 1)*sin(x), 0)))
 
 class YCosinePizza(Pizza, YCosine):
-    pass
+    
+    def eval_d_u_outwards(self, x, y, **kwargs):
+        r, th = cart_to_polar(x, y)
+
+        if 'sid' in kwargs:
+            sid = kwargs['sid']
+        else:
+            sid = self.get_sid(th)
+
+        a = self.a
+        k = self.k
+        
+        d_u_x = -y*sin(x)
+        d_u_y = cos(x)
+        
+        if sid == 0:
+            return self.eval_d_u_r(th)
+        elif sid == 1:
+            return cos(x)
+        elif sid == 2:
+            b = np.pi/2 - a
+            return d_u_x*cos(b)-d_u_y*sin(b)
 

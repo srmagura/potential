@@ -84,7 +84,7 @@ class CircleSolver(Solver):
         if p.homogeneous:
             return
 
-        for i,j in self.Kplus - self.Mplus:
+        for i,j in self.Kplus - self.global_Mplus:
             R = self.R
 
             r, th = self.get_polar(i, j)
