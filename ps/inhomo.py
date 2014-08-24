@@ -96,10 +96,12 @@ class PsInhomo:
 
         return dir_X, dir_Y
 
-    def _extend_inhomo_outer_taylor12(self, x, y, radius_sid):
+    def _extend_inhomo_12_outer(self, i, j, radius_sid):
         p = self.problem
         R = self.R
         a = self.a
+        
+        x, y = self.get_coord(i, j)
 
         if radius_sid == 1:
             x0, y0 = (R, 0)
@@ -180,14 +182,15 @@ class PsInhomo:
         R = self.R
         a = self.a
 
+        x, y = self.get_coord(i, j)
+        r, th = self.get_polar(i, j)
+        
         if radius_sid == 1:
+            delta = th
             th0 = 2*np.pi
         elif radius_sid == 2:
             th0 = a
-
-        x, y = self.get_coord(i, j)
-        r, th = self.get_polar(i, j)
-        delta = th - th0
+            delta = th - th0
 
         f0 = p.eval_f_polar(R, th0)
         f_derivs = [f0]
@@ -262,19 +265,19 @@ class PsInhomo:
         return self._extend_inhomo_radius(i, j, 1)
 
     def do_extend_inhomo_1_left(self, i, j):
-        return 0
+        return self._extend_inhomo_radius(i, j, 1)
 
     def do_extend_inhomo_1_right(self, i, j):
-        return 0
+        return self._extend_inhomo_12_outer(i, j, 1)
 
     def do_extend_inhomo_2_standard(self, i, j):
         return self._extend_inhomo_radius(i, j, 2)
 
     def do_extend_inhomo_2_left(self, i, j):
-        return 0
+        return self._extend_inhomo_radius(i, j, 2)
 
     def do_extend_inhomo_2_right(self, i, j):
-        return 0
+        return self._extend_inhomo_12_outer(i, j, 2)
 
     def extend_inhomo_f(self):    
         ext = Multivalue(self)
@@ -285,8 +288,7 @@ class PsInhomo:
         for sid in range(3):
             gamma = self.all_gamma[sid]
             
-            for i, j in gamma:
-                v = None    #TODO           
+            for i, j in gamma:          
                 etype = self.get_etype(sid, i, j)
 
                 if sid == 0:

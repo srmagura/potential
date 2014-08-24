@@ -42,9 +42,7 @@ class Multivalue:
                 
             _dict = self.data[ij]
             
-            if len(_dict) == 2:
-                assert set(_dict.keys()) == {1,2}
- 
+            if 1 in _dict and 2 in _dict:
                 for sid in _dict:
                     array[l + sid - 1] = _dict[sid]
             else:

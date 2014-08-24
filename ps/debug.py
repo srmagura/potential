@@ -50,7 +50,6 @@ class PsDebug:
 
         self.calc_c0()
         self.calc_c1_exact()
-        #self.c1_test()
         
         all_error = 0
         ext = self.extend_boundary()
@@ -68,15 +67,9 @@ class PsDebug:
                     exp = self.problem.eval_expected(x, y) 
                     act = ext.get((i, j), sid)
                     
-                    if act is not None:
-                        diff = abs(exp-act)
-                        error.append(diff)
-                        
-                        if diff > .1:
-                            #print('i={}   j={}'.format(i, j))
-                            #print('x={}   y={}   exp={}   act={}'.format(x,y,exp,act))
-                            pass
-                
+                    diff = abs(exp-act)
+                    error.append(diff)
+                                  
             segment_error = np.max(np.abs(error))
             
             if segment_error > all_error:
@@ -327,5 +320,11 @@ class PsDebug:
         Q0 = self.get_Q(0)
         Q1 = self.get_Q(1)
         
-        result = Q0.dot(self.c0) + Q1.dot(self.c1)
+        ext_f = self.extend_inhomo_f()           
+        proj_f = self.get_potential(ext_f)
+        
+        term = proj_f.add_array(self.ap_sol_f).get_gamma_array()
+        ext_f_array = ext_f.get_gamma_array()
+     
+        result = Q0.dot(self.c0) + Q1.dot(self.c1) + term - ext_f_array
         print('Q system residual:', np.max(np.abs(result)))

@@ -100,11 +100,13 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Q0 = self.get_Q(0)
         Q1 = self.get_Q(1)
 
-        #self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
-        #ext_f = self.extend_inhomo_f()    
-        #proj_f = self.get_trace(self.get_potential(ext_f))
+        ext_f = self.extend_inhomo_f()           
+        proj_f = self.get_potential(ext_f)
+        
+        term = proj_f.add_array(self.ap_sol_f).get_gamma_array()
+        ext_f_array = ext_f.get_gamma_array()
 
-        rhs = -Q0.dot(self.c0) #- self.get_trace(self.ap_sol_f) - proj_f + ext_f        
+        rhs = -Q0.dot(self.c0) - term + ext_f_array       
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def get_radius_point(self, sid, x, y):
@@ -134,33 +136,34 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         n_basis_tuple = self.problem.get_n_basis(self.N)
         #print('n_basis_tuple: {}'.format(n_basis_tuple))
         self.setup_B_desc(*n_basis_tuple)
+        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
         #print('n_basis: {}'.format(n_basis_tuple))
-        #self.plot_gamma()
+ 
+        #return self.test_extend_src_f()
         #return self.test_extend_boundary()
-        return self.test_extend_boundary({
-            (0, 'standard'),
-            (0, 'left'),
-            (0, 'right'),
-            (1, 'standard'),
-            (1, 'left'),
-            #(1, 'right'),
-            (2, 'standard'),
-            #(2, 'left'),
-            #(2, 'right'),
-        })
+        #return self.test_extend_boundary({
+        #    (0, 'standard'),
+        #    (0, 'left'),
+        #    (0, 'right'),
+        #    (1, 'standard'),
+        #    (1, 'left'),
+        #    (1, 'right'),
+        #    (2, 'standard'),
+        #    (2, 'left'),
+        #    (2, 'right'),
+        #})
         #return self.test_extend_basis()
-
         self.calc_c0()
         #self.calc_c1_exact()
         #self.c0_test()
         self.calc_c1()
-        #self.c1_test()
+        self.c1_test()
         #self.print_c1()
         #self.plot_gamma()
         #self.test_Q_system_residual()
 
         ext = self.extend_boundary()
-        potential = self.get_potential(ext) #+ self.ap_sol_f
+        potential = self.get_potential(ext).add_array(self.ap_sol_f)
         u_act = potential.get_interior_array()
 
         #self.plot_contour(u_act)

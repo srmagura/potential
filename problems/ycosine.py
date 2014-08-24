@@ -7,7 +7,7 @@ from cs.csf import CsFourier
 from .problem import Problem, Pizza
 
 class YCosine(Problem):
-    k = 1
+    k = 2/3
     solver_class = CsFourier
 
     def eval_expected(self, x, y):

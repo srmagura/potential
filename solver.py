@@ -101,7 +101,7 @@ class Solver(SolverExtend, SolverDebug):
 
         if hasattr(self, 'extend_src_f'):
             self.extend_src_f()
-
+            
     # Returns || u_act - u_exp ||_inf, the error between 
     # actual and expected solutions under the infinity-norm. 
     def eval_error(self, u_act):
