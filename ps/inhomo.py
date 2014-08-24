@@ -186,7 +186,31 @@ class PsInhomo:
         return self.inhomo_extend_from_radius(
             Y, f, d_f_Y, d2_f_X, d2_f_Y)
 
-    def _extend_inhomo_outer_taylor0(self, x, y, radius_sid):
+    def extend_inhomo_outer(self, x, y, radius_sid):
+        if self.problem.homogeneous:
+            return 0
+
+        r, th = cart_to_polar(x, y)
+
+        dist0 = r - self.R
+
+        if radius_sid == 1:
+            dist1 = y
+        elif radius_sid == 2:
+            dist1 = self.dist_to_radius(radius_sid, x, y)
+
+        if dist0 < dist1:
+            return self._extend_inhomo_outer_taylor0(
+                x, y, radius_sid)
+        else:
+            return self._extend_inhomo_outer_taylor12(
+                x, y, radius_sid)
+                
+    def do_extend_inhomo_0_standard(self, i, j):
+        r, th = self.get_polar(i, j)
+        return self.calc_inhomo_circle(r, th)
+            
+    def _extend_inhomo_0_outer(self, i, j, radius_sid):
         p = self.problem
         R = self.R
         a = self.a
@@ -196,7 +220,8 @@ class PsInhomo:
         elif radius_sid == 2:
             th0 = a
 
-        r, th = cart_to_polar(x, y)
+        x, y = self.get_coord(i, j)
+        r, th = self.get_polar(i, j)
         delta = th - th0
 
         f0 = p.eval_f_polar(R, th0)
@@ -231,45 +256,32 @@ class PsInhomo:
 
         return self.extend_inhomo_circle(r, f, d_f_r, d2_f_r, d2_f_th)
 
-    def extend_inhomo_outer(self, x, y, radius_sid):
-        if self.problem.homogeneous:
-            return 0
-
-        r, th = cart_to_polar(x, y)
-
-        dist0 = r - self.R
-
-        if radius_sid == 1:
-            dist1 = y
-        elif radius_sid == 2:
-            dist1 = self.dist_to_radius(radius_sid, x, y)
-
-        if dist0 < dist1:
-            return self._extend_inhomo_outer_taylor0(
-                x, y, radius_sid)
-        else:
-            return self._extend_inhomo_outer_taylor12(
-                x, y, radius_sid)
-                
-    def do_extend_inhomo_0_standard(self, i, j):
-        r, th = self.get_polar(i, j)
-        return self.calc_inhomo_circle(r, th)
+    def do_extend_inhomo_0_left(self, i, j):
+        return self._extend_inhomo_0_outer(i, j, 2)
+        
+    def do_extend_inhomo_0_right(self, i, j):
+        return self._extend_inhomo_0_outer(i, j, 1)
 
     def extend_inhomo_f(self):    
         ext = Multivalue(self)
+
+        if self.problem.homogeneous:
+            return ext
 
         for sid in range(3):
             gamma = self.all_gamma[sid]
             
             for i, j in gamma:
-                v = None
-                
+                v = None               
                 etype = self.get_etype(sid, i, j)
 
                 if sid == 0:
-                    set_sid = 1
                     if etype == self.etypes['standard']:
                         v = self.do_extend_inhomo_0_standard(i, j)
+                    elif etype == self.etypes['left']:
+                        v = self.do_extend_inhomo_0_left(i, j)
+                    elif etype == self.etypes['right']:
+                        v = self.do_extend_inhomo_0_right(i, j)
                         
                 ext.set((i, j), sid, v)
 

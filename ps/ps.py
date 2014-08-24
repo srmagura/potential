@@ -139,8 +139,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #return self.test_extend_boundary()
         return self.test_extend_boundary({
             (0, 'standard'),
-            #(0, 'left'),
-            #(0, 'right'),
+            (0, 'left'),
+            (0, 'right'),
             #(1, 'standard'),
             #(1, 'left'),
             #(1, 'right'),
