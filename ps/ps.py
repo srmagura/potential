@@ -32,54 +32,27 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         return r <= self.R and th >= self.a         
         
     def get_potential(self, ext):
-        ww = ext.force_single_value_array()
-        Lww = np.ravel(self.L.dot(ww))
+        w = np.zeros([(self.N-1)**2], dtype=complex)
+
+        for l in range(len(self.union_gamma)):
+            w[matrices.get_index(self.N, *self.union_gamma[l])] = ext[l]
+
+        Lw = np.ravel(self.L.dot(w))
+
+        for i,j in self.global_Mminus:
+            Lw[matrices.get_index(self.N, i, j)] = 0
+
+        return w - self.LU_factorization.solve(Lw)
         
-        radius_Lw = {}
+    def get_trace(self, w):
+        trace = np.zeros(len(self.union_gamma), dtype=complex)
         
-        for rsid in (1, 2):
-            w = np.zeros((self.N-1)**2, dtype=complex)           
-            gamma = self.all_gamma[rsid]
-            
-            for l in range(len(gamma)):
-                i, j = gamma[l]
-                index = matrices.get_index(self.N, i, j) 
-                w[index] = ext.get(gamma[l], rsid)
-                
-            radius_Lw[rsid] = np.ravel(self.L.dot(w))
-            
-        rhs = np.zeros((self.N-1)**2, dtype=complex)
-        
-        for i, j in self.global_Mplus:
+        for l in range(len(self.union_gamma)):
+            i, j = self.union_gamma[l]
             index = matrices.get_index(self.N, i, j)
-            x, y = self.get_coord(i, j)
-            r, th = self.get_polar(i, j)
+            trace[l] = w[index]
             
-            # N must be at least 32. This may be invalid if a != pi/6
-            if r < .6*self.R:
-                in_Mplus1 = (i, j) in self.all_Mplus[1]
-                in_Mplus2 = (i, j) in self.all_Mplus[2]
-            
-                if in_Mplus1 and not in_Mplus2:
-                    rhs[index] = radius_Lw[1][index]
-                    
-                elif not in_Mplus1 and in_Mplus2:
-                    rhs[index] = radius_Lw[2][index]
-                    
-                elif not in_Mplus1 and not in_Mplus2:
-                    if y > 0:
-                        sid = 2
-                    else:
-                        sid = 1
-                        
-                    rhs[index] = radius_Lw[sid][index]
-                    
-                else:
-                    raise Exception('{}'.format((i, j)))
-            else:
-                rhs[index] = Lww[index]
-                       
-        return ext.add_array(-self.LU_factorization.solve(rhs))
+        return trace
 
     def get_Q(self, index):
         columns = []
@@ -87,9 +60,9 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         for JJ in range(len(self.B_desc)):
             ext = self.extend_basis(JJ, index)
             potential = self.get_potential(ext)
-            projection = potential.get_gamma_array()
+            projection = self.get_trace(potential)
 
-            columns.append(projection - ext.get_gamma_array())
+            columns.append(projection - ext)
         
         Q = np.column_stack(columns)
                     
@@ -99,13 +72,13 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Q0 = self.get_Q(0)
         Q1 = self.get_Q(1)
 
-        ext_f = self.extend_inhomo_f()           
-        proj_f = self.get_potential(ext_f)
+        #ext_f = self.extend_inhomo_f()           
+        #proj_f = self.get_potential(ext_f)
         
-        term = proj_f.add_array(self.ap_sol_f).get_gamma_array()
-        ext_f_array = ext_f.get_gamma_array()
+        #term = proj_f.add_array(self.ap_sol_f).get_gamma_array()
+        #ext_f_array = ext_f.get_gamma_array()
 
-        rhs = -Q0.dot(self.c0) - term + ext_f_array       
+        rhs = -Q0.dot(self.c0) #- term + ext_f_array       
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def get_radius_point(self, sid, x, y):
@@ -139,21 +112,21 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #print('n_basis: {}'.format(n_basis_tuple))
  
         #return self.test_extend_src_f()
-        return self.test_extend_boundary()
+        #return self.test_extend_boundary()
 
         #return self.test_extend_basis()
-        #self.calc_c0()
+        self.calc_c0()
         #self.calc_c1_exact()
         #self.c0_test()
-        #self.calc_c1()
+        self.calc_c1()
         #self.c1_test()
         #self.print_c1()
         #self.plot_gamma()
         #self.test_Q_system_residual()
 
         ext = self.extend_boundary()
-        potential = self.get_potential(ext).add_array(self.ap_sol_f)
-        u_act = potential.get_interior_array()
+        potential = self.get_potential(ext) + self.ap_sol_f
+        u_act = potential
 
         #self.plot_contour(u_act)
 

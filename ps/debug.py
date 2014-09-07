@@ -60,7 +60,7 @@ class PsDebug:
         error = []
         for index in (0, 1):
             for JJ in range(len(self.B_desc)):
-                ext1_array = self.extend_basis(JJ, index).get_gamma_array()
+                ext1_array = self.extend_basis(JJ, index)
 
                 self.c0 = np.zeros(len(self.B_desc))
                 self.c1 = np.zeros(len(self.B_desc))
@@ -70,16 +70,16 @@ class PsDebug:
                 elif index == 1:
                     self.c1[JJ] = 1
 
-                ext2_array = self.extend_boundary().get_gamma_array() #- self.extend_inhomo_f()
+                ext2_array = self.extend_boundary() #- self.extend_inhomo_f()
                 diff = np.abs(ext1_array - ext2_array)
                 error.append(np.max(diff))
                 print('index={}  JJ={}  error={}'.format(index, JJ, error[-1]))
                 
-                for l in range(2*len(self.union_gamma)):
-                    if diff[l] > 1e-13:
-                        i, j = self.union_gamma[l//2]
-                        x, y = self.get_coord(i, j)
-                        print('at {}   ext1={}    ext2={}'.format((x, y), ext1_array[l], ext2_array[l]))
+                #for l in range(len(self.union_gamma)):
+                #    if diff[l] > 1e-13:
+                #        i, j = self.union_gamma[l]
+                #        x, y = self.get_coord(i, j)
+                #        print('at {}   ext1={}    ext2={}'.format((x, y), ext1_array[l], ext2_array[l]))
 
         error = np.array(error)
         
