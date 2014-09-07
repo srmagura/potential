@@ -3,7 +3,6 @@ import math
 
 import matrices
 from solver import cart_to_polar
-from ps.multivalue import Multivalue
 
 class PsInhomo:
         

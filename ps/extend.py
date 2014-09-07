@@ -4,8 +4,6 @@ import math
 
 from solver import cart_to_polar
 
-from ps.multivalue import Multivalue
-
 ETYPE_NAMES = ('standard', 'left', 'right')
 TAYLOR_N_DERIVS = 6
 
@@ -179,10 +177,12 @@ class PsExtend:
 
         if taylor_sid == 0:
             v = self.extend_circle(r, *ext_params)
+            rho = r
         elif taylor_sid in {1, 2}:
             v = self.extend_from_radius(Y, *ext_params)
+            rho = abs(Y)
 
-        return v
+        return {'rho': rho, 'value': v}
         
     def do_extend_inner(self, i, j, options):
         options['param_r'] = 0
@@ -196,7 +196,7 @@ class PsExtend:
         options['sid'] = 0
         r, th = self.get_polar(i, j)       
         derivs = self.ext_calc_certain_xi_derivs(i, j, self.R, th, options)            
-        return self.extend_circle(r, *derivs)
+        return {'rho': abs(self.R - r), 'value': self.extend_circle(r, *derivs)}
         
     def do_extend_0_left(self, i, j, options):
         x, y = self.get_coord(i, j)
@@ -226,7 +226,7 @@ class PsExtend:
         options['sid'] = 1
         derivs = self.ext_calc_certain_xi_derivs(i, j, x, 2*np.pi, options)
 
-        return self.extend_from_radius(y, *derivs)
+        return {'rho': abs(y), 'value': self.extend_from_radius(y, *derivs)}
                 
     def do_extend_1_left(self, i, j, options):
         x, y = self.get_coord(i, j)
@@ -262,7 +262,7 @@ class PsExtend:
         derivs = self.ext_calc_certain_xi_derivs(i, j, param_r, self.a, options)
 
         Y = self.signed_dist_to_radius(2, x, y)
-        return self.extend_from_radius(Y, *derivs)
+        return {'rho': abs(Y), 'value': self.extend_from_radius(Y, *derivs)}
         
     def do_extend_2_left(self, i, j, options):
         x, y = self.get_coord(i, j)      
@@ -296,61 +296,75 @@ class PsExtend:
          
         return self.do_extend_outer(i, j, options)
 
-    def get_all_ext(self, options):
+    def reduce_all_ext(self, all_ext):
+        ext = np.zeros(len(self.union_gamma), dtype=complex)
+        
+        for l in range(len(self.union_gamma)):
+            i, j = self.union_gamma[l]
+            ext_list = all_ext[(i, j)]
+            
+            if len(ext_list) == 1:
+                ext[l] = ext_list[0]['value']
+            elif len(ext_list) == 2:                
+                rho0 = ext_list[0]['rho']
+                value0 = ext_list[0]['value']
+                
+                rho1 = ext_list[1]['rho']
+                value1 = ext_list[1]['value']
+                
+                if rho0 == 0 and rho1 == 0:
+                    rho0 = rho1 = 1
+                
+                ext[l] = (rho1*value0 + rho0*value1) / (rho0 + rho1)
+                
+            else:
+                raise Exception()
+                
+        return ext
+            
+
+    def extend_boundary(self, options={}):
         R = self.R
         k = self.problem.k
 
         all_ext = {}
         
         for sid in range(3):
-            gamma = self.all_gamma[sid]
-            
-            ext = np.zeros(len(gamma), dtype=complex)
-            all_ext[sid] = ext
+            gamma = self.all_gamma[sid]         
 
             for l in range(len(gamma)):
                 i, j = gamma[l]
                 etype = self.get_etype(sid, i, j)
-
+            
+                ext_list = []
+                all_ext[(i, j)] = ext_list
+            
                 if sid == 0:
                     if etype == self.etypes['standard']:
-                        ext[l] = self.do_extend_0_standard(i, j, options)
+                        ext_list.append(self.do_extend_0_standard(i, j, options))
                     elif etype == self.etypes['left']:
-                        ext[l] = self.do_extend_0_left(i, j, options)
+                        ext_list.append(self.do_extend_0_left(i, j, options))
                     elif etype == self.etypes['right']:
-                        ext[l] = self.do_extend_0_right(i, j, options)
+                        ext_list.append(self.do_extend_0_right(i, j, options))
                         
                 elif sid == 1:
                     if etype == self.etypes['standard']:
-                        ext[l] = self.do_extend_1_standard(i, j, options)
+                        ext_list.append(self.do_extend_1_standard(i, j, options))
                     elif etype == self.etypes['left']:
-                        ext[l] = self.do_extend_1_left(i, j, options)
+                        ext_list.append(self.do_extend_1_left(i, j, options))
                     elif etype == self.etypes['right']:
-                        ext[l] = self.do_extend_1_right(i, j, options)
+                        ext_list.append(self.do_extend_1_right(i, j, options))
                         
                 elif sid == 2:
                     if etype == self.etypes['standard']:
-                        ext[l] = self.do_extend_2_standard(i, j, options)
+                        ext_list.append(self.do_extend_2_standard(i, j, options))
                     elif etype == self.etypes['left']:
-                        ext[l] = self.do_extend_2_left(i, j, options)
+                        ext_list.append(self.do_extend_2_left(i, j, options))
                     elif etype == self.etypes['right']:
-                        ext[l] = self.do_extend_2_right(i, j, options)
+                        ext_list.append(self.do_extend_2_right(i, j, options))
 
-        return all_ext
-        
-    def extend_boundary(self, options={}):                
-        all_ext = self.get_all_ext(options)
-        ext = Multivalue(self)
-        
-        for sid in (1, 2):
-            gamma = self.all_gamma[sid]
-            
-            for l in range(len(gamma)):
-                ext.set(gamma[l], sid, all_ext[sid][l])
-                
-        gamma = self.all_gamma[0]
-        for l in range(len(gamma)):
-            ext.set(gamma[l], 0, all_ext[0][l])
+        ext = self.reduce_all_ext(all_ext)
+        return ext
                
-        inhomo_f = self.extend_inhomo_f()
-        return ext.add_multivalue(inhomo_f)
+        #inhomo_f = self.extend_inhomo_f()
+        #add inhomo f

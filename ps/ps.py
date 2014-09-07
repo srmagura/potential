@@ -10,7 +10,6 @@ from ps.grid import PsGrid
 from ps.extend import PsExtend
 from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
-from ps.multivalue import Multivalue
 
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
@@ -140,24 +139,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #print('n_basis: {}'.format(n_basis_tuple))
  
         #return self.test_extend_src_f()
-        #return self.test_extend_boundary()
-        #return self.test_extend_boundary({
-        #    (0, 'standard'),
-        #    (0, 'left'),
-        #    (0, 'right'),
-        #    (1, 'standard'),
-        #    (1, 'left'),
-        #    (1, 'right'),
-        #    (2, 'standard'),
-        #    (2, 'left'),
-        #    (2, 'right'),
-        #})
+        return self.test_extend_boundary()
+
         #return self.test_extend_basis()
-        self.calc_c0()
+        #self.calc_c0()
         #self.calc_c1_exact()
         #self.c0_test()
-        self.calc_c1()
-        self.c1_test()
+        #self.calc_c1()
+        #self.c1_test()
         #self.print_c1()
         #self.plot_gamma()
         #self.test_Q_system_residual()
