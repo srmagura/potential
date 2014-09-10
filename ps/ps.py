@@ -122,6 +122,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #self.c1_test()
         #self.print_c1()
         #self.plot_gamma()
+        #self.plot_union_gamma()
         #self.test_Q_system_residual()
 
         ext = self.extend_boundary()

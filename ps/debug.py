@@ -74,12 +74,6 @@ class PsDebug:
                 diff = np.abs(ext1_array - ext2_array)
                 error.append(np.max(diff))
                 print('index={}  JJ={}  error={}'.format(index, JJ, error[-1]))
-                
-                #for l in range(len(self.union_gamma)):
-                #    if diff[l] > 1e-13:
-                #        i, j = self.union_gamma[l]
-                #        x, y = self.get_coord(i, j)
-                #        print('at {}   ext1={}    ext2={}'.format((x, y), ext1_array[l], ext2_array[l]))
 
         error = np.array(error)
         
@@ -232,36 +226,36 @@ class PsDebug:
         plt.ylim(-4,4)
         plt.legend(loc=3)
         plt.show()
-        
-    def plot_rhs_nodes(self, rhs_nodes):
+
+    def plot_union_gamma(self):
         self.plot_Gamma()
         
-        colors = ('red', 'green', 'blue')
-        labels = ('Lww', 'radius_Lw[1]', 'radius_Lw[2]')
-        
         for sid in range(3):
-            nodes = rhs_nodes[sid]
-            x_data, y_data = self.nodes_to_plottable(nodes)
+            gamma = self.all_gamma[sid]
+            x_data, y_data = self.nodes_to_plottable(gamma)
             
-            plt.plot(x_data, y_data, 'o', mfc='none', mec=colors[sid], mew=1,
-                label=labels[sid])
+            plt.plot(x_data, y_data, 'o', mfc='purple')
 
-        plt.title('RHS nodes')
-        plt.legend(loc=3)
+        plt.title('union_gamma')
+        plt.xlim(-3,3)
+        plt.ylim(-3,3)
         plt.show()
             
     def optimize_n_basis(self):
         min_error = float('inf')
+
+        start_circle = 40
+        start_radius = 24
         
-        for n_circle in range(5, 50):
-            for n_radius in range(max(5,n_circle-5), n_circle+1):
+        for n_circle in range(start_circle, 50, 3):
+            for n_radius in range(start_radius, n_circle, 3):
                 self.setup_B_desc(n_circle, n_radius)
                 
                 self.calc_c0()
                 self.calc_c1()
 
                 ext = self.extend_boundary()
-                u_act = self.get_potential(ext) + self.ap_sol_f
+                u_act = self.get_potential(ext) #+ self.ap_sol_f
 
                 error = self.eval_error(u_act)
                 s ='n_circle={}    n_radius={}    error={}'.format(n_circle, n_radius, error)
@@ -297,11 +291,11 @@ class PsDebug:
         Q0 = self.get_Q(0)
         Q1 = self.get_Q(1)
         
-        ext_f = self.extend_inhomo_f()           
-        proj_f = self.get_potential(ext_f)
+        #ext_f = self.extend_inhomo_f()           
+        #proj_f = self.get_potential(ext_f)
         
-        term = proj_f.add_array(self.ap_sol_f).get_gamma_array()
-        ext_f_array = ext_f.get_gamma_array()
+        #term = proj_f.add_array(self.ap_sol_f).get_gamma_array()
+        #ext_f_array = ext_f.get_gamma_array()
      
-        result = Q0.dot(self.c0) + Q1.dot(self.c1) + term - ext_f_array
+        result = Q0.dot(self.c0) + Q1.dot(self.c1) #+ term - ext_f_array
         print('Q system residual:', np.max(np.abs(result)))

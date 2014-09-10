@@ -15,7 +15,9 @@ class Problem:
         return self.solver_class(self, *args, **kwargs)
         
     def get_n_basis(self, N):
-        if N in self.n_basis_dict:
+        if 'constant' in self.n_basis_dict:
+            return self.n_basis_dict['constant']
+        elif N in self.n_basis_dict:
             return self.n_basis_dict[N]
         else:
             return self.n_basis_dict[None]
@@ -39,8 +41,8 @@ class Pizza:
     a = np.pi / 6
     solver_class = PizzaSolver
     
-    n_basis_dict = {16: (17, 12), 32: (23, 19), 64: (32, 27), 
-        128: (45, 37), None: (55, 50)}
+    n_basis_dict = {16: (21, 9), 32: (28, 8), 64: (34, 17), 
+        128: (40, 24), 256: (45, 29), 512: (53, 34)}
         
     def __init__(self, **kwargs):
         super().__init__()   
