@@ -72,13 +72,11 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Q0 = self.get_Q(0)
         Q1 = self.get_Q(1)
 
-        #ext_f = self.extend_inhomo_f()           
-        #proj_f = self.get_potential(ext_f)
+        ext_f = self.extend_inhomo_f()           
+        proj_f = self.get_potential(ext_f)
         
-        #term = proj_f.add_array(self.ap_sol_f).get_gamma_array()
-        #ext_f_array = ext_f.get_gamma_array()
-
-        rhs = -Q0.dot(self.c0) #- term + ext_f_array       
+        term = self.get_trace(proj_f + self.ap_sol_f)
+        rhs = -Q0.dot(self.c0) + ext_f - term    
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def get_radius_point(self, sid, x, y):
@@ -112,7 +110,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #print('n_basis: {}'.format(n_basis_tuple))
  
         #return self.test_extend_src_f()
-        return self.test_extend_boundary()
+        #return self.test_extend_boundary()
 
         #return self.test_extend_basis()
         self.calc_c0()
