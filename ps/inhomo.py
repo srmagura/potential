@@ -149,8 +149,11 @@ class PsInhomo:
         d2_f_X = hessian_f0.dot(dir_X).dot(dir_X)
         d2_f_Y = hessian_f0.dot(dir_Y).dot(dir_Y)
 
-        return self.inhomo_extend_from_radius(
-            Y, f, d_f_Y, d2_f_X, d2_f_Y)
+        return {
+            'rho': abs(Y),
+            'value': self.inhomo_extend_from_radius(
+                Y, f, d_f_Y, d2_f_X, d2_f_Y)
+        }
 
     def extend_inhomo_outer(self, x, y, radius_sid):
         if self.problem.homogeneous:
@@ -174,7 +177,10 @@ class PsInhomo:
                 
     def do_extend_inhomo_0_standard(self, i, j):
         r, th = self.get_polar(i, j)
-        return self.calc_inhomo_circle(r, th)
+        return {
+            'rho': abs(self.R - r),
+            'value': self.calc_inhomo_circle(r, th),
+        }
             
     def _extend_inhomo_0_outer(self, i, j, radius_sid):
         p = self.problem
@@ -221,7 +227,10 @@ class PsInhomo:
             d2_f_r = 0
             d2_f_th = 0
 
-        return self.extend_inhomo_circle(r, f, d_f_r, d2_f_r, d2_f_th)
+        return {
+            'rho': abs(self.R - r),
+            'value': self.extend_inhomo_circle(r, f, d_f_r, d2_f_r, d2_f_th)
+        }
 
     def do_extend_inhomo_0_left(self, i, j):
         return self._extend_inhomo_0_outer(i, j, 2)
@@ -244,8 +253,11 @@ class PsInhomo:
 
         d2_f_X = hessian_f.dot(dir_X).dot(dir_X)
         d2_f_Y = hessian_f.dot(dir_Y).dot(dir_Y)
-        return self.inhomo_extend_from_radius(
-            Y, f, d_f_Y, d2_f_X, d2_f_Y)
+        return {
+            'rho': abs(Y),
+            'value':self.inhomo_extend_from_radius(
+                Y, f, d_f_Y, d2_f_X, d2_f_Y)
+        }
             
     def _extend_inhomo_radius(self, i, j, radius_sid):
         x, y = self.get_coord(i, j)
@@ -279,42 +291,44 @@ class PsInhomo:
         return self._extend_inhomo_12_outer(i, j, 2)
 
     def extend_inhomo_f(self):    
-        ext = Multivalue(self)
+        R = self.R
+        k = self.problem.k
 
-        if self.problem.homogeneous:
-            return ext
-
+        all_ext = {}
+        
         for sid in range(3):
-            gamma = self.all_gamma[sid]
-            
-            for i, j in gamma:          
-                etype = self.get_etype(sid, i, j)
+            gamma = self.all_gamma[sid]         
 
+            for l in range(len(gamma)):
+                i, j = gamma[l]
+                etype = self.get_etype(sid, i, j)
+            
+                ext_list = []
+                all_ext[(i, j)] = ext_list
+            
                 if sid == 0:
                     if etype == self.etypes['standard']:
-                        v = self.do_extend_inhomo_0_standard(i, j)
+                        ext_list.append(self.do_extend_inhomo_0_standard(i, j))
                     elif etype == self.etypes['left']:
-                        v = self.do_extend_inhomo_0_left(i, j)
+                        ext_list.append(self.do_extend_inhomo_0_left(i, j))
                     elif etype == self.etypes['right']:
-                        v = self.do_extend_inhomo_0_right(i, j)
+                        ext_list.append(self.do_extend_inhomo_0_right(i, j))
                         
                 elif sid == 1:
                     if etype == self.etypes['standard']:
-                        v = self.do_extend_inhomo_1_standard(i, j)
+                        ext_list.append(self.do_extend_inhomo_1_standard(i, j))                        
                     elif etype == self.etypes['left']:
-                        v = self.do_extend_inhomo_1_left(i, j)
+                        ext_list.append(self.do_extend_inhomo_1_left(i, j))                       
                     elif etype == self.etypes['right']:
-                        v = self.do_extend_inhomo_1_right(i, j)
+                        ext_list.append(self.do_extend_inhomo_1_right(i, j))
                         
                 elif sid == 2:
                     if etype == self.etypes['standard']:
-                        v = self.do_extend_inhomo_2_standard(i, j)
+                        ext_list.append(self.do_extend_inhomo_2_standard(i, j))
                     elif etype == self.etypes['left']:
-                        v = self.do_extend_inhomo_2_left(i, j)
+                        ext_list.append(self.do_extend_inhomo_2_left(i, j))
                     elif etype == self.etypes['right']:
-                        v = self.do_extend_inhomo_2_right(i, j)
-                        
-                        
-                ext.set((i, j), sid, v)
+                        ext_list.append(self.do_extend_inhomo_2_right(i, j))
 
+        ext = self.reduce_all_ext(all_ext)
         return ext

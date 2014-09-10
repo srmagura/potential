@@ -364,7 +364,4 @@ class PsExtend:
                         ext_list.append(self.do_extend_2_right(i, j, options))
 
         ext = self.reduce_all_ext(all_ext)
-        return ext
-               
-        #inhomo_f = self.extend_inhomo_f()
-        #add inhomo f
+        return ext + self.extend_inhomo_f()

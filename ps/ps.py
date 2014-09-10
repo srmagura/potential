@@ -112,7 +112,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #print('n_basis: {}'.format(n_basis_tuple))
  
         #return self.test_extend_src_f()
-        #return self.test_extend_boundary()
+        return self.test_extend_boundary()
 
         #return self.test_extend_basis()
         self.calc_c0()
