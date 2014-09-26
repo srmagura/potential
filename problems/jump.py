@@ -57,9 +57,6 @@ class JumpReg(Pizza, Problem):
         a = self.a
         r, th = cart_to_polar(x, y)
         
-        if sid != 1 and not 'from1':
-            return 1
-        
         if sid == 0 and th < a/2:
             th += 2*pi 
         elif sid == 1 and x < 0:    
@@ -120,7 +117,6 @@ def get_reg_f_expr():
 class JumpReg0(sympy_problem.SympyProblem, JumpReg):
 
     def __init__(self, **kwargs): 
-        # I think sign is correct now
         kwargs['f_expr'] = get_reg_f_expr()
         super().__init__(**kwargs)
         

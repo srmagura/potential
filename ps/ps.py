@@ -117,9 +117,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #self.calc_c1_exact()
         #self.c0_test()
         self.calc_c1()
-        self.print_c1()
-        self.c1_test()
-        return
+        #self.print_c1()
+        #self.c1_test()
         #self.plot_gamma()
         #self.plot_union_gamma()
         #self.test_Q_system_residual()

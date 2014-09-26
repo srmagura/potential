@@ -6,7 +6,7 @@ class SympyProblem:
 
     def __init__(self, **kwargs):
         f = kwargs.pop('f_expr')
-        super().__init__(**kwargs)
+        #super().__init__(**kwargs)
           
         args = symbols('k R r th')
         k, R, r, th = args
