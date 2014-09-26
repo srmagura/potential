@@ -306,8 +306,11 @@ class PsInhomo:
             
                 ext_list = []
                 all_ext[(i, j)] = ext_list
-            
-                if sid == 0:
+                
+                if self.problem.homogeneous:
+                    ext_list.append({'rho': 1, 'value': 0})
+                    
+                elif sid == 0:
                     if etype == self.etypes['standard']:
                         ext_list.append(self.do_extend_inhomo_0_standard(i, j))
                     elif etype == self.etypes['left']:

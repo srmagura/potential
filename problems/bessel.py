@@ -35,6 +35,49 @@ def eval_expected_polar(k, R, r, th):
     nu_float = 6/11
     return jv(nu_float, k*r) * np.sin(nu_float*(th-np.pi/6))
     
+
+class BesselNoCorrection(Pizza, Problem):
+
+    k = 1
+    homogeneous = True
+
+    def eval_f(self, x, y):
+        return 0
+        
+    def eval_expected(self, x, y):
+        r, th = cart_to_polar(x, y)
+        
+        if th < self.a/2:
+            th += 2*np.pi
+            
+        return self.eval_expected_polar(r, th)
+        
+    def eval_expected_polar(self, r, th):
+        return eval_expected_polar(self.k, self.R, r, th)
+                
+    def eval_bc(self, x, y):
+        r, th = cart_to_polar(x, y)
+        sid = self.get_sid(th)
+        return self.eval_bc_extended(x, y, sid)
+        
+    def eval_bc_extended(self, x, y, sid):
+        a = self.a
+        r, th = cart_to_polar(x, y)
+
+        if sid == 0 and th < a/2:
+            th += 2*np.pi 
+        elif sid == 1 and x < 0:    
+            return self.eval_bc_extended(-x*cos(a), -x*sin(a), 2)
+        elif sid == 2 and x < 0:
+            return self.eval_bc_extended(r, 0, 1) 
+        
+        if sid == 0:
+            bc_nc = eval_expected_polar(self.k, self.R, r, th) 
+        elif sid == 1 or sid == 2:
+            bc_nc = 0
+
+        return bc_nc
+    
     
 class BesselReg(sympy_problem.SympyProblem, Pizza, Problem):
 
