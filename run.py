@@ -31,15 +31,14 @@ class Interface:
 
             if prev_error is not None:
                 convergence = np.log2(prev_error / result.error)
+                print('Convergence:', convergence)
             elif u2 is not None:
                 convergence = my_solver.calc_convergence3(u0, u1, u2)
+                print('Grid convergence:', convergence)
             else:
                 convergence = None
-                
-            if convergence is not None:
-                print('Convergence:', convergence)
-             
-            prev_error = result.error   
+                          
+            prev_error = result.error  
             N *= 2
             print()
 

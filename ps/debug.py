@@ -276,7 +276,7 @@ class PsDebug:
             x_range[i-1] = y_range[i-1] = self.get_coord(i, 0)[0]
         
         Z = np.zeros((N-1, N-1))
-        for i, j in self.Mplus:            
+        for i, j in self.global_Mplus:            
             Z[i-1, j-1] = u[matrices.get_index(N, i, j)].real
     
         X, Y = np.meshgrid(x_range, y_range, indexing='ij')

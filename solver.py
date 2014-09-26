@@ -119,7 +119,8 @@ class Solver(SolverExtend, SolverDebug):
         
         for i,j in self.global_Mplus:
             l = matrices.get_index(self.N, i,j)
-            error.append(abs(u_exp[l] - u_act[l]))           
+            diff = abs(u_exp[l] - u_act[l])
+            error.append(diff)  
 
         return max(error)
         

@@ -126,6 +126,11 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f
         u_act = potential
+        
+        for i, j in self.M0:
+            index = matrices.get_index(self.N, i, j)
+            r, th = self.get_polar(i, j)
+            u_act[index] += self.problem.get_restore_polar(r, th)
 
         #self.plot_contour(u_act)
 

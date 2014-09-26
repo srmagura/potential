@@ -36,6 +36,8 @@ class Problem:
         y = r * sin(th)
         return self.eval_f(x, y)
 
+    def get_restore_polar(self, r, th):
+        return 0
        
 class Pizza:
     a = np.pi / 6

@@ -30,7 +30,11 @@ def get_reg_f_expr():
     f *= 2**(5/11) * k**(72/11) * r**(50/11)
     
     return f
-   
+
+def eval_expected_polar(k, R, r, th):    
+    nu_float = 6/11
+    return jv(nu_float, k*r) * np.sin(nu_float*(th-np.pi/6))
+    
     
 class BesselReg(sympy_problem.SympyProblem, Pizza, Problem):
 
@@ -44,8 +48,15 @@ class BesselReg(sympy_problem.SympyProblem, Pizza, Problem):
         
     def eval_expected(self, x, y):
         r, th = cart_to_polar(x, y)
-        nu_float = 6/11
-        return jv(nu_float, self.k*self.R) * np.sin(nu_float*(th-np.pi/6))
+        
+        if th < self.a/2:
+            th += 2*np.pi
+            
+        return self.eval_expected_polar(r, th)
+        
+    def eval_expected_polar(self, r, th):
+        u_asympt = float(self.u_asympt_lambda(self.k, self.R, r, th))
+        return eval_expected_polar(self.k, self.R, r, th) - u_asympt
                 
     def eval_bc(self, x, y):
         r, th = cart_to_polar(x, y)
@@ -57,12 +68,24 @@ class BesselReg(sympy_problem.SympyProblem, Pizza, Problem):
         r, th = cart_to_polar(x, y)
 
         if sid == 0 and th < a/2:
-            th += 2*pi
+            th += 2*np.pi 
+        elif sid == 1 and x < 0:    
+            return self.eval_bc_extended(-x*cos(a), -x*sin(a), 2)
+        elif sid == 2 and x < 0:
+            return self.eval_bc_extended(r, 0, 1) 
         
         if sid == 0:
-            bc_nc = self.eval_expected(x, y) 
+            bc_nc = eval_expected_polar(self.k, self.R, r, th) 
         elif sid == 1 or sid == 2:
             bc_nc = 0
         
         u_asympt = self.u_asympt_lambda(self.k, self.R, r, th)
         return bc_nc - float(u_asympt)
+        
+class Bessel(BesselReg):
+    
+    def eval_expected_polar(self, r, th):
+        return eval_expected_polar(self.k, self.R, r, th)
+        
+    def get_restore_polar(self, r, th):
+        return self.u_asympt_lambda(self.k, self.R, r, th)
