@@ -128,7 +128,7 @@ class Solver(SolverExtend, SolverDebug):
         diff12 = []
         diff01 = []
     
-        for i, j in self.Mplus:
+        for i, j in self.global_Mplus:
             k0 = matrices.get_index(N, i, j)
             k1 = matrices.get_index(N//2, i//2, j//2)
             k2 = matrices.get_index(N//4, i//4, j//4)

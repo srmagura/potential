@@ -112,6 +112,7 @@ class SympyProblem:
             d_f_x = self.d_f_x_upper_lambda(self.k, self.R, x, y)
             d_f_y = self.d_f_y_upper_lambda(self.k, self.R, x, y)
         else:
+            #print('-------- x={}     y={} --------------'.format(x,y))
             d_f_x = self.d_f_x_lower_lambda(self.k, self.R, x, y)
             d_f_y = self.d_f_y_lower_lambda(self.k, self.R, x, y)
         

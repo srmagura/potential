@@ -8,7 +8,7 @@ from .problem import Problem, Pizza
 import problems.sympy_problem as sympy_problem
 
 def get_L(R):
-    return 2*R + 11/6*pi*R
+    return 2*R + 11/6*np.pi*R
 
 def eval_bc_extended(a, R, r, th, sid): 
     L = get_L(R)
@@ -32,7 +32,7 @@ class JumpNoCorrection(Pizza, Problem):
         
     def eval_bc(self, x, y):
         r, th = cart_to_polar(x, y)
-        sid = Pizza.get_sid(th)
+        sid = self.get_sid(th)
         return eval_bc_extended(self.a, self.R, r, th, sid)
         
     def eval_bc_extended(self, x, y, sid):
@@ -120,7 +120,8 @@ def get_reg_f_expr():
 class JumpReg0(sympy_problem.SympyProblem, JumpReg):
 
     def __init__(self, **kwargs): 
-        kwargs['f_expr'] = -get_reg_f_expr()
+        # I think sign is correct now
+        kwargs['f_expr'] = get_reg_f_expr()
         super().__init__(**kwargs)
         
         self.u04_lambda = lambdify(symbols('k R r th'), get_u04_expr())
@@ -129,7 +130,7 @@ class JumpReg0(sympy_problem.SympyProblem, JumpReg):
 def get_u04_sng_expr():
     k, r, th = symbols('k r th')             
     u04 = (th-pi/6)*(k**2*r**2-8)**2
-    u04 *= -3/(352*pi)
+    u04 *= 3/(352*pi)
     return u04 
       
     
