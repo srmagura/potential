@@ -118,9 +118,10 @@ class CsFourier(CircleSolver):
         return boundary
 
     def run(self):
+        self.plot_gamma()
         self.calc_c0()
         self.calc_c1()
-        self.c1_test()
+        #self.c1_test()
 
         if self.verbose:
             print('Using {} basis functions.'.
@@ -200,3 +201,39 @@ class CsFourier(CircleSolver):
             error[l] = self.problem.eval_expected(x, y) - ext[l]
 
         return np.max(np.abs(error))
+        
+    def plot_Gamma(self):
+        n = 256
+        Gamma_x_data = np.zeros(n)
+        Gamma_y_data = np.zeros(n)
+
+        l = 0
+        for th in np.linspace(0, 2*np.pi, n):
+            Gamma_x_data[l] = self.R*np.cos(th)
+            Gamma_y_data[l] = self.R*np.sin(th)
+            l += 1
+
+        plt.plot(Gamma_x_data, Gamma_y_data, color='black')
+        
+    def nodes_to_plottable(self, nodes):
+        x_data = np.zeros(len(nodes))
+        y_data = np.zeros(len(nodes))
+
+        l = 0
+        for i, j in nodes:
+            x, y = self.get_coord(i, j)
+            x_data[l] = x
+            y_data[l] = y
+            l += 1
+
+        return x_data, y_data
+
+    def plot_gamma(self):
+        self.plot_Gamma()
+                
+        x_data, y_data = self.nodes_to_plottable(self.gamma)         
+        plt.plot(x_data, y_data, 'o')
+        
+ 
+        plt.axes().set_aspect('equal', 'datalim')
+        plt.show()
