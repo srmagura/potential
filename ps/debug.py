@@ -217,11 +217,11 @@ class PsDebug:
             gamma = self.all_gamma[sid]
             x_data, y_data = self.nodes_to_plottable(gamma)
             
-            label_text = '$\gamma$ seg{}'.format(sid)
+            label_text = '$\gamma_{}$'.format(sid)
             plt.plot(x_data, y_data, markers[sid], label=label_text,
                 mfc='none', mec=colors[sid], mew=1)
 
-        plt.title('$\gamma$ nodes')
+        #plt.title('$\gamma$ nodes')
         plt.xlim(-4,4)
         plt.ylim(-4,4)
         plt.legend(loc=3)

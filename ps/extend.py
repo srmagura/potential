@@ -364,4 +364,9 @@ class PsExtend:
                         ext_list.append(self.do_extend_2_right(i, j, options))
 
         ext = self.reduce_all_ext(all_ext)
-        return ext + self.extend_inhomo_f()
+        
+        if 'JJ' in options:
+            # Don't add inhomogeneous part if this is a basis function
+            return ext
+        else:
+            return ext + self.extend_inhomo_f()
