@@ -28,15 +28,23 @@ class Interface:
             u2 = u1
             u1 = u0
             u0 = result.u_act
+            
+            tex = '\\grid{' + str(N) + '} &'
+            tex += '\\error{' + str(result.error) + '} &'
 
             if prev_error is not None:
                 convergence = np.log2(prev_error / result.error)
                 print('Convergence:', convergence)
+                
+                tex += str(convergence)
+                
             elif u2 is not None:
                 convergence = my_solver.calc_convergence3(u0, u1, u2)
                 print('Grid convergence:', convergence)
             else:
                 convergence = None
+            
+            print(tex + r'\\')
                           
             prev_error = result.error  
             N *= 2
