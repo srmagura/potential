@@ -1,3 +1,5 @@
+# Derivatives and roots of the Chebyshev polynomials
+
 from numpy import pi, sqrt, cos, arccos as acos, sin
 
 def eval_weight(t):

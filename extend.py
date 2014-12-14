@@ -1,9 +1,12 @@
+# Extension procedures available to all Solvers
+
 import math
 import numpy as np
 
 class SolverExtend:
 
     def extend_circle(self, r, xi0, xi1,
+        '''Homogeneous extension from the circle/arc'''
         d2_xi0_th, d2_xi1_th, d4_xi0_th):
 
         R = self.R
@@ -30,6 +33,10 @@ class SolverExtend:
         return v
 
     def calc_inhomo_circle(self, r, th):
+        '''
+        Inhomogeneous extension from the circle/arc, including the
+        calculation of the necessary derivatives of f.
+        '''
         p = self.problem
         if p.homogeneous:
             return 0
@@ -53,11 +60,13 @@ class SolverExtend:
             r, f, d_f_r, d2_f_r, d2_f_th)
 
     def extend_inhomo_circle(self, r, f, d_f_r, d2_f_r, d2_f_th):
+        ''' Inhomogeneous extension from the circle/arc. '''
         R = self.R
         k = self.k
 
         derivs = [0, 0, f]
         
+        # Don't need any more derivatives if using second order scheme
         if self.scheme_order == 4:
             derivs.extend([
                 d_f_r - f / R,
