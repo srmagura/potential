@@ -1,5 +1,7 @@
-# Second and fourth order finite difference schemes for the Helholtz
-# equation.
+'''
+Second and fourth order finite difference schemes for the Helholtz
+equation.
+'''
 
 import itertools as it
 import numpy as np

@@ -1,4 +1,6 @@
-# Derivatives and roots of the Chebyshev polynomials
+'''
+Derivatives and roots of the Chebyshev polynomials
+'''
 
 from numpy import pi, sqrt, cos, arccos as acos, sin
 

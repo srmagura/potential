@@ -1,3 +1,6 @@
+'''
+Command-line interface to the solvers
+'''
 import numpy as np
 import sys
 import argparse
@@ -9,6 +12,10 @@ import solver
 class Interface:
 
     def test_convergence(self):
+        '''
+        Perform the convergence test. Prints in TeX-friendly
+        format if the `--tex` option was given.
+        '''
         prev_error = None
         
         u2 = None
@@ -28,15 +35,17 @@ class Interface:
             u2 = u1
             u1 = u0
             u0 = result.u_act
-            
-            tex = '\\grid{' + str(N) + '} &'
-            tex += '\\error{' + str(result.error) + '} &'
+
+            if self.args.tex:            
+                tex = '\\grid{' + str(N) + '} &'
+                tex += '\\error{' + str(result.error) + '} &'
 
             if prev_error is not None:
                 convergence = np.log2(prev_error / result.error)
                 print('Convergence:', convergence)
                 
-                tex += str(convergence)
+                if self.args.tex:
+                    tex += str(convergence)
                 
             elif u2 is not None:
                 convergence = my_solver.calc_convergence3(u0, u1, u2)
@@ -44,27 +53,28 @@ class Interface:
             else:
                 convergence = None
             
-            print(tex + r'\\')
+            if self.args.tex:
+                print(tex + r'\\')
                           
             prev_error = result.error  
             N *= 2
             print()
 
     def run(self):
+        '''
+        Main routine. Parse command-line arguments and run a solver
+        or start the convergence test.
+        '''
         parser = argparse.ArgumentParser()
         parser.add_argument('-p', required=True, 
             choices=problems.problem_dict.keys())
         parser.add_argument('-N', type=int, default=16)
         parser.add_argument('-c', type=int, nargs='?', const=128)
         parser.add_argument('-o', type=int, default=4)
-        #parser.add_argument('-s', choices=solver.solver_dict.keys())
+        parser.add_argument('--tex', action='store_true')
         self.args = parser.parse_args()
 
         self.problem = problems.problem_dict[self.args.p](scheme_order=self.args.o)
-
-        #if self.args.s is not None:
-        #    self.problem.solver_class =\
-        #        solver.solver_dict[self.args.s]
 
         if self.args.c is None:
             my_solver = self.problem.get_solver(self.args.N, 

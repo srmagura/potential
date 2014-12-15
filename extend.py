@@ -1,4 +1,6 @@
-# Extension procedures available to all Solvers
+'''
+Extension procedures available to all Solvers
+'''
 
 import math
 import numpy as np
