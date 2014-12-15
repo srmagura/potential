@@ -6,8 +6,8 @@ import numpy as np
 class SolverExtend:
 
     def extend_circle(self, r, xi0, xi1,
-        '''Homogeneous extension from the circle/arc'''
         d2_xi0_th, d2_xi1_th, d4_xi0_th):
+        '''Homogeneous extension from the circle/arc'''
 
         R = self.R
         k = self.k

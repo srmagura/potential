@@ -1,3 +1,6 @@
+import sys
+sys.path.append(sys.path[0] + '/..')
+
 from sympy import *
 import numpy as np
 import random
