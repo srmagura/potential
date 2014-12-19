@@ -3,8 +3,17 @@ import numpy as np
    
    
 class SympyProblem:
+    '''
+    Use SymPy to symbolically differentiate the source function f.
+    Calculates up to 2nd order derivatives of f w.r.t. r and th, 
+    as well as the gradient and Hessian of f.
+    '''
 
     def __init__(self, **kwargs):
+        '''
+        Requires a keyword argument f which is a SymPy expression
+        in k, R, r, and th.
+        '''
         f = kwargs.pop('f_expr')
         #super().__init__(**kwargs)
           
@@ -13,10 +22,14 @@ class SympyProblem:
         
         self.f_polar_lambda = lambdify(args, f)
         
+        # If using 2nd order scheme, don't need derivatives of f
         if kwargs['scheme_order'] == 4:
             self.do_diff(f)
         
     def do_diff(self, f):
+        '''
+        Do the differentiation.
+        '''
         args = symbols('k R r th')
         k, R, r, th = args
     
