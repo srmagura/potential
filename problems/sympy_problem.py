@@ -65,19 +65,6 @@ class SympyProblem:
         f_cart_upper = f.subs(subs_dict_upper)
         f_cart_lower = f.subs(subs_dict_lower)
         
-        # Gradient
-        d_f_x_upper = diff(f_cart_upper, x)
-        self.d_f_x_upper_lambda = lambdify(cart_args, d_f_x_upper)
-        
-        d_f_x_lower = diff(f_cart_lower, x)
-        self.d_f_x_lower_lambda = lambdify(cart_args, d_f_x_lower)
-        
-        d_f_y_upper = diff(f_cart_upper, y)
-        self.d_f_y_upper_lambda = lambdify(cart_args, d_f_y_upper)
-        
-        d_f_y_lower = diff(f_cart_lower, y)
-        self.d_f_y_lower_lambda = lambdify(cart_args, d_f_y_lower)
-        
         # Hessian
         d2_f_x_upper = diff(f_cart_upper, x, 2)
         self.d2_f_x_upper_lambda = lambdify(cart_args, d2_f_x_upper)
@@ -120,7 +107,6 @@ class SympyProblem:
         d_f_r = self.eval_d_f_r(r, th)
         d_f_th = self.eval_d_f_th(r, th)
         
-        # Divide by 0 error
         d_f_x = d_f_r * np.cos(th) - d_f_th * np.sin(th) / r
         d_f_y = d_f_r * np.sin(th) + d_f_th * np.cos(th) / r
         

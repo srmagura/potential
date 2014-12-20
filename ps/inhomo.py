@@ -242,8 +242,8 @@ class PsInhomo:
         p = self.problem
         f = p.eval_f(x0, y0)
 
-        # Y != 0 condition is a hack to prevent divide by 0
-        if self.scheme_order == 4 and Y != 0:
+        # Don't evaluate at r = 0 to prevent divide by 0 error
+        if self.scheme_order == 4 and (x0 != 0 or y0 != 0):
             grad_f = p.eval_grad_f(x0, y0)
             hessian_f = p.eval_hessian_f(x0, y0)
         else:
