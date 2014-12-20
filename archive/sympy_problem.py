@@ -1,7 +1,6 @@
 from sympy import *
 import numpy as np
-
-from solver import cart_to_polar   
+   
    
 class SympyProblem:
     '''
@@ -98,31 +97,37 @@ class SympyProblem:
         self.d2_f_y_lower_lambda = lambdify(cart_args, d2_f_y_lower)
 
     def eval_f_polar(self, r, th):
+        assert th > .01
         return self.f_polar_lambda(self.k, self.R, r, th)
     
     def eval_d_f_r(self, r, th):
+        assert th > .01
         return self.d_f_r_lambda(self.k, self.R, r, th)
 
     def eval_d2_f_r(self, r, th):
+        assert th > .01
         return self.d2_f_r_lambda(self.k, self.R, r, th)
 
     def eval_d_f_th(self, r, th):
+        assert th > .01
         return self.d_f_th_lambda(self.k, self.R, r, th)
 
     def eval_d2_f_th(self, r, th):   
+        assert th > .01
         return self.d2_f_th_lambda(self.k, self.R, r, th)
 
     def eval_d2_f_r_th(self, r, th):  
+        assert th > .01
         return self.d2_f_r_th_lambda(self.k, self.R, r, th)
 
-    def eval_grad_f(self, x, y):        
-        r, th = cart_to_polar(x, y)
-        d_f_r = self.eval_d_f_r(r, th)
-        d_f_th = self.eval_d_f_th(r, th)
-        
-        # Divide by 0 error
-        d_f_x = d_f_r * np.cos(th) - d_f_th * np.sin(th) / r
-        d_f_y = d_f_r * np.sin(th) + d_f_th * np.cos(th) / r
+    def eval_grad_f(self, x, y):
+        if y > 0:
+            d_f_x = self.d_f_x_upper_lambda(self.k, self.R, x, y)
+            d_f_y = self.d_f_y_upper_lambda(self.k, self.R, x, y)
+        else:
+            #print('-------- x={}     y={} --------------'.format(x,y))
+            d_f_x = self.d_f_x_lower_lambda(self.k, self.R, x, y)
+            d_f_y = self.d_f_y_lower_lambda(self.k, self.R, x, y)
         
         return np.array((d_f_x, d_f_y))
 
@@ -137,4 +142,3 @@ class SympyProblem:
             d2_f_y = self.d2_f_y_lower_lambda(self.k, self.R, x, y)
         
         return np.array(((d2_f_x, d2_f_x_y), (d2_f_x_y, d2_f_y)))
-	
