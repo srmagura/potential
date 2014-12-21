@@ -6,8 +6,9 @@ from solver import cart_to_polar
 class SympyProblem:
     '''
     Use SymPy to symbolically differentiate the source function f.
-    Calculates up to 2nd order derivatives of f w.r.t. r and th, 
-    as well as the gradient and Hessian of f.
+    Calculates up to 2nd order derivatives of f WRT r and th. Uses 
+    the chain rule to compute the gradient and Hessian of f from its
+    polar derivatives.
     '''
 
     def __init__(self, **kwargs):
@@ -16,7 +17,6 @@ class SympyProblem:
         in k, R, r, and th.
         '''
         f = kwargs.pop('f_expr')
-        #super().__init__(**kwargs)
           
         args = symbols('k R r th')
         k, R, r, th = args
@@ -114,16 +114,13 @@ class SympyProblem:
 
     def eval_hessian_f(self, x, y): 
         if y > 0:
-            d2_f_x = self.d2_f_x_upper_lambda(self.k, self.R, x, y)
             d2_f_x_y = self.d2_f_x_y_upper_lambda(self.k, self.R, x, y)
             d2_f_y = self.d2_f_y_upper_lambda(self.k, self.R, x, y)
         else:
-            d2_f_x = self.d2_f_x_lower_lambda(self.k, self.R, x, y)
             d2_f_x_y = self.d2_f_x_y_lower_lambda(self.k, self.R, x, y)
             d2_f_y = self.d2_f_y_lower_lambda(self.k, self.R, x, y)
          
-        # TODO: Calculate the Hessian using chain rule instead of substitution
-            
+        # Get derivatives of f WRT r and th   
         r, th = cart_to_polar(x, y)
         d_f_r = self.eval_d_f_r(r, th)
         d_f_th = self.eval_d_f_th(r, th)
@@ -132,6 +129,7 @@ class SympyProblem:
         d2_f_r_th = self.eval_d2_f_r_th(r, th)
         d2_f_th = self.eval_d2_f_th(r, th)
         
+        # Calculate d2_f_x
         d_f_x_r = d2_f_r * np.cos(th)
         d_f_x_r += d2_f_r_th * (-np.sin(th) / r)
         d_f_x_r += d_f_th * np.sin(th) / r**2
@@ -143,4 +141,18 @@ class SympyProblem:
         
         d2_f_x = d_f_x_r * np.cos(th) + d_f_x_th * (-np.sin(th) / r)
         
+        # Calculate d2_f_x_y
+        
+        # Calculate d2_f_y
+        d_f_y_r = d2_f_r * np.sin(th)
+        d_f_y_r += d2_f_r_th * np.cos(th) / r
+        d_f_y_r += d_f_th * (-np.cos(th) / r**2)
+        
+        d_f_y_th = d2_f_r_th * np.sin(th)
+        d_f_y_th += d_f_r * np.cos(th)
+        d_f_y_th += d2_f_th * np.cos(th) / r
+        d_f_y_th += d_f_th * (-np.sin(th) / r)
+        
+        d2_f_y = d_f_y_r * np.sin(th) + d_f_y_th * np.cos(th) / r
+
         return np.array(((d2_f_x, d2_f_x_y), (d2_f_x_y, d2_f_y)))
