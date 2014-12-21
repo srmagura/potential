@@ -121,6 +121,26 @@ class SympyProblem:
             d2_f_x = self.d2_f_x_lower_lambda(self.k, self.R, x, y)
             d2_f_x_y = self.d2_f_x_y_lower_lambda(self.k, self.R, x, y)
             d2_f_y = self.d2_f_y_lower_lambda(self.k, self.R, x, y)
+         
+        # TODO: Calculate the Hessian using chain rule instead of substitution
+            
+        r, th = cart_to_polar(x, y)
+        d_f_r = self.eval_d_f_r(r, th)
+        d_f_th = self.eval_d_f_th(r, th)
+		
+        d2_f_r = self.eval_d2_f_r(r, th)
+        d2_f_r_th = self.eval_d2_f_r_th(r, th)
+        d2_f_th = self.eval_d2_f_th(r, th)
+        
+        d_f_x_r = d2_f_r * np.cos(th)
+        d_f_x_r += d2_f_r_th * (-np.sin(th) / r)
+        d_f_x_r += d_f_th * np.sin(th) / r**2
+        
+        d_f_x_th = d2_f_r_th * np.cos(th)
+        d_f_x_th += d_f_r * (-np.sin(th))
+        d_f_x_th += d2_f_th * (-np.sin(th) / r)
+        d_f_x_th += d_f_th * (-np.cos(th) / r)
+        
+        d2_f_x = d_f_x_r * np.cos(th) + d_f_x_th * (-np.sin(th) / r)
         
         return np.array(((d2_f_x, d2_f_x_y), (d2_f_x_y, d2_f_y)))
-	
