@@ -29,7 +29,7 @@ class SympyProblem:
         
     def do_diff(self, f):
         '''
-        Do the differentiation.
+        Find polar derivatives symbolically.
         '''
         args = symbols('k R r th')
         k, R, r, th = args
@@ -48,61 +48,36 @@ class SympyProblem:
         
         d2_f_r_th = diff(f, r, th)
         self.d2_f_r_th_lambda = lambdify(args, d2_f_r_th)
-        
-        x, y = symbols('x y')
-        cart_args = (k, R, x, y)
-        
-        subs_dict_upper = {
-            r: sqrt(x**2 + y**2),
-            th: atan2(y, x)
-        }
-        
-        subs_dict_lower = {
-            r: sqrt(x**2 + y**2),
-            th: atan2(y, x) + 2*pi
-        }
-        
-        f_cart_upper = f.subs(subs_dict_upper)
-        f_cart_lower = f.subs(subs_dict_lower)
-        
-        # Hessian
-        d2_f_x_upper = diff(f_cart_upper, x, 2)
-        self.d2_f_x_upper_lambda = lambdify(cart_args, d2_f_x_upper)
-        
-        d2_f_x_lower = diff(f_cart_lower, x, 2)
-        self.d2_f_x_lower_lambda = lambdify(cart_args, d2_f_x_lower)
-        
-        d2_f_x_y_upper = diff(f_cart_upper, x, y)
-        self.d2_f_x_y_upper_lambda = lambdify(cart_args, d2_f_x_y_upper)
-        
-        d2_f_x_y_lower = diff(f_cart_lower, x, y)
-        self.d2_f_x_y_lower_lambda = lambdify(cart_args, d2_f_x_y_lower)
-        
-        d2_f_y_upper = diff(f_cart_upper, y, 2)
-        self.d2_f_y_upper_lambda = lambdify(cart_args, d2_f_y_upper)
-        
-        d2_f_y_lower = diff(f_cart_lower, y, 2)
-        self.d2_f_y_lower_lambda = lambdify(cart_args, d2_f_y_lower)
 
     def eval_f_polar(self, r, th):
+        '''Evaluate f at (r, th)'''
         return self.f_polar_lambda(self.k, self.R, r, th)
     
     def eval_d_f_r(self, r, th):
+        '''Partial of f WRT r'''
         return self.d_f_r_lambda(self.k, self.R, r, th)
 
     def eval_d2_f_r(self, r, th):
+        '''2nd partial of f WRT to r'''
         return self.d2_f_r_lambda(self.k, self.R, r, th)
 
     def eval_d_f_th(self, r, th):
+        '''Partial of f WRT to th'''
         return self.d_f_th_lambda(self.k, self.R, r, th)
 
-    def eval_d2_f_th(self, r, th):   
+    def eval_d2_f_th(self, r, th):  
+        '''2nd partial of f WRT to th''' 
         return self.d2_f_th_lambda(self.k, self.R, r, th)
 
-    def eval_d2_f_r_th(self, r, th):  
+    def eval_d2_f_r_th(self, r, th):
+        '''Partial of f WRT r and th'''
         return self.d2_f_r_th_lambda(self.k, self.R, r, th)
 
-    def eval_grad_f(self, x, y):        
+    def eval_grad_f(self, x, y):
+        '''
+        Evaluate gradient of f at (x, y), using the chain rule. Returns the
+        result as a NumPy array.
+        '''    
         r, th = cart_to_polar(x, y)
         d_f_r = self.eval_d_f_r(r, th)
         d_f_th = self.eval_d_f_th(r, th)
@@ -112,14 +87,11 @@ class SympyProblem:
         
         return np.array((d_f_x, d_f_y))
 
-    def eval_hessian_f(self, x, y): 
-        if y > 0:
-            d2_f_x_y = self.d2_f_x_y_upper_lambda(self.k, self.R, x, y)
-            d2_f_y = self.d2_f_y_upper_lambda(self.k, self.R, x, y)
-        else:
-            d2_f_x_y = self.d2_f_x_y_lower_lambda(self.k, self.R, x, y)
-            d2_f_y = self.d2_f_y_lower_lambda(self.k, self.R, x, y)
-         
+    def eval_hessian_f(self, x, y):
+        '''
+        Evaluate Hessian of f at (x, y), using the chain rule. Returns the
+        result as a 2x2 NumPy array.
+        '''
         # Get derivatives of f WRT r and th   
         r, th = cart_to_polar(x, y)
         d_f_r = self.eval_d_f_r(r, th)
@@ -142,6 +114,7 @@ class SympyProblem:
         d2_f_x = d_f_x_r * np.cos(th) + d_f_x_th * (-np.sin(th) / r)
         
         # Calculate d2_f_x_y
+        d2_f_x_y = d_f_x_r * np.sin(th) + d_f_x_th * np.cos(th) / r
         
         # Calculate d2_f_y
         d_f_y_r = d2_f_r * np.sin(th)
