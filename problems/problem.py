@@ -26,7 +26,12 @@ class Problem:
         return self.eval_expected(self.R*cos(th), self.R*sin(th))
 
     def eval_expected(self, x, y):
-        return self.eval_expected_polar(*cart_to_polar(x, y))
+        r, th = cart_to_polar(x, y)
+        
+        if th < self.a/2:
+            th += 2*np.pi
+            
+        return self.eval_expected_polar(r, th)
 
     def eval_f(self, x, y):
         return self.eval_f_polar(*cart_to_polar(x, y))
@@ -53,13 +58,10 @@ class Pizza:
     }
         
     def __init__(self, **kwargs):
-        super().__init__()   
-
-    def eval_bc(self, x, y):
-        return self.eval_expected(x, y)
+        super().__init__()
         
     def eval_bc_extended(self, x, y, sid):
-        return self.eval_bc(x, y)
+        return self.eval_expected(x, y)
 
     # Note: need to handle cases when a point is at the interface of 
     # two segments carefully
