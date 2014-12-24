@@ -112,9 +112,12 @@ class PsDebug:
         for l in range(len(sample)):
             p = sample[l]
             s_data[l] = p['s']
-            exact_data[l] = self.problem.eval_bc(p['x'], p['y']).real          
             
             r, th = cart_to_polar(p['x'], p['y'])
+            sid = self.get_sid(th) 
+            
+            exact_data[l] = self.problem.eval_bc_extended(p['x'], p['y'], sid).real          
+            
             for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\
                     (self.c0[JJ] *
