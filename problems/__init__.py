@@ -1,9 +1,12 @@
+'''
+Defines choices for the -p (problem) command-line argument.
+'''
 from .sine import Sine, SinePizza
 from .wave import Wave, WavePizza
 from .ycosine import YCosine, YCosinePizza
 from .bessel import BesselNoCorrection, BesselReg, Bessel
+from .shc_bessel import ShcBesselKnown, ShcBessel
 
-# Choices for the -p command-line argument
 problem_dict = {
     'sine': Sine,
     'sine-pizza': SinePizza,
@@ -13,5 +16,7 @@ problem_dict = {
     'ycosine-pizza': YCosinePizza,
     'bessel-nc': BesselNoCorrection,
     'bessel-reg': BesselReg,
-    'bessel': Bessel
+    'bessel': Bessel,
+    'shc-bessel-known': ShcBesselKnown,
+    'shc-bessel': ShcBessel,
 }
