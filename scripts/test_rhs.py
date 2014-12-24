@@ -1,3 +1,4 @@
+# To allow __main__ in subdirectory
 import sys
 sys.path.append(sys.path[0] + '/..')
 
@@ -5,8 +6,8 @@ from sympy import *
 import numpy as np
 import random
 
-import problems.jump as jump
 import problems.bessel as bessel
+import problems.shc_bessel as shc_bessel
 
 n_trials = 100
 th_interval = (np.pi/6+.01, 2*np.pi-.01)
@@ -37,23 +38,19 @@ def do_test(u, manual_f_expr):
     return max(error)
            
 
-all_tests = {
-    'jump-reg0': (
-        -jump.get_u04_expr(),
-        jump.get_reg_f_expr(),
-    ),
-    
-    'jump-reg1': (
-        -jump.get_u04_sng_expr(),
-        jump.get_reg_f_sng_expr()
-    ),
-    
-    'bessel-reg': (
+all_tests = (
+    (
+        'bessel-reg',
         -bessel.get_u_asympt_expr(),
         bessel.get_reg_f_expr()
+    ),
+    (
+        'shc-bessel',
+        -shc_bessel.get_u_asympt_expr(),
+        shc_bessel.get_reg_f_expr()
     )
-}
+)
 
-for problem in all_tests:
-    error = do_test(*all_tests[problem])
-    print('Error(`{}`) = {}'.format(problem, error))
+for test in all_tests:
+    error = do_test(test[1], test[2])
+    print('Error(`{}`) = {}'.format(test[0], error))

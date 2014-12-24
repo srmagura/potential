@@ -33,7 +33,7 @@ def get_reg_f_expr():
     '''
     k, R, r, th = symbols('k R r th')
     
-    f = -1331/(67200 * gamma(3/11))
+    f = 1331/(67200 * gamma(3/11))
     f *= 2**(8/11) * k**(69/11) * r**(47/11)
     f *= sin(-3*th/11 + pi/22)
     
