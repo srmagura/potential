@@ -8,6 +8,8 @@ class Problem:
     homogeneous = False
     expected_known = True
     
+    R = 2.3
+    
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -57,6 +59,8 @@ class Pizza:
         256: (45, 29),
         512: (53, 34)
     }
+    
+    d0_len = 7
         
     def eval_bc_extended(self, x, y, sid):
         return self.eval_expected(x, y)

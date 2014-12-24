@@ -1,6 +1,7 @@
 from sympy import *
 import numpy as np
 from scipy.special import jv
+from scipy.integrate import quad
 
 from solver import cart_to_polar
 
@@ -37,7 +38,7 @@ def get_reg_f_expr():
     f *= sin(-3*th/11 + pi/22)
     
     return f
-    
+            
 class ShcBesselAbstract(sympy_problem.SympyProblem, Pizza, Problem):
     
     k = 1
@@ -47,12 +48,13 @@ class ShcBesselAbstract(sympy_problem.SympyProblem, Pizza, Problem):
         super().__init__(**kwargs)
         
         self.u_asympt_lambda = lambdify(symbols('k R r th'), get_u_asympt_expr())
+        self.nu = np.pi / (2*np.pi - self.a)
                 
     def eval_expected_polar(self, r, th):
         k = self.k
         R = self.R
-        
-        nu = 6/11
+        nu = self.nu
+    
         return jv(nu/2, k*r) * np.sin(nu*(th-np.pi/6)/2)
         
     def _eval_bc_extended(self, x, y, sid, d0):
@@ -75,12 +77,44 @@ class ShcBesselAbstract(sympy_problem.SympyProblem, Pizza, Problem):
             return 0
         
     def get_restore_polar(self, r, th):
-        return self.u_asympt_lambda(self.k, self.R, r, th)
+        k = self.k
+        R = self.R
+        a = self.a
+        nu = self.nu
+        
+        v = self.u_asympt_lambda(k, R, r, th)
+        
+        for m in range(len(self.d0)):
+            v += self.d0[m] * jv(m*nu, k*r) * np.sin(m*nu*(th - a))
+    
+        return v
+        
+    def calc_exact_d0(self):
+        k = self.k
+        R = self.R
+        
+        def eval_integrand(th):
+            phi = (th - np.pi/6) / (11*np.pi/6)
+            phi -= np.sin(3/11*(th - np.pi/6))
+            phi *= jv(3/11, k*R)
+            
+            return phi * np.sin(6*m/11*(th - np.pi/6))
+    
+        self.d0 = np.zeros(self.d0_len)
+    
+        for m in range(self.d0_len):
+            self.d0[m] = quad(eval_integrand, np.pi/6, 2*np.pi)[0]
+            self.d0[m] *= 12 / (11*np.pi * jv(6*m/11, k*R))
 
-class ShcBesselKnown(ShcBessel):
+class ShcBesselKnown(ShcBesselAbstract):
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.calc_exact_d0()
     
     def eval_bc_extended(self, x, y, sid):
-        return self._eval_bc_extended(x, y, sid, #)
+        return self._eval_bc_extended(x, y, sid, self.d0)
+        
         
 class ShcBessel(ShcBesselAbstract):
                 

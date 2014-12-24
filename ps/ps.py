@@ -14,11 +14,10 @@ from ps.debug import PsDebug
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
     AD_len = 2*np.pi
-    R = 2.3
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
-        problem.R = self.R
+        self.R = problem.R
         
         super().__init__(problem, N, scheme_order, **kwargs)
         
