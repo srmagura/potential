@@ -3,6 +3,7 @@ from .wave import Wave, WavePizza
 from .ycosine import YCosine, YCosinePizza
 from .bessel import BesselNoCorrection, BesselReg, Bessel
 
+# Choices for the -p command-line argument
 problem_dict = {
     'sine': Sine,
     'sine-pizza': SinePizza,

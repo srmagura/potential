@@ -116,7 +116,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #return self.test_extend_boundary()
 
         self.calc_c0()
-        self.c0_test()
         self.calc_c1()
 
         ext = self.extend_boundary()

@@ -48,6 +48,7 @@ class Pizza:
     a = np.pi / 6
     solver_class = PizzaSolver
     
+    # Semi-optimal values, determined by experiment
     n_basis_dict = {
         16: (21, 9), 
         32: (28, 8), 
@@ -62,12 +63,35 @@ class Pizza:
         
     def eval_bc_extended(self, x, y, sid):
         return self.eval_expected(x, y)
+    
+    def wrap_func(self, x, y, sid):
+        '''
+        Used to create the smooth extensions of the Dirichlet data needed
+        for the Chebyshev fit. Only valid when the Dirichlet data is smooth,
+        even across the interfaces where the segments meet.
+        '''
+        a = self.a    
+        r, th = cart_to_polar(x, y)
 
-    # Note: need to handle cases when a point is at the interface of 
-    # two segments carefully
+        if sid == 0 and th < a/2:
+            th += 2*np.pi 
+        elif sid == 1 and x < 0:    
+            r = -x
+            th = a
+            sid = 2
+        elif sid == 2 and x < 0:
+            th = 2*np.pi
+            sid = 1
+
+        return (r, th, sid)
+
     def get_sid(self, th):
+        '''
+        Mapping of polar angles in the interval (0, 2*pi] to the set of 
+        segment ID's, {0, 1, 2}.
+        '''
         tol = 1e-12
-        a = Pizza.a
+        a = self.a
 
         if th >= 2*np.pi:
             return 1
