@@ -58,9 +58,6 @@ class Pizza:
         512: (53, 34)
     }
         
-    def __init__(self, **kwargs):
-        super().__init__()
-        
     def eval_bc_extended(self, x, y, sid):
         return self.eval_expected(x, y)
     

@@ -2,9 +2,6 @@ from sympy import *
 import numpy as np
 from scipy.special import jv
 
-from solver import cart_to_polar
-from ps.ps import PizzaSolver
-
 from .problem import Problem, Pizza
 import problems.sympy_problem as sympy_problem
 
