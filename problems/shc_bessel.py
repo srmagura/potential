@@ -58,6 +58,7 @@ class ShcBesselAbstract(sympy_problem.SympyProblem, Pizza, Problem):
         return jv(nu/2, k*r) * np.sin(nu*(th-np.pi/6)/2)
         
     def _eval_bc_extended(self, x, y, sid, d0):
+        # TODO use d0
         k = self.k
         R = self.R
         
