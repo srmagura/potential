@@ -75,67 +75,23 @@ class PsBasis:
             return 0
 
     def calc_c0(self):
+        '''
+        Do Chebyshev fits on the Dirichlet data of each segment to get
+        the coefficients c0.
+        '''
         t_data = get_chebyshev_roots(1000)
         self.c0 = []
 
         for sid in range(self.N_SEGMENT):
-            arg_data = [self.eval_g(sid, t) for t in t_data] 
-            boundary_points = self.get_boundary_sample_by_sid(sid, arg_data)
-            boundary_data = np.zeros(len(arg_data), dtype=complex)
-            for l in range(len(boundary_points)):
-                p = boundary_points[l]
-                boundary_data[l] = self.problem.eval_bc_extended(p['x'], p['y'], sid)
+            boundary_data = np.zeros(len(t_data))
+            
+            for i in range(len(t_data)):
+                arg = self.eval_g(sid, t_data[i])
+                boundary_data[i] = self.problem.eval_bc_extended(arg, sid)
 
             n_basis = self.segment_desc[sid]['n_basis']
             self.c0.extend(np.polynomial.chebyshev.chebfit(
                 t_data, boundary_data, n_basis-1))
-
-    def get_boundary_sample(self, n=100):
-        ep = 1e-5
-        th_data = np.linspace(self.a+ep, 2*np.pi-ep, 3*n)
-        
-        r_data = np.arange(ep, self.R, self.R/n)
-
-        points = []
-        arg_datas = (th_data, r_data[::-1], r_data)
-        for sid in range(self.N_SEGMENT):
-            points.extend(
-                self.get_boundary_sample_by_sid(sid, arg_datas[sid]))
-
-        return points
-
-    def get_boundary_sample_by_sid(self, sid, arg_data):
-        points = []
-        a = self.a
-
-        if sid == 0:
-            for i in range(len(arg_data)):
-                th = arg_data[i]
-
-                points.append({'x': self.R * np.cos(th),
-                    'y': self.R * np.sin(th),
-                    's': self.R * (th - a),
-                    'sid': sid})
-
-        elif sid == 1:
-            for i in range(len(arg_data)):
-                r = arg_data[i]
-
-                points.append({'x': r,
-                    'y': 0,
-                    's': self.R*(2*np.pi - a + 1) - r,
-                    'sid': sid})
-
-        elif sid == 2:
-            for i in range(len(arg_data)):
-                r = arg_data[i]
-
-                points.append({'x': r*np.cos(a),
-                    'y': r*np.sin(a),
-                    's': self.R*(2*np.pi - a + 1) + r,
-                    'sid': sid})
-
-        return points
 
     def extend_basis(self, JJ, index):
         return self.extend_boundary({'JJ': JJ, 'index': index})

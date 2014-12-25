@@ -28,7 +28,14 @@ class Sine(Problem):
         
 
 class SinePizza(Pizza, Sine):
+    
+    def eval_bc_extended(self, arg, sid):
+        r, th, sid = self.wrap_func(arg, sid)
         
+        x, y = r*cos(th), r*sin(th)        
+        return self.eval_expected(x, y)
+    
+    # FIXME    
     def eval_d_u_outwards(self, x, y, **kwargs):
         r, th = cart_to_polar(x, y)
 

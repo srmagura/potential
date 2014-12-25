@@ -11,7 +11,67 @@ from chebyshev import get_chebyshev_roots
 import matrices
 
 class PsDebug:
+    
+    def get_boundary_sample(self, n=100):
+        ep = 1e-5
+        th_data = np.linspace(self.a+ep, 2*np.pi-ep, 3*n)
+        
+        r_data = np.arange(ep, self.R, self.R/n)
 
+        points = []
+        arg_datas = (th_data, r_data[::-1], r_data)
+        for sid in range(self.N_SEGMENT):
+            points.extend(
+                self.get_boundary_sample_by_sid(sid, arg_datas[sid]))
+
+        return points
+
+    def get_boundary_sample_by_sid(self, sid, arg_data):        
+        a = self.a
+        R = self.R
+        
+        points = []
+
+        if sid == 0:
+            for i in range(len(arg_data)):
+                th = arg_data[i]
+
+                points.append({
+                    'arg': th,
+                    'x': R * np.cos(th),
+                    'y': R * np.sin(th),
+                    's': R * (th - a),
+                    'sid': sid
+                })
+
+        elif sid == 1:
+            for i in range(len(arg_data)):
+                r = arg_data[i]
+
+                points.append({
+                    'arg': r,
+                    'x': r,
+                    'y': 0,
+                    's': R*(2*np.pi - a + 1) - r,
+                    'sid': sid
+                })
+
+        elif sid == 2:
+            for i in range(len(arg_data)):
+                r = arg_data[i]
+
+                points.append({
+                    'arg': r,
+                    'x': r*np.cos(a),
+                    'y': r*np.sin(a),
+                    's': R*(2*np.pi - a + 1) + r,
+                    'sid': sid
+                })
+
+        return points
+
+
+    # FIXME
     def calc_c1_exact(self):
         t_data = get_chebyshev_roots(1000)
         self.c1 = []
@@ -102,6 +162,7 @@ class PsDebug:
         result.error = max(error)
         return result
 
+    # FIXME
     def c0_test(self):
         sample = self.get_boundary_sample()
 
@@ -148,6 +209,7 @@ class PsDebug:
             i += n_basis
             sid += 1
 
+    # FIXME
     def c1_test(self):  
         sample = self.get_boundary_sample()
 
@@ -289,16 +351,3 @@ class PsDebug:
         
         self.plot_Gamma()
         plt.show()
-        
-    def test_Q_system_residual(self):
-        Q0 = self.get_Q(0)
-        Q1 = self.get_Q(1)
-        
-        #ext_f = self.extend_inhomo_f()           
-        #proj_f = self.get_potential(ext_f)
-        
-        #term = proj_f.add_array(self.ap_sol_f).get_gamma_array()
-        #ext_f_array = ext_f.get_gamma_array()
-     
-        result = Q0.dot(self.c0) + Q1.dot(self.c1) #+ term - ext_f_array
-        print('Q system residual:', np.max(np.abs(result)))

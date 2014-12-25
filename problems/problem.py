@@ -78,8 +78,8 @@ class Pizza:
             r = arg
             th = 2*np.pi
             
-            if x < 0:    
-                r = -x
+            if r < 0:    
+                r = -r
                 th = a
                 sid = 2
                 
@@ -87,21 +87,12 @@ class Pizza:
             r = arg
             th = a
 
-            if x < 0:
+            if r < 0:
+                r = -r
                 th = 2*np.pi
                 sid = 1
 
         return (r, th, sid)
-        
-    def eval_bc_extended(self, arg, sid):
-        '''
-        Extended versions of Dirichlet data for each segment. By default,
-        the boundary data is taken as the trace of the true solution.
-        Obviously this behaviour only makes sense if the true solution is
-        known ahead of time.
-        '''
-        r, th, sid = self.wrap_func(arg, sid)
-        return self.eval_expected_polar(r, th)
 
     def get_sid(self, th):
         '''
