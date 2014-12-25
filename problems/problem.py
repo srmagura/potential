@@ -33,17 +33,25 @@ class Problem:
         return self.eval_expected_polar(r, th)
 
     def eval_f(self, x, y):
+        if self.homogeneous:
+            return 0
+        
         return self.eval_f_polar(*cart_to_polar(x, y))
 
     def eval_f_polar(self, r, th):
+        if self.homogeneous:
+            return 0
+        
         x = r * cos(th)
         y = r * sin(th)
         return self.eval_f(x, y)
 
     def get_restore_polar(self, r, th):
         return 0
+    
        
-class Pizza:
+class PizzaProblem(Problem):
+    
     a = np.pi / 6
     solver_class = PizzaSolver
     
@@ -65,34 +73,27 @@ class Pizza:
         for the Chebyshev fit. Only valid when the Dirichlet data is smooth,
         even across the interfaces where the segments meet.
         '''
-        a = self.a
-        
         if sid == 0:
-            r = self.R
-            th = arg
-            
-            if th < a/2:
-                th += 2*np.pi
-                 
-        elif sid == 1:
-            r = arg
-            th = 2*np.pi
-            
-            if r < 0:    
-                r = -r
-                th = a
-                sid = 2
+            if arg < self.a/2:
+                arg += 2*np.pi
                 
+        elif sid == 1 and arg < 0:
+            arg = -arg
+            sid = 2
+            
+        elif sid == 2 and arg < 0:
+            arg = -arg
+            sid = 1
+                
+        return (arg, sid)
+        
+    def arg_to_polar(self, arg, sid):
+        if sid == 0:
+            return (self.R, arg)
+        elif sid == 1:
+            return (arg, 2*np.pi)
         elif sid == 2:
-            r = arg
-            th = a
-
-            if r < 0:
-                r = -r
-                th = 2*np.pi
-                sid = 1
-
-        return (r, th, sid)
+            return (arg, self.a)
 
     def get_sid(self, th):
         '''

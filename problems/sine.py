@@ -4,19 +4,16 @@ from numpy import cos, sin
 from solver import cart_to_polar
 from cs.csf import CsFourier
 
-from .problem import Problem, Pizza
+from .problem import Problem, PizzaProblem
 
 class Sine(Problem):
+    
     k = 1
-
     solver_class = CsFourier
     homogeneous = True
     
     def eval_bc(self, th):
         return self.eval_expected(self.R*cos(th), self.R*sin(th))
-
-    def eval_f(self, x, y):
-        return 0
 
     def eval_expected(self, x, y):
         return sin(self.k*x)
@@ -27,12 +24,19 @@ class Sine(Problem):
         return k*cos(th) * cos(k*R*cos(th))
         
 
-class SinePizza(Pizza, Sine):
+class SinePizza(PizzaProblem):
+    
+    k = 1
+    homogeneous = True
+    
+    def eval_expected(self, x, y):
+        return sin(self.k*x)
     
     def eval_bc_extended(self, arg, sid):
-        r, th, sid = self.wrap_func(arg, sid)
-        
-        x, y = r*cos(th), r*sin(th)        
+        arg, sid = self.wrap_func(arg, sid)
+        r, th = self.arg_to_polar(arg, sid) 
+ 
+        x, y = r*cos(th), r*sin(th)    
         return self.eval_expected(x, y)
     
     # FIXME    

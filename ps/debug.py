@@ -162,8 +162,11 @@ class PsDebug:
         result.error = max(error)
         return result
 
-    # FIXME
     def c0_test(self):
+        '''
+        Plot the Dirichlet data along with its Chebyshev expansion. If there
+        is more than a minor difference between the two, something is wrong.
+        '''
         sample = self.get_boundary_sample()
 
         s_data = np.zeros(len(sample))
@@ -177,7 +180,7 @@ class PsDebug:
             r, th = cart_to_polar(p['x'], p['y'])
             sid = self.get_sid(th) 
             
-            exact_data[l] = self.problem.eval_bc_extended(p['x'], p['y'], sid).real          
+            exact_data[l] = self.problem.eval_bc_extended(p['arg'], sid).real          
             
             for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\
@@ -186,8 +189,8 @@ class PsDebug:
 
         plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
         plt.plot(s_data, expansion_data, label='Expansion')
+        
         plt.legend(loc=0)
-        #plt.ylim(-1, 1)
         plt.title('c0')
         plt.xlabel('Arclength s')
         plt.ylabel('Dirichlet data')
