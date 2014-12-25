@@ -12,6 +12,9 @@ class Wave(Problem):
 
     solver_class = CsFourier
     homogeneous = True
+    
+    def eval_bc(self, th):
+        return self.eval_expected(self.R*np.cos(th), self.R*np.sin(th))
 
     def eval_f(self, x, y):
         return 0

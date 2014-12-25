@@ -11,6 +11,9 @@ class Sine(Problem):
 
     solver_class = CsFourier
     homogeneous = True
+    
+    def eval_bc(self, th):
+        return self.eval_expected(self.R*cos(th), self.R*sin(th))
 
     def eval_f(self, x, y):
         return 0
@@ -25,7 +28,7 @@ class Sine(Problem):
         
 
 class SinePizza(Pizza, Sine):
-    
+        
     def eval_d_u_outwards(self, x, y, **kwargs):
         r, th = cart_to_polar(x, y)
 

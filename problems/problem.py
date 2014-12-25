@@ -24,9 +24,6 @@ class Problem:
         else:
             return self.n_basis_dict[None]
 
-    def eval_bc(self, th):
-        return self.eval_expected(self.R*cos(th), self.R*sin(th))
-
     def eval_expected(self, x, y):
         r, th = cart_to_polar(x, y)
         
@@ -60,31 +57,51 @@ class Pizza:
         512: (53, 34)
     }
     
-    d0_len = 7
-        
-    def eval_bc_extended(self, x, y, sid):
-        return self.eval_expected(x, y)
-    
-    def wrap_func(self, x, y, sid):
+    shc_coef_len = 7
+            
+    def wrap_func(self, arg, sid):
         '''
         Used to create the smooth extensions of the Dirichlet data needed
         for the Chebyshev fit. Only valid when the Dirichlet data is smooth,
         even across the interfaces where the segments meet.
         '''
-        a = self.a    
-        r, th = cart_to_polar(x, y)
-
-        if sid == 0 and th < a/2:
-            th += 2*np.pi 
-        elif sid == 1 and x < 0:    
-            r = -x
-            th = a
-            sid = 2
-        elif sid == 2 and x < 0:
+        a = self.a
+        
+        if sid == 0:
+            r = self.R
+            th = arg
+            
+            if th < a/2:
+                th += 2*np.pi
+                 
+        elif sid == 1:
+            r = arg
             th = 2*np.pi
-            sid = 1
+            
+            if x < 0:    
+                r = -x
+                th = a
+                sid = 2
+                
+        elif sid == 2:
+            r = arg
+            th = a
+
+            if x < 0:
+                th = 2*np.pi
+                sid = 1
 
         return (r, th, sid)
+        
+    def eval_bc_extended(self, arg, sid):
+        '''
+        Extended versions of Dirichlet data for each segment. By default,
+        the boundary data is taken as the trace of the true solution.
+        Obviously this behaviour only makes sense if the true solution is
+        known ahead of time.
+        '''
+        r, th, sid = self.wrap_func(arg, sid)
+        return self.eval_expected_polar(r, th)
 
     def get_sid(self, th):
         '''
