@@ -296,7 +296,7 @@ class PsInhomo:
         R = self.R
         k = self.problem.k
 
-        all_ext = {}
+        mv_ext = {}
         
         for sid in range(3):
             gamma = self.all_gamma[sid]         
@@ -305,10 +305,10 @@ class PsInhomo:
                 i, j = gamma[l]
                 etype = self.get_etype(sid, i, j)
             
-                if (i, j) not in all_ext:
-                    all_ext[(i, j)] = []
+                if (i, j) not in mv_ext:
+                    mv_ext[(i, j)] = []
                     
-                ext_list = all_ext[(i, j)]
+                ext_list = mv_ext[(i, j)]
                 
                 if self.problem.homogeneous:
                     ext_list.append({'elen': 1, 'value': 0})
@@ -337,5 +337,4 @@ class PsInhomo:
                     elif etype == self.etypes['right']:
                         ext_list.append(self.do_extend_inhomo_2_right(i, j))
 
-        ext = self.reduce_all_ext(all_ext)
-        return ext
+        return mv_ext

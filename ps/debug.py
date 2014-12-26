@@ -97,20 +97,24 @@ class PsDebug:
 
         return result
 
-    def test_extend_boundary(self):
+    def test_extend_boundary(self, setypes=None):
         self.calc_c0()
         self.calc_c1_exact()
         
         error = []
-        ext = self.extend_boundary()
+        mv_ext = self.mv_extend_boundary()
 
-        for l in range(len(self.union_gamma)):
-            i, j = self.union_gamma[l]
-            x, y = self.get_coord(i, j)
+        for node in mv_ext:
+            x, y = self.get_coord(*node)
             
-            exp = self.problem.eval_expected(x, y)                    
-            diff = abs(exp - ext[l])
-            error.append(diff)
+            exp = self.problem.eval_expected(x, y)  
+            
+            for data in mv_ext[node]:
+                if setypes is None or data['setype'] in setypes:
+                    diff = abs(exp - data['value'])
+                    error.append(diff)
+                    
+        # TODO: Also check reduction
 
         result = Result()
         result.error = max(error)

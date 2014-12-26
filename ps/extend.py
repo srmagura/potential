@@ -295,12 +295,32 @@ class PsExtend:
          
         return self.do_extend_12_right(i, j, options)
 
-    def reduce_all_ext(self, all_ext):
+    def mv_add(self, ext1, ext2):
+        result = {}
+        
+        for node in ext1:
+            result[node] = []
+            
+            for i in range(len(ext1[node])):
+                data1 = ext1[node][i]
+                data2 = ext2[node][i]
+                
+                data_result = {
+                    'elen': data1['elen'],
+                    'value': data1['value'] + data2['value'],
+                    'setype': data1['setype']
+                }
+                
+                result[node].append(data_result)
+                
+        return result
+
+    def mv_reduce(self, mv_ext):
         ext = np.zeros(len(self.union_gamma), dtype=complex)
         
         for l in range(len(self.union_gamma)):
             i, j = self.union_gamma[l]
-            ext_list = all_ext[(i, j)]
+            ext_list = mv_ext[(i, j)]
             
             if len(ext_list) == 1:
                 ext[l] = ext_list[0]['value']
@@ -321,12 +341,11 @@ class PsExtend:
                 
         return ext
             
-
-    def extend_boundary(self, options={}):
+    def mv_extend_boundary(self, options={}):
         R = self.R
         k = self.problem.k
 
-        all_ext = {}
+        mv_ext = {}
         
         for sid in range(3):
             gamma = self.all_gamma[sid]         
@@ -335,39 +354,46 @@ class PsExtend:
                 i, j = gamma[l]
                 etype = self.get_etype(sid, i, j)
             
-                if (i, j) not in all_ext:
-                    all_ext[(i, j)] = []
+                if (i, j) not in mv_ext:
+                    mv_ext[(i, j)] = []
                     
-                ext_list = all_ext[(i, j)]
+                ext_list = mv_ext[(i, j)]
+            
+                result = None
             
                 if sid == 0:
                     if etype == self.etypes['standard']:
-                        ext_list.append(self.do_extend_0_standard(i, j, options))
+                        result = self.do_extend_0_standard(i, j, options)
                     elif etype == self.etypes['left']:
-                        ext_list.append(self.do_extend_0_left(i, j, options))
+                        result = self.do_extend_0_left(i, j, options)
                     elif etype == self.etypes['right']:
-                        ext_list.append(self.do_extend_0_right(i, j, options))
+                        result = self.do_extend_0_right(i, j, options)
                         
                 elif sid == 1:
                     if etype == self.etypes['standard']:
-                        ext_list.append(self.do_extend_1_standard(i, j, options))
+                        result = self.do_extend_1_standard(i, j, options)
                     elif etype == self.etypes['left']:
-                        ext_list.append(self.do_extend_1_left(i, j, options))
+                        result = self.do_extend_1_left(i, j, options)
                     elif etype == self.etypes['right']:
-                        ext_list.append(self.do_extend_1_right(i, j, options))
+                        result = self.do_extend_1_right(i, j, options)
                         
                 elif sid == 2:
                     if etype == self.etypes['standard']:
-                        ext_list.append(self.do_extend_2_standard(i, j, options))
+                        result = self.do_extend_2_standard(i, j, options)
                     elif etype == self.etypes['left']:
-                        ext_list.append(self.do_extend_2_left(i, j, options))
+                        result = self.do_extend_2_left(i, j, options)
                     elif etype == self.etypes['right']:
-                        ext_list.append(self.do_extend_2_right(i, j, options))
-
-        ext = self.reduce_all_ext(all_ext)
+                        result = self.do_extend_2_right(i, j, options)
+                
+                result['setype'] = (sid, etype)
+                ext_list.append(result)
         
         if 'JJ' in options:
             # Don't add inhomogeneous part if this is a basis function
             return ext
         else:
-            return ext + self.extend_inhomo_f()
+            return self.mv_add(mv_ext, self.extend_inhomo_f())
+            
+    def extend_boundary(self, options={}):
+        mv_ext = self.mv_extend_boundary(options)
+        return self.mv_reduce(mv_ext)
