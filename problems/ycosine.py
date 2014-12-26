@@ -6,7 +6,9 @@ from cs.csf import CsFourier
 
 from .problem import Problem, PizzaProblem
 
-class YCosineFunctions:
+class YCosineShared:
+        
+    k = .66
     
     def eval_f(self, x, y):
         k = self.k
@@ -50,8 +52,7 @@ class YCosineFunctions:
         return d_u_x*cos(th) + d_u_y*sin(th)
 
 
-class YCosine(YCosineFunctions, Problem):
-    k = 2/3
+class YCosine(YCosineShared, Problem):
     solver_class = CsFourier
 
     def eval_expected(self, x, y):
@@ -60,9 +61,7 @@ class YCosine(YCosineFunctions, Problem):
     def eval_bc(self, th):
         return self.eval_expected(self.R*cos(th), self.R*sin(th))
  
-class YCosinePizza(YCosineFunctions, PizzaProblem):
-    
-    k = 2/3
+class YCosinePizza(YCosineShared, PizzaProblem):
     
     def eval_expected(self, x, y):
         return y*cos(x)

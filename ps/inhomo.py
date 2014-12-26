@@ -150,7 +150,7 @@ class PsInhomo:
         d2_f_Y = hessian_f0.dot(dir_Y).dot(dir_Y)
 
         return {
-            'rho': abs(Y),
+            'elen': delta + abs(Y),
             'value': self.inhomo_extend_from_radius(
                 Y, f, d_f_Y, d2_f_X, d2_f_Y)
         }
@@ -178,7 +178,7 @@ class PsInhomo:
     def do_extend_inhomo_0_standard(self, i, j):
         r, th = self.get_polar(i, j)
         return {
-            'rho': abs(self.R - r),
+            'elen': abs(self.R - r),
             'value': self.calc_inhomo_circle(r, th),
         }
             
@@ -228,7 +228,7 @@ class PsInhomo:
             d2_f_th = 0
 
         return {
-            'rho': abs(self.R - r),
+            'elen': self.R*delta + abs(self.R - r),
             'value': self.extend_inhomo_circle(r, f, d_f_r, d2_f_r, d2_f_th)
         }
 
@@ -256,7 +256,7 @@ class PsInhomo:
         d2_f_X = hessian_f.dot(dir_X).dot(dir_X)
         d2_f_Y = hessian_f.dot(dir_Y).dot(dir_Y)
         return {
-            'rho': abs(Y),
+            'elen': abs(Y),
             'value':self.inhomo_extend_from_radius(
                 Y, f, d_f_Y, d2_f_X, d2_f_Y)
         }
@@ -305,11 +305,13 @@ class PsInhomo:
                 i, j = gamma[l]
                 etype = self.get_etype(sid, i, j)
             
-                ext_list = []
-                all_ext[(i, j)] = ext_list
+                if (i, j) not in all_ext:
+                    all_ext[(i, j)] = []
+                    
+                ext_list = all_ext[(i, j)]
                 
                 if self.problem.homogeneous:
-                    ext_list.append({'rho': 1, 'value': 0})
+                    ext_list.append({'elen': 1, 'value': 0})
                     
                 elif sid == 0:
                     if etype == self.etypes['standard']:
