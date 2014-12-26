@@ -4,25 +4,10 @@ from numpy import cos, sin
 from solver import cart_to_polar
 from cs.csf import CsFourier
 
-from .problem import Problem, Pizza
+from .problem import Problem, PizzaProblem
 
-class YCosine(Problem):
-    k = 2/3
-    solver_class = CsFourier
-
-    def eval_expected(self, x, y):
-        k = self.k
-        return y*cos(x)
-        
-    def eval_d_u_r(self, th):
-        R = self.R
-        x = R*cos(th)
-        y = R*sin(th)
-        
-        d_u_x = -y*sin(x)
-        d_u_y = cos(x)
-        return d_u_x*cos(th) + d_u_y*sin(th)
-
+class YCosineFunctions:
+    
     def eval_f(self, x, y):
         k = self.k
         return k**2*y*cos(x) - y*cos(x)
@@ -55,27 +40,54 @@ class YCosine(Problem):
         k = self.k
         return np.array(((y*(-k**2 + 1)*cos(x), (-k**2 + 1)*sin(x)), ((-k**2 + 1)*sin(x), 0)))
 
-class YCosinePizza(Pizza, YCosine):
-    
-    def eval_d_u_outwards(self, x, y, **kwargs):
-        r, th = cart_to_polar(x, y)
-
-        if 'sid' in kwargs:
-            sid = kwargs['sid']
-        else:
-            sid = self.get_sid(th)
-
-        a = self.a
-        k = self.k
+    def eval_d_u_r(self, th):
+        R = self.R
+        x = R*cos(th)
+        y = R*sin(th)
         
         d_u_x = -y*sin(x)
         d_u_y = cos(x)
+        return d_u_x*cos(th) + d_u_y*sin(th)
+
+
+class YCosine(YCosineFunctions, Problem):
+    k = 2/3
+    solver_class = CsFourier
+
+    def eval_expected(self, x, y):
+        return y*cos(x)
         
+    def eval_bc(self, th):
+        return self.eval_expected(self.R*cos(th), self.R*sin(th))
+ 
+class YCosinePizza(YCosineFunctions, PizzaProblem):
+    
+    k = 2/3
+    
+    def eval_expected(self, x, y):
+        return y*cos(x)
+        
+    def eval_bc_extended(self, arg, sid):
+        r, th = self.arg_to_polar(arg, sid) 
+        x, y = r*cos(th), r*sin(th)
+            
+        return self.eval_expected(x, y)
+
+    def eval_d_u_outwards(self, arg, sid):
+        a = self.a
+        
+        r, th = self.arg_to_polar(arg, sid)
+        x, y = r*cos(th), r*sin(th)
+                
         if sid == 0:
             return self.eval_d_u_r(th)
+            
         elif sid == 1:
             return cos(x)
+            
         elif sid == 2:
+            d_u_x = -y*sin(x)
+            d_u_y = cos(x)
+            
             b = np.pi/2 - a
             return d_u_x*cos(b)-d_u_y*sin(b)
-

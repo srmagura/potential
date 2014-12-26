@@ -99,7 +99,6 @@ class PsDebug:
 
     def test_extend_boundary(self):
         self.calc_c0()
-        self.c0_test()
         self.calc_c1_exact()
         
         error = []
@@ -112,6 +111,11 @@ class PsDebug:
             exp = self.problem.eval_expected(x, y)                    
             diff = abs(exp - ext[l])
             error.append(diff)
+            
+            #if diff > .005:
+            #    print('i={}    j={}'.format(i, j))
+            #    print('x={}    y={}'.format(x, y))
+            #    print('error={}'.format(diff))
 
         result = Result()
         result.error = max(error)

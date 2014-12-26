@@ -112,7 +112,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
  
         #return self.test_extend_src_f()
-        #return self.test_extend_boundary()
+        return self.test_extend_boundary()
 
         self.calc_c0()
         self.calc_c1()

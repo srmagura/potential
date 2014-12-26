@@ -32,12 +32,9 @@ class SinePizza(PizzaProblem):
         return sin(self.k*x)
     
     def eval_bc_extended(self, arg, sid):
-        if sid == 0:
-            arg, sid = self.wrap_func(arg, sid)
-            
         r, th = self.arg_to_polar(arg, sid) 
- 
-        x, y = r*cos(th), r*sin(th)    
+        x, y = r*cos(th), r*sin(th)
+        
         return self.eval_expected(x, y)
     
     def eval_d_u_outwards(self, arg, sid):
