@@ -106,15 +106,23 @@ class PsDebug:
 
         for node in mv_ext:
             x, y = self.get_coord(*node)
-            
             exp = self.problem.eval_expected(x, y)  
             
             for data in mv_ext[node]:
                 if setypes is None or data['setype'] in setypes:
                     diff = abs(exp - data['value'])
                     error.append(diff)
-                    
-        # TODO: Also check reduction
+        
+        if setypes is None:
+            reduced = self.mv_reduce(mv_ext)
+            
+            for l in range(len(self.union_gamma)):
+                node = self.union_gamma[l]
+                x, y = self.get_coord(*node)
+                exp = self.problem.eval_expected(x, y)  
+            
+                diff = abs(exp - reduced[l])
+                error.append(diff)
 
         result = Result()
         result.error = max(error)
