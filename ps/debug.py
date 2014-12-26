@@ -70,20 +70,20 @@ class PsDebug:
 
         return points
 
-
-    # FIXME
     def calc_c1_exact(self):
+        '''
+        Do Chebyshev fits on the analytically-known Neumann data of 
+        each segment to get the "exact" values of the coefficients c1. 
+        '''
         t_data = get_chebyshev_roots(1000)
         self.c1 = []
 
         for sid in range(self.N_SEGMENT):
-            arg_data = [self.eval_g(sid, t) for t in t_data] 
-            boundary_points = self.get_boundary_sample_by_sid(sid, arg_data)
-            boundary_data = np.zeros(len(arg_data), dtype=complex)
-            for l in range(len(boundary_points)):
-                p = boundary_points[l]
-                boundary_data[l] = self.problem.eval_d_u_outwards(
-                    p['x'], p['y'], sid=sid)
+            boundary_data = np.zeros(len(t_data))
+            
+            for i in range(len(t_data)):
+                arg = self.eval_g(sid, t_data[i])
+                boundary_data[i] = self.problem.eval_d_u_outwards(arg, sid)
 
             n_basis = self.segment_desc[sid]['n_basis']
             self.c1.extend(np.polynomial.chebyshev.chebfit(
@@ -212,8 +212,12 @@ class PsDebug:
             i += n_basis
             sid += 1
 
-    # FIXME
-    def c1_test(self):  
+    def c1_test(self):
+        '''
+        Plot the reconstructed Neumann data, as approximated by a Chebyshev 
+        expansion. If the Chebyshev expansion shows "spikes" near the
+        interfaces of the segments, something is probably wrong.
+        '''
         sample = self.get_boundary_sample()
 
         do_exact = hasattr(self.problem, 'eval_d_u_outwards')       
@@ -229,7 +233,7 @@ class PsDebug:
             s_data[l] = p['s']
             
             if do_exact:
-                exact_data[l] = self.problem.eval_d_u_outwards(p['x'], p['y']).real
+                exact_data[l] = self.problem.eval_d_u_outwards(p['arg'], p['sid']).real
 
             r, th = cart_to_polar(p['x'], p['y'])            
             for JJ in range(len(self.B_desc)):                             
@@ -238,10 +242,13 @@ class PsDebug:
                     self.eval_dn_B_arg(0, JJ, r, th)).real        
 
         if do_exact:
+            error = np.max(np.abs(exact_data - expansion_data))
+            print('c1 error: {}'.format(error))
+            
             plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
             
         plt.plot(s_data, expansion_data, label='Expansion')
-        plt.legend(loc=4)
+        plt.legend(loc=1)
         #plt.ylim(-1.5, 1.5)
         plt.title('c1')
         plt.xlabel('Arclength s')

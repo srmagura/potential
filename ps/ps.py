@@ -112,11 +112,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
  
         #return self.test_extend_src_f()
-        #return self.test_extend_boundary()
+        return self.test_extend_boundary()
 
         self.calc_c0()
-        self.calc_c1()
-        self.c1_test()
+        #self.calc_c1()
+        self.calc_c1_exact()
+        #self.c1_test()
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f

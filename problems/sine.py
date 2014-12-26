@@ -1,10 +1,11 @@
 import numpy as np
 from numpy import cos, sin
 
-from solver import cart_to_polar
 from cs.csf import CsFourier
-
 from .problem import Problem, PizzaProblem
+
+def eval_d_u_r(k, R, th):
+    return k*cos(th) * cos(k*R*cos(th))
 
 class Sine(Problem):
     
@@ -19,9 +20,7 @@ class Sine(Problem):
         return sin(self.k*x)
 
     def eval_d_u_r(self, th):
-        k = self.k
-        R = self.R
-        return k*cos(th) * cos(k*R*cos(th))
+        return eval_d_u_r(self.k, self.R, th)
         
 
 class SinePizza(PizzaProblem):
@@ -39,20 +38,16 @@ class SinePizza(PizzaProblem):
         x, y = r*cos(th), r*sin(th)    
         return self.eval_expected(x, y)
     
-    # FIXME    
-    def eval_d_u_outwards(self, x, y, **kwargs):
-        r, th = cart_to_polar(x, y)
-
-        if 'sid' in kwargs:
-            sid = kwargs['sid']
-        else:
-            sid = self.get_sid(th)
-
+    def eval_d_u_outwards(self, arg, sid):
         a = self.a
         k = self.k
+        R = self.R
+        
+        r, th = self.arg_to_polar(arg, sid)
+        x = r*cos(th)
 
         if sid == 0:
-            return super().eval_d_u_r(th)
+            return eval_d_u_r(k, R, th)
         elif sid == 1:
             return 0
         elif sid == 2:
