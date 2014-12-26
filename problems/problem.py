@@ -69,9 +69,10 @@ class PizzaProblem(Problem):
             
     def wrap_func(self, arg, sid):
         '''
-        Used to create the smooth extensions of the Dirichlet data needed
-        for the Chebyshev fit. Only valid when the Dirichlet data is smooth,
-        even across the interfaces where the segments meet.
+        Can be used to create the smooth extensions of the Dirichlet data 
+        needed for the Chebyshev fit, for certain problems. In particular,
+        the Dirichlet data needs to be sufficiently smooth at the reentrant
+        corner.
         '''
         if sid == 0:
             if arg < self.a/2:
@@ -91,9 +92,15 @@ class PizzaProblem(Problem):
         if sid == 0:
             return (self.R, arg)
         elif sid == 1:
-            return (arg, 2*np.pi)
+            if arg >= 0:
+                return (arg, 2*np.pi)
+            else:
+                return (-arg, np.pi)
         elif sid == 2:
-            return (arg, self.a)
+            if arg >= 0:
+                return (arg, self.a)
+            else:
+                return (-arg, np.pi + self.a)
 
     def get_sid(self, th):
         '''
@@ -109,5 +116,3 @@ class PizzaProblem(Problem):
             return 0
         elif abs(th - a) < tol:
             return 2
-
-        assert False

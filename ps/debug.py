@@ -99,6 +99,7 @@ class PsDebug:
 
     def test_extend_boundary(self):
         self.calc_c0()
+        self.c0_test()
         self.calc_c1_exact()
         
         error = []

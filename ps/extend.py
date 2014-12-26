@@ -123,9 +123,6 @@ class PsExtend:
         return derivs
         
     def do_extend_taylor(self, i, j, options):
-        x, y = self.get_coord(i, j)
-        r, th = self.get_polar(i, j)
-
         taylor_sid = options['taylor_sid']
         delta_arg = options['delta_arg']
         
@@ -138,9 +135,6 @@ class PsExtend:
         else:
             JJ = None
             index = None
-            
-        if 'Y' in options:
-            Y = options['Y']
 
         derivs0 = np.zeros(TAYLOR_N_DERIVS)
         derivs1 = np.zeros(TAYLOR_N_DERIVS)
@@ -151,7 +145,7 @@ class PsExtend:
         elif index == 0:
             derivs0 = self.ext_calc_B_derivs(JJ, taylor_sid, param_r, param_th) 
         elif index == 1:
-            derivs1 = self.ext_calc_B_derivs(JJ, taylor_sid, param_r, param_th) 
+            derivs1 = self.ext_calc_B_derivs(JJ, taylor_sid, param_r, param_th)
 
         xi0 = xi1 = 0
         d2_xi0_arg = d2_xi1_arg = 0
@@ -176,9 +170,11 @@ class PsExtend:
         ext_params = (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
 
         if taylor_sid == 0:
+            r, th = self.get_polar(i, j)
             v = self.extend_circle(r, *ext_params)
             rho = r
         elif taylor_sid in {1, 2}:
+            Y = options['Y']
             v = self.extend_from_radius(Y, *ext_params)
             rho = abs(Y)
 
@@ -336,8 +332,10 @@ class PsExtend:
                 i, j = gamma[l]
                 etype = self.get_etype(sid, i, j)
             
-                ext_list = []
-                all_ext[(i, j)] = ext_list
+                if (i, j) not in all_ext:
+                    all_ext[(i, j)] = []
+                    
+                ext_list = all_ext[(i, j)]
             
                 if sid == 0:
                     if etype == self.etypes['standard']:
