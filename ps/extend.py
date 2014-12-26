@@ -172,19 +172,22 @@ class PsExtend:
         if taylor_sid == 0:
             r, th = self.get_polar(i, j)
             v = self.extend_circle(r, *ext_params)
-            rho = r
+            
+            elen = delta_arg*self.R + r
+            
         elif taylor_sid in {1, 2}:
             Y = options['Y']
             v = self.extend_from_radius(Y, *ext_params)
-            rho = abs(Y)
+            
+            elen = delta_arg + abs(Y)
 
-        return {'rho': rho, 'value': v}
+        return {'elen': elen, 'value': v}
         
-    def do_extend_inner(self, i, j, options):
+    def do_extend_12_left(self, i, j, options):
         options['param_r'] = 0
         return self.do_extend_taylor(i, j, options)
 
-    def do_extend_outer(self, i, j, options):
+    def do_extend_12_right(self, i, j, options):
         options['param_r'] = self.R
         return self.do_extend_taylor(i, j, options)
 
@@ -192,7 +195,7 @@ class PsExtend:
         options['sid'] = 0
         r, th = self.get_polar(i, j)       
         derivs = self.ext_calc_certain_xi_derivs(i, j, self.R, th, options)            
-        return {'rho': abs(self.R - r), 'value': self.extend_circle(r, *derivs)}
+        return {'elen': abs(self.R - r), 'value': self.extend_circle(r, *derivs)}
         
     def do_extend_0_left(self, i, j, options):
         x, y = self.get_coord(i, j)
@@ -204,7 +207,7 @@ class PsExtend:
             'param_th': self.a
         })
          
-        return self.do_extend_outer(i, j, options)
+        return self.do_extend_12_right(i, j, options)
         
     def do_extend_0_right(self, i, j, options):
         r, th = self.get_polar(i, j)
@@ -215,14 +218,14 @@ class PsExtend:
             'param_th': 2*np.pi
         })
          
-        return self.do_extend_outer(i, j, options)
+        return self.do_extend_12_right(i, j, options)
           
     def do_extend_1_standard(self, i, j, options):
         x, y = self.get_coord(i, j)
         options['sid'] = 1
         derivs = self.ext_calc_certain_xi_derivs(i, j, x, 2*np.pi, options)
 
-        return {'rho': abs(y), 'value': self.extend_from_radius(y, *derivs)}
+        return {'elen': abs(y), 'value': self.extend_from_radius(y, *derivs)}
                 
     def do_extend_1_left(self, i, j, options):
         x, y = self.get_coord(i, j)
@@ -235,7 +238,7 @@ class PsExtend:
             'Y': y,
         })
          
-        return self.do_extend_inner(i, j, options)      
+        return self.do_extend_12_left(i, j, options)      
         
     def do_extend_1_right(self, i, j, options):
         x, y = self.get_coord(i, j)
@@ -247,7 +250,7 @@ class PsExtend:
             'Y': y
         })
          
-        return self.do_extend_outer(i, j, options)
+        return self.do_extend_12_right(i, j, options)
 
     def do_extend_2_standard(self, i, j, options):
         x, y = self.get_coord(i, j)
@@ -258,7 +261,7 @@ class PsExtend:
         derivs = self.ext_calc_certain_xi_derivs(i, j, param_r, self.a, options)
 
         Y = self.signed_dist_to_radius(2, x, y)
-        return {'rho': abs(Y), 'value': self.extend_from_radius(Y, *derivs)}
+        return {'elen': abs(Y), 'value': self.extend_from_radius(Y, *derivs)}
         
     def do_extend_2_left(self, i, j, options):
         x, y = self.get_coord(i, j)      
@@ -271,7 +274,7 @@ class PsExtend:
             'Y': self.signed_dist_to_radius(2, x, y)
         })
          
-        return self.do_extend_inner(i, j, options)
+        return self.do_extend_12_left(i, j, options)
         
     def do_extend_2_right(self, i, j, options):
         R = self.R
@@ -290,7 +293,7 @@ class PsExtend:
             'Y': self.signed_dist_to_radius(2, x, y)
         })
          
-        return self.do_extend_outer(i, j, options)
+        return self.do_extend_12_right(i, j, options)
 
     def reduce_all_ext(self, all_ext):
         ext = np.zeros(len(self.union_gamma), dtype=complex)
@@ -302,19 +305,19 @@ class PsExtend:
             if len(ext_list) == 1:
                 ext[l] = ext_list[0]['value']
             elif len(ext_list) == 2:                
-                rho0 = ext_list[0]['rho']
+                elen0 = ext_list[0]['elen']
                 value0 = ext_list[0]['value']
                 
-                rho1 = ext_list[1]['rho']
+                elen1 = ext_list[1]['elen']
                 value1 = ext_list[1]['value']
                 
-                if rho0 == 0 and rho1 == 0:
-                    rho0 = rho1 = 1
+                if elen0 == 0 and elen1 == 0:
+                    elen0 = elen1 = 1
                 
-                ext[l] = (rho1*value0 + rho0*value1) / (rho0 + rho1)
+                ext[l] = (elen1*value0 + elen0*value1) / (elen0 + elen1)
                 
             else:
-                raise Exception()
+                assert False
                 
         return ext
             

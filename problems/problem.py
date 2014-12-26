@@ -74,8 +74,7 @@ class PizzaProblem(Problem):
         the Dirichlet data needs to be sufficiently smooth at the reentrant
         corner.
         '''
-        if sid == 0:
-            if arg < self.a/2:
+        if sid == 0 and arg < self.a/2:
                 arg += 2*np.pi
                 
         elif sid == 1 and arg < 0:
