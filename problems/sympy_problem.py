@@ -24,7 +24,7 @@ class SympyProblem:
         self.f_polar_lambda = lambdify(args, f)
         
         # If using 2nd order scheme, don't need derivatives of f
-        if kwargs['scheme_order'] == 4:
+        if 'scheme_order' not in kwargs or kwargs['scheme_order'] == 4:
             self.do_diff(f)
         
     def do_diff(self, f):

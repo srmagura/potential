@@ -38,6 +38,30 @@ def get_reg_f_expr():
     f *= sin(-3*th/11 + pi/22)
     
     return f
+    
+def get_u_reg_expr():
+    '''
+    SymPy expression for expected solution to the regularized problem.
+    '''
+    k, R, r, th = symbols('k R r th')
+    
+    a = pi/6
+    nu = pi / (2*pi - a)
+    
+    # True solution to original problem
+    u = besselj(nu/2, k*r) * sin(nu*(th-a)/2)
+    
+    # Inhomogeneous part of asymptotic expansion
+    u -= get_u_asympt_expr()
+    
+    # Compute the shc_coef using quadratures
+    problem = ShcBesselKnown()  
+    
+    # Homogeneous part of asymptotic expansion  
+    for m in range(1, len(problem.shc_coef)+1):
+        u -= problem.shc_coef[m-1] * besselj(m*nu, k*r) * sin(m*nu*(th - a))
+        
+    return u
             
 class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
@@ -97,8 +121,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         
         v = self.u_asympt_lambda(k, R, r, th)
         
-        for m in range(len(self.shc_coef)):
-            v += self.shc_coef[m] * jv(m*nu, k*r) * np.sin(m*nu*(th - a))
+        for m in range(1, len(self.shc_coef)+1):
+            v += self.shc_coef[m-1] * jv(m*nu, k*r) * np.sin(m*nu*(th - a))
     
         return v
         
@@ -115,9 +139,9 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
         self.shc_coef = np.zeros(self.shc_coef_len)
     
-        for m in range(self.shc_coef_len):
-            self.shc_coef[m] = quad(eval_integrand, np.pi/6, 2*np.pi)[0]
-            self.shc_coef[m] *= 12 / (11*np.pi * jv(6*m/11, k*R))
+        for m in range(1, self.shc_coef_len+1):
+            self.shc_coef[m-1] = quad(eval_integrand, np.pi/6, 2*np.pi)[0]
+            self.shc_coef[m-1] *= 12 / (11*np.pi * jv(6*m/11, k*R))
 
 class ShcBesselKnown(ShcBesselAbstract):
     

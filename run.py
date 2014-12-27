@@ -46,8 +46,9 @@ class Interface:
                 
                 if self.args.tex:
                     tex += str(convergence)
-                
-            elif u2 is not None:
+            
+            # TODO    
+            if u2 is not None:
                 convergence = my_solver.calc_convergence3(u0, u1, u2)
                 print('Grid convergence:', convergence)
             else:
