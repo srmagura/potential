@@ -119,7 +119,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         via the -c command-line flag to ensure that the extension procedures
         have the desired convergence rates.
         '''
-        #return self.test_extend_src_f()
+        return self.test_extend_src_f()
         #return self.test_extend_boundary()
         
         '''

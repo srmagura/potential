@@ -5,8 +5,8 @@ from scipy.integrate import quad
 
 from solver import cart_to_polar
 
-from .problem import Problem, Pizza
-import problems.sympy_problem as sympy_problem
+from .problem import PizzaProblem
+from .sympy_problem import SympyProblem
 
 def get_u_asympt_expr():
     '''
@@ -39,7 +39,7 @@ def get_reg_f_expr():
     
     return f
             
-class ShcBesselAbstract(sympy_problem.SympyProblem, Pizza, Problem):
+class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
     k = 1
 
@@ -57,27 +57,34 @@ class ShcBesselAbstract(sympy_problem.SympyProblem, Pizza, Problem):
     
         return jv(nu/2, k*r) * np.sin(nu*(th-np.pi/6)/2)
         
-    def _eval_bc_extended(self, x, y, sid, shc_coef):
+    def _eval_bc_extended(self, arg, sid, shc_coef):
         k = self.k
         R = self.R
         a = self.a
         nu = self.nu
         
-        r, th = cart_to_polar(x, y)
+        r, th = self.arg_to_polar(arg, sid)
         
         if sid == 0:
-            u_asympt = self.u_asympt_lambda(k, R, R, th)
+            u_asympt = float(self.u_asympt_lambda(k, R, R, th))
             bc = jv(3/11, k*R) / (11*np.pi/6) * (th - np.pi/6)
             bc -= np.sin(3/11 * (th-np.pi/6)) * u_asympt
             
             for m in range(len(shc_coef)):
-                bc -= shc_coef[m] * jv(m*nu, k*R) * sin(m*nu*(th - a))
+                bc -= shc_coef[m] * jv(m*nu, k*R) * np.sin(m*nu*(th - a))
             
             return bc
             
         elif sid == 1:
-            u_asympt = self.u_asympt_lambda(k, R, r, th)
-            return jv(3/11, k*r) - u_asympt
+            u_asympt = float(self.u_asympt_lambda(k, R, r, th))
+            bc = jv(3/11, k*r) - u_asympt
+            
+            if th == 2*np.pi:
+                return bc
+            elif th == np.pi:
+                return 0
+            else:
+                assert False
             
         elif sid == 2:
             return 0
@@ -118,8 +125,8 @@ class ShcBesselKnown(ShcBesselAbstract):
         super().__init__(**kwargs)
         self.calc_exact_shc_coef()
     
-    def eval_bc_extended(self, x, y, sid):
-        return self._eval_bc_extended(x, y, sid, self.shc_coef)
+    def eval_bc_extended(self, arg, sid):
+        return self._eval_bc_extended(arg, sid, self.shc_coef)
         
         
 class ShcBessel(ShcBesselAbstract):
