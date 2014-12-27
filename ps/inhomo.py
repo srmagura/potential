@@ -228,7 +228,7 @@ class PsInhomo:
             d2_f_th = 0
 
         return {
-            'elen': self.R*delta + abs(self.R - r),
+            'elen': self.R*abs(delta) + abs(self.R - r),
             'value': self.extend_inhomo_circle(r, f, d_f_r, d2_f_r, d2_f_th)
         }
 
@@ -242,9 +242,8 @@ class PsInhomo:
         p = self.problem
         f = p.eval_f(x0, y0)
 
-        # Don't evaluate at r = 0 to prevent divide by 0 error
-        # Should we be evaluating f at r = 0 in the first place?
-        if self.scheme_order == 4 and (x0 != 0 or y0 != 0):
+        # Possible divide by 0 error when r = 0
+        if self.scheme_order == 4:
             grad_f = p.eval_grad_f(x0, y0)
             hessian_f = p.eval_hessian_f(x0, y0)
         else:
@@ -255,8 +254,16 @@ class PsInhomo:
 
         d2_f_X = hessian_f.dot(dir_X).dot(dir_X)
         d2_f_Y = hessian_f.dot(dir_Y).dot(dir_Y)
+        
+        elen = abs(Y)
+        
+        # Only so that elen matches that of the homogeneous extension
+        r, th = cart_to_polar(x0, y0)
+        if x0 < 0 or r > self.R:
+            elen += r
+         
         return {
-            'elen': abs(Y),
+            'elen': elen,
             'value':self.inhomo_extend_from_radius(
                 Y, f, d_f_Y, d2_f_X, d2_f_Y)
         }
@@ -292,7 +299,7 @@ class PsInhomo:
     def do_extend_inhomo_2_right(self, i, j):
         return self._extend_inhomo_12_outer(i, j, 2)
 
-    def extend_inhomo_f(self):    
+    def mv_extend_inhomo_f(self):    
         R = self.R
         k = self.problem.k
 
@@ -310,31 +317,40 @@ class PsInhomo:
                     
                 ext_list = mv_ext[(i, j)]
                 
+                result = None
+                
                 if self.problem.homogeneous:
-                    ext_list.append({'elen': 1, 'value': 0})
+                    # Change elen to None to avoid confusion?
+                    result = {'elen': 1, 'value': 0}
                     
                 elif sid == 0:
                     if etype == self.etypes['standard']:
-                        ext_list.append(self.do_extend_inhomo_0_standard(i, j))
+                        result = self.do_extend_inhomo_0_standard(i, j)
                     elif etype == self.etypes['left']:
-                        ext_list.append(self.do_extend_inhomo_0_left(i, j))
+                        result = self.do_extend_inhomo_0_left(i, j)
                     elif etype == self.etypes['right']:
-                        ext_list.append(self.do_extend_inhomo_0_right(i, j))
+                        result = self.do_extend_inhomo_0_right(i, j)
                         
                 elif sid == 1:
                     if etype == self.etypes['standard']:
-                        ext_list.append(self.do_extend_inhomo_1_standard(i, j))                        
+                        result = self.do_extend_inhomo_1_standard(i, j)                        
                     elif etype == self.etypes['left']:
-                        ext_list.append(self.do_extend_inhomo_1_left(i, j))                       
+                        result = self.do_extend_inhomo_1_left(i, j)                       
                     elif etype == self.etypes['right']:
-                        ext_list.append(self.do_extend_inhomo_1_right(i, j))
+                        result = self.do_extend_inhomo_1_right(i, j)
                         
                 elif sid == 2:
                     if etype == self.etypes['standard']:
-                        ext_list.append(self.do_extend_inhomo_2_standard(i, j))
+                        result = self.do_extend_inhomo_2_standard(i, j)
                     elif etype == self.etypes['left']:
-                        ext_list.append(self.do_extend_inhomo_2_left(i, j))
+                        result = self.do_extend_inhomo_2_left(i, j)
                     elif etype == self.etypes['right']:
-                        ext_list.append(self.do_extend_inhomo_2_right(i, j))
+                        result = self.do_extend_inhomo_2_right(i, j)
+
+                result['setype'] = (sid, etype)
+                ext_list.append(result)
 
         return mv_ext
+
+    def extend_inhomo_f(self):
+        return self.mv_reduce(self.mv_extend_inhomo_f())

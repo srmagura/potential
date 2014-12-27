@@ -173,13 +173,13 @@ class PsExtend:
             r, th = self.get_polar(i, j)
             v = self.extend_circle(r, *ext_params)
             
-            elen = delta_arg*self.R + r
+            elen = abs(delta_arg)*self.R + abs(r - self.R)
             
         elif taylor_sid in {1, 2}:
             Y = options['Y']
             v = self.extend_from_radius(Y, *ext_params)
             
-            elen = delta_arg + abs(Y)
+            elen = abs(delta_arg) + abs(Y)
 
         return {'elen': elen, 'value': v}
         
@@ -305,6 +305,9 @@ class PsExtend:
                 data1 = ext1[node][i]
                 data2 = ext2[node][i]
                 
+                assert abs(data1['elen'] - data2['elen']) < 1e-5
+                assert data1['setype'] == data2['setype']
+                
                 data_result = {
                     'elen': data1['elen'],
                     'value': data1['value'] + data2['value'],
@@ -388,11 +391,12 @@ class PsExtend:
                 result['setype'] = (sid, etype)
                 ext_list.append(result)
         
-        if 'JJ' in options:
+        if('JJ' in options or 'homogeneous_only' in options or
+            self.problem.homogeneous):
             # Don't add inhomogeneous part if this is a basis function
-            return ext
+            return mv_ext
         else:
-            return self.mv_add(mv_ext, self.extend_inhomo_f())
+            return self.mv_add(mv_ext, self.mv_extend_inhomo_f())
             
     def extend_boundary(self, options={}):
         mv_ext = self.mv_extend_boundary(options)

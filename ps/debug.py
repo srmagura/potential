@@ -142,7 +142,7 @@ class PsDebug:
                 elif index == 1:
                     self.c1[JJ] = 1
 
-                ext2_array = self.extend_boundary() #- self.extend_inhomo_f()
+                ext2_array = self.extend_boundary({'homogeneous_only': True})
                 diff = np.abs(ext1_array - ext2_array)
                 error.append(np.max(diff))
                 print('index={}  JJ={}  error={}'.format(index, JJ, error[-1]))

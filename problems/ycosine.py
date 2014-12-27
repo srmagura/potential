@@ -8,7 +8,7 @@ from .problem import Problem, PizzaProblem
 
 class YCosineShared:
         
-    k = .66
+    k = 2/3
     
     def eval_f(self, x, y):
         k = self.k
