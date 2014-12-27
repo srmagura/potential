@@ -131,5 +131,5 @@ class ShcBesselKnown(ShcBesselAbstract):
         
 class ShcBessel(ShcBesselAbstract):
                 
-    def eval_bc_extended(self, x, y, sid):
-        return self._eval_bc_extended(x, y, sid, [0])
+    def eval_bc_extended(self, arg, sid):
+        return self._eval_bc_extended(arg, sid, [0])

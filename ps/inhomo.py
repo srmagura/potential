@@ -14,12 +14,13 @@ class PsInhomo:
 
         if self.get_etype(0, i, j) == self.etypes['standard']:
             return 0
-        elif th < a/2 and r < self.R:
-            return 1
-        elif th >= a/2 and r < self.R:
-            return 2
+        elif r < self.R:
+            if th < a/2:
+                return 1
+            else:
+                return 2
         else:
-             return 0   
+            return 0   
 
     def extend_src_f(self):
         R = self.R

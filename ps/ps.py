@@ -117,9 +117,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         Uncomment one of the following lines and run the convergence test
         via the -c command-line flag to ensure that the extension procedures
-        have the desired convergence rates.
+        have the desired convergence rates. ps_test_extend_src_f() is
+        not valid for problems where f is not continuous everywhere (even
+        outside the domain). test_extend_boundary() requires the Neumann
+        data to be analytically known.
         '''
-        return self.test_extend_src_f()
+        #return self.ps_test_extend_src_f()
         #return self.test_extend_boundary()
         
         '''

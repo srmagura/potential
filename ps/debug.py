@@ -153,22 +153,19 @@ class PsDebug:
         result.error = np.max(np.abs(error))
         return result
         
-    def ps_test_extend_src_f(self, pairs):
+    def ps_test_extend_src_f(self, setypes=None):
         error = []
         
-        for sid, etype_name in pairs:
-            etype = self.etypes[etype_name]
-        
-            for i, j in self.Kplus:
-                x, y = self.get_coord(i, j)
+        for node in self.Kplus:
+            x, y = self.get_coord(*node)
                 
-                sid1 = self._extend_src_f_get_sid(i, j)
-                etype1 = self.get_etype(sid, i, j)
+            sid = self._extend_src_f_get_sid(*node)
+            etype = self.get_etype(sid, *node)
                 
-                if sid1 == sid and etype1 == etype:
-                    l = matrices.get_index(self.N, i, j)         
-                    diff = abs(self.problem.eval_f(x, y) - self.src_f[l])
-                    error.append(diff)                   
+            if setypes is None or (sid, etype) in setypes:
+                l = matrices.get_index(self.N, *node)         
+                diff = abs(self.problem.eval_f(x, y) - self.src_f[l])
+                error.append(diff)             
                         
         result = Result()
         result.error = max(error)
