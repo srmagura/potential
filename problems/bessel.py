@@ -2,8 +2,8 @@ from sympy import *
 import numpy as np
 from scipy.special import jv
 
-from .problem import Problem, Pizza
-import problems.sympy_problem as sympy_problem
+from .problem import PizzaProblem
+from .sympy_problem import SympyProblem
 
 # Use this value of k for both the no-correction and regularized versions
 # of the bessel problem
@@ -36,31 +36,24 @@ def eval_expected_polar(k, R, r, th):
     return jv(nu_float, k*r) * np.sin(nu_float*(th-np.pi/6))
     
     
-class BesselNoCorrection(Pizza, Problem):
+class BesselNoCorrection(PizzaProblem):
 
     k = shared_k
     homogeneous = True
-
-    def eval_f(self, x, y):
-        return 0
                 
     def eval_expected_polar(self, r, th):
         return eval_expected_polar(self.k, self.R, r, th)
     
-    def eval_bc_extended(self, x, y, sid):
+    def eval_bc_extended(self, arg, sid):
         k = self.k
         R = self.R
         
-        r, th, sid = self.wrap_func(x, y, sid)
-        
-        if sid == 0:
-            bc_nc = eval_expected_polar(k, R, r, th) 
-        elif sid == 1 or sid == 2:
-            bc_nc = 0
-        
-        return bc_nc
+        arg, sid = self.wrap_func(arg, sid)
+        r, th = self.arg_to_polar(arg, sid)
+
+        return eval_expected_polar(k, R, r, th) 
     
-class BesselReg(sympy_problem.SympyProblem, Pizza, Problem):
+class BesselReg(SympyProblem, PizzaProblem):
     
     k = shared_k
 
@@ -74,17 +67,14 @@ class BesselReg(sympy_problem.SympyProblem, Pizza, Problem):
         u_asympt = float(self.u_asympt_lambda(self.k, self.R, r, th))
         return eval_expected_polar(self.k, self.R, r, th) - u_asympt
         
-    def eval_bc_extended(self, x, y, sid):
+    def eval_bc_extended(self, arg, sid):
         k = self.k
         R = self.R
         
-        r, th, sid = self.wrap_func(x, y, sid)
+        arg, sid = self.wrap_func(arg, sid)
+        r, th = self.arg_to_polar(arg, sid)
         
-        if sid == 0:
-            bc_nc = eval_expected_polar(k, R, r, th) 
-        elif sid == 1 or sid == 2:
-            bc_nc = 0
-        
+        bc_nc = eval_expected_polar(k, R, r, th)
         u_asympt = self.u_asympt_lambda(k, R, r, th)
         
         return bc_nc - float(u_asympt)

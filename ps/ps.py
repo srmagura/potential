@@ -106,17 +106,39 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
         
     def run(self):
+        '''
+        The main procedure for PizzaSolver.
+        '''
         n_basis_tuple = self.problem.get_n_basis(self.N)
         self.setup_B_desc(*n_basis_tuple)
         
         self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
- 
+        
+        '''
+        Uncomment one of the following lines and run the convergence test
+        via the -c command-line flag to ensure that the extension procedures
+        have the desired convergence rates.
+        '''
         #return self.test_extend_src_f()
         #return self.test_extend_boundary()
+        
+        '''
+        Uncomment to run the extend basis test. Just run the program on a
+        single grid --- don't bother running the convergence test.
+        '''
         #return self.test_extend_basis()
 
         self.calc_c0()
         self.calc_c1()
+        
+        '''
+        Uncomment one or both of the following lines to see a plot of the
+        Chebyshev series with coefficients c0 or c1. Also plots the
+        the boundary data the Chebyshev series is supposed to approximate, 
+        if that the boundary data is known analytically.
+        '''
+        #self.c0_test()
+        #self.c1_test()
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f

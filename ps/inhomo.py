@@ -242,10 +242,23 @@ class PsInhomo:
         p = self.problem
         f = p.eval_f(x0, y0)
 
-        # Possible divide by 0 error when r = 0
-        if self.scheme_order == 4:
-            grad_f = p.eval_grad_f(x0, y0)
-            hessian_f = p.eval_hessian_f(x0, y0)
+        if self.scheme_order == 4 and Y != 0:
+            if x0 == 0 and y0 == 0:
+                '''
+                Use Taylor's theorem to construct a smooth extension of
+                f (?), grad_f, and hessian_f at the origin, since they may 
+                be undefined or annoying to calculate at this point.
+                '''
+                h = self.AD_len / (10*self.N)
+                
+                hessian_f = p.eval_hessian_f(-h, 0)
+                
+                _grad_f = p.eval_grad_f(-h, 0)
+                grad_f = _grad_f + h * hessian_f.dot((1, 0))
+                
+            else:
+                grad_f = p.eval_grad_f(x0, y0)
+                hessian_f = p.eval_hessian_f(x0, y0)
         else:
             grad_f = np.zeros(2)
             hessian_f = np.zeros((2, 2))
