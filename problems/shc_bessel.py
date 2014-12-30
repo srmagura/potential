@@ -8,7 +8,7 @@ from solver import cart_to_polar
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
 
-def get_u_asympt_expr():
+def get_v_asympt_expr():
     '''
     Returns SymPy expression for the inhomogeneous part of the
     asymptotic expansion.
@@ -16,13 +16,13 @@ def get_u_asympt_expr():
     k, R, r, th = symbols('k R r th')    
     kr2 = k*r/2
     
-    u_asympt = 1/gamma(14/11)
-    u_asympt += -1/gamma(25/11)*kr2**2
-    u_asympt += 1/(2*gamma(36/11))*kr2**4
+    v_asympt = 1/gamma(14/11)
+    v_asympt += -1/gamma(25/11)*kr2**2
+    v_asympt += 1/(2*gamma(36/11))*kr2**4
     
-    u_asympt *= sin(3/11*(th-pi/6)) * kr2**(3/11)
+    v_asympt *= sin(3/11*(th-pi/6)) * kr2**(3/11)
     
-    return u_asympt
+    return v_asympt
     
 def get_reg_f_expr():
     '''
@@ -39,30 +39,6 @@ def get_reg_f_expr():
     
     return f
     
-def get_u_reg_expr():
-    '''
-    SymPy expression for expected solution to the regularized problem.
-    '''
-    k, R, r, th = symbols('k R r th')
-    
-    a = pi/6
-    nu = pi / (2*pi - a)
-    
-    # True solution to original problem
-    u = besselj(nu/2, k*r) * sin(nu*(th-a)/2)
-    
-    # Inhomogeneous part of asymptotic expansion
-    u -= get_u_asympt_expr()
-    
-    # Compute the shc_coef using quadratures
-    problem = ShcBesselKnown()  
-    
-    # Homogeneous part of asymptotic expansion  
-    for m in range(1, len(problem.shc_coef)+1):
-        u -= problem.shc_coef[m-1] * besselj(m*nu, k*r) * sin(m*nu*(th - a))
-        
-    return u
-            
 class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
     k = 1
@@ -71,15 +47,15 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         kwargs['f_expr'] = get_reg_f_expr()
         super().__init__(**kwargs)
         
-        self.u_asympt_lambda = lambdify(symbols('k R r th'), get_u_asympt_expr())
+        self.v_asympt_lambda = lambdify(symbols('k R r th'), get_v_asympt_expr())
         self.nu = np.pi / (2*np.pi - self.a)
                 
-    def eval_expected_polar(self, r, th):
-        k = self.k
-        R = self.R
-        nu = self.nu
-    
-        return jv(nu/2, k*r) * np.sin(nu*(th-np.pi/6)/2)
+    #def eval_expected_polar(self, r, th):
+    #    k = self.k
+    #    R = self.R
+    #    nu = self.nu
+    #
+    #    return jv(nu/2, k*r) * np.sin(nu*(th-np.pi/6)/2)
         
     def _eval_bc_extended(self, arg, sid, shc_coef):
         k = self.k
@@ -90,9 +66,9 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         r, th = self.arg_to_polar(arg, sid)
         
         if sid == 0:
-            u_asympt = float(self.u_asympt_lambda(k, R, R, th))
+            v_asympt = float(self.v_asympt_lambda(k, R, R, th))
             bc = jv(3/11, k*R) / (11*np.pi/6) * (th - np.pi/6)
-            bc -= np.sin(3/11 * (th-np.pi/6)) * u_asympt
+            bc -= np.sin(3/11 * (th-np.pi/6)) * v_asympt
             
             for m in range(len(shc_coef)):
                 bc -= shc_coef[m] * jv(m*nu, k*R) * np.sin(m*nu*(th - a))
@@ -100,8 +76,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
             return bc
             
         elif sid == 1:
-            u_asympt = float(self.u_asympt_lambda(k, R, r, th))
-            bc = jv(3/11, k*r) - u_asympt
+            v_asympt = float(self.v_asympt_lambda(k, R, r, th))
+            bc = jv(3/11, k*r) - v_asympt
             
             if th == 2*np.pi:
                 return bc
@@ -113,18 +89,18 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         elif sid == 2:
             return 0
         
-    def get_restore_polar(self, r, th):
-        k = self.k
-        R = self.R
-        a = self.a
-        nu = self.nu
-        
-        v = self.u_asympt_lambda(k, R, r, th)
-        
-        for m in range(1, len(self.shc_coef)+1):
-            v += self.shc_coef[m-1] * jv(m*nu, k*r) * np.sin(m*nu*(th - a))
-    
-        return v
+    #def get_restore_polar(self, r, th):
+    #    k = self.k
+    #    R = self.R
+    #    a = self.a
+    #    nu = self.nu
+    #    
+    #    v = self.u_asympt_lambda(k, R, r, th)
+    #    
+    #    for m in range(1, len(self.shc_coef)+1):
+    #        v += self.shc_coef[m-1] * jv(m*nu, k*r) * np.sin(m*nu*(th - a))
+    #
+    #    return v
         
     def calc_exact_shc_coef(self):
         k = self.k
