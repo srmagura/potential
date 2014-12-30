@@ -67,18 +67,28 @@ class Interface:
         or start the convergence test.
         '''
         parser = argparse.ArgumentParser()
-        parser.add_argument('-p', required=True, 
-            choices=problems.problem_dict.keys())
-        parser.add_argument('-N', type=int, default=16)
-        parser.add_argument('-c', type=int, nargs='?', const=128)
-        parser.add_argument('-o', type=int, default=4)
 
-        parser.add_argument('--tex', action='store_true')
-        parser.add_argument('-r', action='store_true')
+        parser.add_argument('problem', metavar='problem', 
+            choices=problems.problem_dict.keys(),
+            help='name of the problem to run')
+
+        parser.add_argument('-N', type=int, default=16,
+            help='initial grid size')
+        parser.add_argument('-c', type=int, nargs='?', const=128,
+            help='run convergence test, up to the C x C grid. '
+            'Default is 128.')
+        parser.add_argument('-o', type=int, default=4,
+            choices=(2, 4),
+            help='order of scheme')
+
+        parser.add_argument('-r', action='store_true',
+            help='show relative convergence, even if the problem\'s '
+            'true solution is known')
+        parser.add_argument('--tex', action='store_true',
+            help='print convergence test results in TeX-friendly format')
 
         self.args = parser.parse_args()
-
-        self.problem = problems.problem_dict[self.args.p](scheme_order=self.args.o)
+        self.problem = problems.problem_dict[self.args.problem](scheme_order=self.args.o)
 
         if self.args.c is None:
             my_solver = self.problem.get_solver(self.args.N, 
