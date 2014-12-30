@@ -16,6 +16,7 @@ class Interface:
         Perform the convergence test. Prints in TeX-friendly
         format if the `--tex` option was given.
         '''
+        do_rel_conv = self.args.r or not self.problem.expected_known
         prev_error = None
         
         u2 = None
@@ -42,24 +43,23 @@ class Interface:
 
             if prev_error is not None:
                 convergence = np.log2(prev_error / result.error)
-                print('Convergence:', convergence)
                 
                 if self.args.tex:
                     tex += str(convergence)
+                else:
+                    print('Convergence:', convergence)
             
-            # TODO    
-            if u2 is not None:
+            if do_rel_conv and u2 is not None:
                 convergence = my_solver.calc_convergence3(u0, u1, u2)
-                print('Grid convergence:', convergence)
-            else:
-                convergence = None
-            
+                print('Rel convergence:', convergence)
+
             if self.args.tex:
                 print(tex + r'\\')
+            else:
+                print()
                           
             prev_error = result.error  
             N *= 2
-            print()
 
     def run(self):
         '''
@@ -72,7 +72,10 @@ class Interface:
         parser.add_argument('-N', type=int, default=16)
         parser.add_argument('-c', type=int, nargs='?', const=128)
         parser.add_argument('-o', type=int, default=4)
+
         parser.add_argument('--tex', action='store_true')
+        parser.add_argument('-r', action='store_true')
+
         self.args = parser.parse_args()
 
         self.problem = problems.problem_dict[self.args.p](scheme_order=self.args.o)

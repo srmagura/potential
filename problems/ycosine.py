@@ -7,8 +7,11 @@ from cs.csf import CsFourier
 from .problem import Problem, PizzaProblem
 
 class YCosineShared:
-        
+
+    # Note: this problem becomes homogeneous if k=1.
     k = 2/3
+
+    expected_known = True
     
     def eval_f(self, x, y):
         k = self.k

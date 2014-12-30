@@ -39,7 +39,9 @@ def eval_expected_polar(k, R, r, th):
 class BesselNoCorrection(PizzaProblem):
 
     k = shared_k
+
     homogeneous = True
+    expected_known = True
                 
     def eval_expected_polar(self, r, th):
         return eval_expected_polar(self.k, self.R, r, th)
@@ -56,6 +58,7 @@ class BesselNoCorrection(PizzaProblem):
 class BesselReg(SympyProblem, PizzaProblem):
     
     k = shared_k
+    expected_known = True
 
     def __init__(self, **kwargs): 
         kwargs['f_expr'] = get_reg_f_expr()

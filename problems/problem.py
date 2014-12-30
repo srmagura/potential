@@ -6,7 +6,7 @@ from ps.ps import PizzaSolver
 
 class Problem:
     homogeneous = False
-    expected_known = True
+    expected_known = False
     
     R = 2.3
     

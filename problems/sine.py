@@ -12,6 +12,7 @@ class Sine(Problem):
     k = 1
     solver_class = CsFourier
     homogeneous = True
+    expected_known = True
     
     def eval_bc(self, th):
         return self.eval_expected(self.R*cos(th), self.R*sin(th))
@@ -27,6 +28,7 @@ class SinePizza(PizzaProblem):
     
     k = 1
     homogeneous = True
+    expected_known = True
     
     def eval_expected(self, x, y):
         return sin(self.k*x)
