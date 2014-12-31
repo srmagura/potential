@@ -16,10 +16,7 @@ def get_v_reg_expr():
     a = pi/6
     nu = pi / (2*pi - a)
     
-    # True solution to original problem
     v = besselj(nu/2, k*r) * sin(nu*(th-a)/2)
-    
-    # Inhomogeneous part of asymptotic expansion
     v -= get_u_asympt_expr()
 
     return v

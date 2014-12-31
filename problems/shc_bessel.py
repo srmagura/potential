@@ -43,6 +43,7 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
     k = 1
     expected_known = True
+    many_shc_coef_len = 50
 
     def __init__(self, **kwargs): 
         kwargs['f_expr'] = get_reg_f_expr()
@@ -66,8 +67,10 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         k = self.k
         R = self.R
 
-        #return jv(3/11, k*R) / (11*np.pi/6) * (th - np.pi/6)
-        return jv(3/11, k*R) * np.sin(3/11*(th - np.pi/6))
+        return jv(3/11, k*R) / (11*np.pi/6) * (th - np.pi/6)
+
+        # Degenerate
+        #return jv(3/11, k*R) * np.sin(3/11*(th - np.pi/6))
         
     def _eval_bc_extended(self, arg, sid, shc_coef):
         k = self.k
@@ -101,19 +104,6 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         elif sid == 2:
             return 0
         
-    #def get_restore_polar(self, r, th):
-    #    k = self.k
-    #    R = self.R
-    #    a = self.a
-    #    nu = self.nu
-    #    
-    #    v = self.u_asympt_lambda(k, R, r, th)
-    #    
-    #    for m in range(1, len(self.shc_coef)+1):
-    #        v += self.shc_coef[m-1] * jv(m*nu, k*r) * np.sin(m*nu*(th - a))
-    #
-    #    return v
-        
     def calc_exact_shc_coef(self):
         k = self.k
         R = self.R
@@ -125,16 +115,24 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
             return phi * np.sin(6*m/11*(th - np.pi/6))
     
         self.shc_coef = np.zeros(self.shc_coef_len)
+        self.many_shc_coef = np.zeros(self.many_shc_coef_len)
     
-        for m in range(1, self.shc_coef_len+1):
-            self.shc_coef[m-1] = quad(eval_integrand, np.pi/6, 2*np.pi)[0]
-            self.shc_coef[m-1] *= 12 / (11*np.pi * jv(6*m/11, k*R))
+        for m in range(1, self.many_shc_coef_len+1):
+            coef = quad(eval_integrand, np.pi/6, 2*np.pi)[0]
+            coef *= 12 / (11*np.pi * jv(6*m/11, k*R))
+
+            self.many_shc_coef[m-1] = coef
+
+            if m < self.shc_coef_len + 1:
+                self.shc_coef[m-1] = coef
+
 
 class ShcBesselKnown(ShcBesselAbstract):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.calc_exact_shc_coef()
+        print(self.many_shc_coef)
     
     def eval_bc_extended(self, arg, sid):
         return self._eval_bc_extended(arg, sid, self.shc_coef)
