@@ -42,6 +42,7 @@ def get_reg_f_expr():
 class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
     k = 1
+    expected_known = True
 
     def __init__(self, **kwargs): 
         kwargs['f_expr'] = get_reg_f_expr()
@@ -50,18 +51,23 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         self.v_asympt_lambda = lambdify(symbols('k R r th'), get_v_asympt_expr())
         self.nu = np.pi / (2*np.pi - self.a)
                 
-    #def eval_expected_polar(self, r, th):
-    #    k = self.k
-    #    R = self.R
-    #    nu = self.nu
-    #
-    #    return jv(nu/2, k*r) * np.sin(nu*(th-np.pi/6)/2)
+    def eval_expected_polar(self, r, th):
+        k = self.k
+        R = self.R
+        nu = self.nu
+    
+        # v_reg
+        u_reg = jv(nu/2, k*r) * np.sin(nu*(th-np.pi/6)/2)
+        u_reg -= self.v_asympt_lambda(k, R, r, th)
+
+        return u_reg
 
     def eval_phi0(self, th):
         k = self.k
         R = self.R
 
-        return jv(3/11, k*R) / (11*np.pi/6) * (th - np.pi/6)
+        #return jv(3/11, k*R) / (11*np.pi/6) * (th - np.pi/6)
+        return jv(3/11, k*R) * np.sin(3/11*(th - np.pi/6))
         
     def _eval_bc_extended(self, arg, sid, shc_coef):
         k = self.k
