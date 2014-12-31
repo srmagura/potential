@@ -56,6 +56,12 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
     #    nu = self.nu
     #
     #    return jv(nu/2, k*r) * np.sin(nu*(th-np.pi/6)/2)
+
+    def eval_phi0(self, th):
+        k = self.k
+        R = self.R
+
+        return jv(3/11, k*R) / (11*np.pi/6) * (th - np.pi/6)
         
     def _eval_bc_extended(self, arg, sid, shc_coef):
         k = self.k
@@ -67,8 +73,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         
         if sid == 0:
             v_asympt = float(self.v_asympt_lambda(k, R, R, th))
-            bc = jv(3/11, k*R) / (11*np.pi/6) * (th - np.pi/6)
-            bc -= np.sin(3/11 * (th-np.pi/6)) * v_asympt
+            bc = self.eval_phi0(th)
+            bc -= v_asympt
             
             for m in range(len(shc_coef)):
                 bc -= shc_coef[m] * jv(m*nu, k*R) * np.sin(m*nu*(th - a))
@@ -107,9 +113,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         R = self.R
         
         def eval_integrand(th):
-            phi = (th - np.pi/6) / (11*np.pi/6)
-            phi -= np.sin(3/11*(th - np.pi/6))
-            phi *= jv(3/11, k*R)
+            phi = self.eval_phi0(th)
+            phi -= jv(3/11, k*R) * np.sin(3/11*(th - np.pi/6))
             
             return phi * np.sin(6*m/11*(th - np.pi/6))
     

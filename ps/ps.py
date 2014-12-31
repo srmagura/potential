@@ -127,7 +127,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         
         '''
         Uncomment to run the extend basis test. Just run the program on a
-        single grid --- don't bother running the convergence test.
+        single grid --- don't run the convergence test.
         '''
         #return self.test_extend_basis()
 
