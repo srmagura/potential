@@ -42,7 +42,7 @@ def get_reg_f_expr():
 class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
     k = 1
-    expected_known = True
+    expected_known = False
     many_shc_coef_len = 50
 
     def __init__(self, **kwargs): 
@@ -53,6 +53,19 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         self.nu = np.pi / (2*np.pi - self.a)
                 
     def eval_expected_polar(self, r, th):
+        '''
+        The values returned by this function are not exactly equal to 
+        the value of the true solution, for two reasons:
+            - Computing the true solution would require us to sum an
+              infinite Fourier-Bessel series
+            - There is some integration error when computing the
+              shc_coef by quadrature
+
+        That being said, this function is pretty close to the true
+        solution. For many_shc_len = 50, I believe the maximum difference
+        between this function and the true solution to be ~ 2.8e-4. So
+        this function can still be used for testing purposes.
+        '''
         k = self.k
         R = self.R
         a = self.a
@@ -63,8 +76,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         u_reg -= self.v_asympt_lambda(k, R, r, th)
 
         # (Some of the) remaining terms of the Fourier-Bessel series
-        for m in range(len(self.shc_coef), len(self.many_shc_coef)):
-            u_reg += self.many_shc_coef[m] * np.sin(m*nu*(th - a))
+        for m in range(len(self.shc_coef)+1, len(self.many_shc_coef)+1):
+            u_reg += self.many_shc_coef[m-1] * np.sin(m*nu*(th - a))
 
         return u_reg
 
@@ -86,12 +99,11 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         r, th = self.arg_to_polar(arg, sid)
         
         if sid == 0:
-            v_asympt = float(self.v_asympt_lambda(k, R, R, th))
             bc = self.eval_phi0(th)
-            bc -= v_asympt
+            bc -= float(self.v_asympt_lambda(k, R, R, th))
             
-            for m in range(len(shc_coef)):
-                bc -= shc_coef[m] * np.sin(m*nu*(th - a))
+            for m in range(1, len(shc_coef)+1):
+                bc -= shc_coef[m-1] * np.sin(m*nu*(th - a))
             
             return bc
             
