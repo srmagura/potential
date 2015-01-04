@@ -55,11 +55,16 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
     def eval_expected_polar(self, r, th):
         k = self.k
         R = self.R
+        a = self.a
         nu = self.nu
     
         # v_reg
         u_reg = jv(nu/2, k*r) * np.sin(nu*(th-np.pi/6)/2)
         u_reg -= self.v_asympt_lambda(k, R, r, th)
+
+        # (Some of the) remaining terms of the Fourier-Bessel series
+        for m in range(len(self.shc_coef), len(self.many_shc_coef)):
+            u_reg += self.many_shc_coef[m] * np.sin(m*nu*(th - a))
 
         return u_reg
 
@@ -86,7 +91,7 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
             bc -= v_asympt
             
             for m in range(len(shc_coef)):
-                bc -= shc_coef[m] * jv(m*nu, k*R) * np.sin(m*nu*(th - a))
+                bc -= shc_coef[m] * np.sin(m*nu*(th - a))
             
             return bc
             
@@ -111,15 +116,20 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         def eval_integrand(th):
             phi = self.eval_phi0(th)
             phi -= jv(3/11, k*R) * np.sin(3/11*(th - np.pi/6))
-            
+
             return phi * np.sin(6*m/11*(th - np.pi/6))
     
         self.shc_coef = np.zeros(self.shc_coef_len)
         self.many_shc_coef = np.zeros(self.many_shc_coef_len)
     
+        quad_error = []
+
         for m in range(1, self.many_shc_coef_len+1):
-            coef = quad(eval_integrand, np.pi/6, 2*np.pi)[0]
-            coef *= 12 / (11*np.pi * jv(6*m/11, k*R))
+            quad_result = quad(eval_integrand, np.pi/6, 2*np.pi)
+            quad_error.append(quad_result[1])
+            
+            coef = quad_result[0]
+            coef *= 12 / (11*np.pi)
 
             self.many_shc_coef[m-1] = coef
 
@@ -132,7 +142,6 @@ class ShcBesselKnown(ShcBesselAbstract):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.calc_exact_shc_coef()
-        print(self.many_shc_coef)
     
     def eval_bc_extended(self, arg, sid):
         return self._eval_bc_extended(arg, sid, self.shc_coef)
