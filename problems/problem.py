@@ -64,8 +64,6 @@ class PizzaProblem(Problem):
         256: (45, 29),
         512: (53, 34)
     }
-    
-    shc_coef_len = 7
             
     def wrap_func(self, arg, sid):
         '''

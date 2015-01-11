@@ -21,7 +21,12 @@ class SympyProblem:
         args = symbols('k R r th')
         k, R, r, th = args
         
-        self.f_polar_lambda = lambdify(args, f)
+        if 'lambdify_module' in kwargs:
+            self.lkw = {'modules': kwargs['lambdify_module']}
+        else:
+            self.lkw = {}
+
+        self.f_polar_lambda = lambdify(args, f, **self.lkw)
         
         # If using 2nd order scheme, don't need derivatives of f
         if 'scheme_order' not in kwargs or kwargs['scheme_order'] == 4:
@@ -35,19 +40,19 @@ class SympyProblem:
         k, R, r, th = args
     
         d_f_r = diff(f, r)
-        self.d_f_r_lambda = lambdify(args, d_f_r)
+        self.d_f_r_lambda = lambdify(args, d_f_r, **self.lkw)
         
         d2_f_r = diff(f, r, 2)
-        self.d2_f_r_lambda = lambdify(args, d2_f_r)
+        self.d2_f_r_lambda = lambdify(args, d2_f_r, **self.lkw)
         
         d_f_th = diff(f, th)
-        self.d_f_th_lambda = lambdify(args, d_f_th)
+        self.d_f_th_lambda = lambdify(args, d_f_th, **self.lkw)
         
         d2_f_th = diff(f, th, 2)
-        self.d2_f_th_lambda = lambdify(args, d2_f_th)
+        self.d2_f_th_lambda = lambdify(args, d2_f_th, **self.lkw)
         
         d2_f_r_th = diff(f, r, th)
-        self.d2_f_r_th_lambda = lambdify(args, d2_f_r_th)
+        self.d2_f_r_th_lambda = lambdify(args, d2_f_r_th, **self.lkw)
 
     def eval_f_polar(self, r, th):
         '''Evaluate f at (r, th)'''

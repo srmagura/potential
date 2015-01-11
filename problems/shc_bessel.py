@@ -1,12 +1,14 @@
 from sympy import *
 import numpy as np
-from scipy.special import jv
+#from scipy.special import jv
 from scipy.integrate import quad
 
 from solver import cart_to_polar
 
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
+
+mpmath.mp.dps = 60
 
 def get_v_asympt_expr():
     '''
@@ -16,9 +18,9 @@ def get_v_asympt_expr():
     k, R, r, th = symbols('k R r th')    
     kr2 = k*r/2
     
-    v_asympt = 1/gamma(14/11)
-    v_asympt += -1/gamma(25/11)*kr2**2
-    v_asympt += 1/(2*gamma(36/11))*kr2**4
+    v_asympt = 1/gamma(sympify('14/11'))
+    v_asympt += -1/gamma(sympify('25/11'))*kr2**2
+    v_asympt += 1/(2*gamma(sympify('36/11')))*kr2**4
     
     v_asympt *= sin(3/11*(th-pi/6)) * kr2**(3/11)
     
@@ -33,7 +35,7 @@ def get_reg_f_expr():
     '''
     k, R, r, th = symbols('k R r th')
     
-    f = 1331/(67200 * gamma(3/11))
+    f = 1331/(67200 * gamma(sympify('3/11')))
     f *= 2**(8/11) * k**(69/11) * r**(47/11)
     f *= sin(-3*th/11 + pi/22)
     
@@ -43,13 +45,17 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
     k = 1
     expected_known = False
+    
+    shc_coef_len = 15
     many_shc_coef_len = 50
 
     def __init__(self, **kwargs): 
         kwargs['f_expr'] = get_reg_f_expr()
+        kwargs['lambdify_module'] = 'mpmath'
         super().__init__(**kwargs)
         
-        self.v_asympt_lambda = lambdify(symbols('k R r th'), get_v_asympt_expr())
+        self.v_asympt_lambda = lambdify(symbols('k R r th'), get_v_asympt_expr(),
+            modules='mpmath')
         self.nu = np.pi / (2*np.pi - self.a)
                 
     def eval_expected_polar(self, r, th):
@@ -85,7 +91,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         k = self.k
         R = self.R
 
-        return jv(3/11, k*R) / (11*np.pi/6) * (th - np.pi/6)
+        _jv = mpmath.besselj(mpmath.mpf('3/11'), k*R)
+        return float(_jv) / (11*np.pi/6) * (th - np.pi/6)
 
         # Degenerate
         #return jv(3/11, k*R) * np.sin(3/11*(th - np.pi/6))
@@ -100,7 +107,11 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         
         if sid == 0:
             bc = self.eval_phi0(th)
-            bc -= float(self.v_asympt_lambda(k, R, R, th))
+
+            v_asympt = self.v_asympt_lambda(k, R, R, th)
+            assert type(v_asympt) is mpmath.mpf
+
+            bc -= float(v_asympt)
             
             for m in range(1, len(shc_coef)+1):
                 bc -= shc_coef[m-1] * np.sin(m*nu*(th - a))
@@ -109,7 +120,7 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
             
         elif sid == 1:
             v_asympt = float(self.v_asympt_lambda(k, R, r, th))
-            bc = jv(3/11, k*r) - v_asympt
+            bc = float(mpmath.besselj(mpmath.mpf('3/11'), k*r)) - v_asympt
             
             if th == 2*np.pi:
                 return bc
@@ -127,7 +138,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         
         def eval_integrand(th):
             phi = self.eval_phi0(th)
-            phi -= jv(3/11, k*R) * np.sin(3/11*(th - np.pi/6))
+            phi -= (float(mpmath.besselj(mpmath.mpf('3/11'), k*R)) *
+                np.sin(3/11*(th - np.pi/6)))
 
             return phi * np.sin(6*m/11*(th - np.pi/6))
     
@@ -136,8 +148,16 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
         quad_error = []
 
-        for m in range(1, self.many_shc_coef_len+1):
-            quad_result = quad(eval_integrand, np.pi/6, 2*np.pi)
+        if self.expected_known:
+            count = self.many_shc_coef_len
+        else:
+            count = self.shc_coef_len
+
+        epsabs = 1e-13
+        epsrel = 1e-13
+
+        for m in range(1, count+1):
+            quad_result = quad(eval_integrand, np.pi/6, 2*np.pi, epsabs=epsabs, epsrel=epsrel)
             quad_error.append(quad_result[1])
             
             coef = quad_result[0]
@@ -147,6 +167,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
 
             if m < self.shc_coef_len + 1:
                 self.shc_coef[m-1] = coef
+
+        #print('quad error:', max(quad_error))
 
 
 class ShcBesselKnown(ShcBesselAbstract):
