@@ -1,14 +1,10 @@
-from sympy import *
 import numpy as np
-from scipy.special import jv
 from scipy.integrate import quad
 
 from solver import cart_to_polar
 
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
-
-mpmath.mp.dps = 60
     
 class FourierBessel(PizzaProblem):
     
@@ -16,7 +12,7 @@ class FourierBessel(PizzaProblem):
     homogeneous = True
     expected_known = False
     
-    shc_coef_len = 15
+    shc_coef_len = 25
 
     def __init__(self, **kwargs): 
         super().__init__(**kwargs)
@@ -49,22 +45,24 @@ class FourierBessel(PizzaProblem):
     def calc_exact_shc_coef(self):
         k = self.k
         R = self.R
+        a = self.a
+        nu = self.nu
         
         def eval_integrand(th):
             phi = self.eval_phi0(th)
-            return phi * np.sin(6*m/11*(th - np.pi/6))
+            return phi * np.sin(m*nu*(th - a))
     
         self.shc_coef = np.zeros(self.shc_coef_len)
-    
         quad_error = []
 
         for m in range(1, len(self.shc_coef)+1):
-            quad_result = quad(eval_integrand, np.pi/6, 2*np.pi, epsabs=1e-10)
+            quad_result = quad(eval_integrand, a, 2*np.pi,
+                epsabs=1e-11)
             quad_error.append(quad_result[1])
             
             coef = quad_result[0]
-            coef *= 12 / (11*np.pi)
+            coef *= 2 / (2*np.pi - a)
 
             self.shc_coef[m-1] = coef
 
-        print('quad_error:', max(quad_error))
+        print('quad error:', max(quad_error))

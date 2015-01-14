@@ -6,6 +6,7 @@ from .ycosine import YCosine, YCosinePizza
 from .bessel import BesselNoCorrection, BesselReg, Bessel
 from .shc_bessel import ShcBesselKnown, ShcBessel
 from .fourier_bessel import FourierBessel
+from .fourier_bessel_mpmath import FourierBesselMpMath
 
 problem_dict = {
     'sine': Sine,
@@ -18,4 +19,5 @@ problem_dict = {
     'shc-bessel-known': ShcBesselKnown,
     'shc-bessel': ShcBessel,
     'fourier-bessel': FourierBessel,
+    'fourier-bessel-mpmath': FourierBesselMpMath,
 }
