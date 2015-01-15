@@ -7,6 +7,7 @@ from .bessel import BesselNoCorrection, BesselReg, Bessel
 from .shc_bessel import ShcBesselKnown, ShcBessel
 from .fourier_bessel import FourierBessel
 from .fourier_bessel_mpmath import FourierBesselMpMath
+from .fourier_bessel_simple import FourierBesselSimple
 
 problem_dict = {
     'sine': Sine,
@@ -20,4 +21,5 @@ problem_dict = {
     'shc-bessel': ShcBessel,
     'fourier-bessel': FourierBessel,
     'fourier-bessel-mpmath': FourierBesselMpMath,
+    'fourier-bessel-simple': FourierBesselSimple,
 }
