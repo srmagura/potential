@@ -13,7 +13,7 @@ class FourierBesselSimple(PizzaProblem):
     homogeneous = True
     expected_known = True
     
-    shc_coef_len = 7
+    m_values = range(8, 15)
 
     def __init__(self, **kwargs): 
         super().__init__(**kwargs)
@@ -26,10 +26,10 @@ class FourierBesselSimple(PizzaProblem):
         a = self.a
         nu = self.nu
 
-        m = self.shc_coef_len + 1
+        u = 0
 
-        u = jv(m*nu, k*r)*np.sin(m*nu*(th-a))
-        u /= jv(m*nu, k*R)
+        for m in self.m_values:
+            u += jv(m*nu, k*r)*np.sin(m*nu*(th-a))/jv(m*nu, k*R)
         
         return u
 
@@ -37,8 +37,12 @@ class FourierBesselSimple(PizzaProblem):
         a = self.a
         nu = self.nu
 
-        m = self.shc_coef_len + 1
-        return np.sin(m*nu*(th - a))
+        phi0 = 0
+
+        for m in self.m_values:
+            phi0 += np.sin(m*nu*(th - a))
+
+        return phi0
         
     def eval_bc_extended(self, arg, sid):
         a = self.a
