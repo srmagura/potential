@@ -10,22 +10,14 @@ nu = np.pi / (2*np.pi - a)
 def eval_phi0(th):
     return -(th - np.pi/6) * (th - 2*np.pi) 
 
-def calc_coef(func, M):
-    def eval_integrand(th):
-        phi = func(th)
-        return phi * np.sin(m*nu*(th - a))
-
+def calc_coef(M):
     coef = np.zeros(M)
 
     for m in range(1, M+1):
-        quad_result = quad(eval_integrand, a, 2*np.pi,
-            limit=100, epsabs=1e-11)
-        quad_error.append(quad_result[1])
-        
-        c = quad_result[0]
-        c *= 2 / (2*np.pi - a)
-
-        coef[m-1] = c
+        if m % 2 == 0:
+            coef[m-1] = 0
+        else:
+            coef[m-1] = 8/(2*np.pi - a) * 1/(m*nu)**3
 
     return coef
 
@@ -34,8 +26,7 @@ def do_test(M, prev_error):
     exact_data = np.array([eval_phi0(th) for th in th_data])
     
     expansion_data = np.zeros(len(th_data))
-    coef = calc_coef(eval_phi0, M)
-    print(coef)
+    coef = calc_coef(M) 
 
     for i in range(len(th_data)):
         th = th_data[i]
@@ -48,16 +39,6 @@ def do_test(M, prev_error):
 
     error = np.max(np.abs(expansion_data - exact_data))
 
-    def eval_leftover(th):
-        phi0 = eval_phi0(th)
-
-        for m in range(1, M+1):
-            phi0 -= coef[m-1] * np.sin(m*nu*(th - a))
-
-        return phi0
-
-    leftover_coef = calc_coef(eval_leftover, M)
-
     print('---- M = {} ----'.format(M))
     print('Fourier error:', error)
 
@@ -65,8 +46,6 @@ def do_test(M, prev_error):
         conv = np.log2(prev_error / error)
         print('Convergence:', conv)
 
-    print()
-    print('Max leftover coef:', np.max(np.abs(leftover_coef)))
 
     print()
     return error
@@ -75,13 +54,10 @@ def do_test(M, prev_error):
 
     #plt.show()
 
+
 M = 4
 prev_error = None
-quad_error = []
 
 while M <= 128:
     prev_error = do_test(M, prev_error)
     M *= 2
-
-print()
-print('Quad error:', max(quad_error))
