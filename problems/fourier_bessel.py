@@ -1,6 +1,5 @@
 import numpy as np
-from scipy.integrate import quad
-import matplotlib.pyplot as plt
+from scipy.special import jv
 
 from solver import cart_to_polar
 
@@ -11,20 +10,39 @@ class FourierBessel(PizzaProblem):
     
     k = 1
     homogeneous = True
-    expected_known = False
+    #expected_known = True
+    #m_max = 99
     
-    shc_coef_len = 7
+    M = 7
 
     def __init__(self, **kwargs): 
         super().__init__(**kwargs)
 
         self.nu = np.pi / (2*np.pi - self.a)
-        self.calc_exact_shc_coef()
-        self.test_shc_coef()
+        #print('b(m_max) =', self.get_b(self.m_max))
+
+    def get_b(self, m):
+        if m % 2 == 0:
+            return 0
+        else:
+            return 8/(2*np.pi - self.a) * 1/(m*self.nu)**3
+
+    def eval_expected_polar(self, r, th):
+        k = self.k
+        R = self.R
+        a = self.a
+        nu = self.nu
+
+        u = 0
+
+        for m in range(self.M+1, self.m_max):
+            b = self.get_b(m)
+            u += jv(m*nu, k*r)*b*np.sin(m*nu*(th-a))/jv(m*nu, k*R)
+        
+        return u
 
     def eval_phi0(self, th):
         return -(th - np.pi/6) * (th - 2*np.pi) 
-        #return th-self.a
         
     def eval_bc_extended(self, arg, sid):
         a = self.a
@@ -35,8 +53,9 @@ class FourierBessel(PizzaProblem):
         if sid == 0:
             bc = self.eval_phi0(th)
             
-            for m in range(1, len(self.shc_coef)+1):
-                bc -= self.shc_coef[m-1] * np.sin(m*nu*(th - a))
+            for m in range(1, self.M+1):
+                b = self.get_b(m)
+                bc -= b * np.sin(m*nu*(th - a))
             
             return bc
             
@@ -44,53 +63,3 @@ class FourierBessel(PizzaProblem):
             return 0 
         elif sid == 2:
             return 0
-        
-    def calc_exact_shc_coef(self):
-        k = self.k
-        R = self.R
-        a = self.a
-        nu = self.nu
-        
-        def eval_integrand(th):
-            phi = self.eval_phi0(th)
-            return phi * np.sin(m*nu*(th - a))
-    
-        self.shc_coef = np.zeros(self.shc_coef_len)
-        quad_error = []
-
-        for m in range(1, len(self.shc_coef)+1):
-            quad_result = quad(eval_integrand, a, 2*np.pi,
-                epsabs=1e-11)
-            quad_error.append(quad_result[1])
-            
-            coef = quad_result[0]
-            coef *= 2 / (2*np.pi - a)
-
-            self.shc_coef[m-1] = coef
-
-        print('quad error:', max(quad_error))
-
-    def test_shc_coef(self):
-        a = self.a
-        nu = self.nu
-
-        th_data = np.linspace(self.a, 2*np.pi, 1000)
-        exact_data = [self.eval_phi0(th) for th in th_data]
-        
-        expansion_data = []
-
-        for th in th_data:
-            phi0 = 0    
-            for m in range(1, len(self.shc_coef)+1):
-                phi0 += self.shc_coef[m-1] * np.sin(m*nu*(th - a))
-
-            expansion_data.append(phi0)
-
-        diff = np.max(np.abs(np.array(expansion_data) -
-            np.array(exact_data)))
-        print('shc_coef diff:', diff)
-
-        plt.plot(th_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
-        plt.plot(th_data, expansion_data, label='Expansion')
-
-        plt.show()

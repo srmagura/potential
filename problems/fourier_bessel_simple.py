@@ -6,19 +6,26 @@ from solver import cart_to_polar
 
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
-    
+
 class FourierBesselSimple(PizzaProblem):
     
     k = 1
     homogeneous = True
     expected_known = True
     
-    m_values = range(8, 15)
+    m_values = range(8, 30)
 
     def __init__(self, **kwargs): 
         super().__init__(**kwargs)
 
         self.nu = np.pi / (2*np.pi - self.a)
+
+    def get_b(self, m):
+        return 1
+        #if m % 2 == 0:
+        #    return 0
+        #else:
+        #    return 8/(2*np.pi - self.a) * 1/(m*self.nu)**3
 
     def eval_expected_polar(self, r, th):
         k = self.k
@@ -29,7 +36,8 @@ class FourierBesselSimple(PizzaProblem):
         u = 0
 
         for m in self.m_values:
-            u += jv(m*nu, k*r)*np.sin(m*nu*(th-a))/jv(m*nu, k*R)
+            b = self.get_b(m)
+            u += jv(m*nu, k*r)*b*np.sin(m*nu*(th-a))/jv(m*nu, k*R)
         
         return u
 
@@ -40,7 +48,8 @@ class FourierBesselSimple(PizzaProblem):
         phi0 = 0
 
         for m in self.m_values:
-            phi0 += np.sin(m*nu*(th - a))
+            b = self.get_b(m)
+            phi0 += b*np.sin(m*nu*(th - a))
 
         return phi0
         
