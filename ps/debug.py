@@ -204,6 +204,8 @@ class PsDebug:
         plt.xlabel('Arclength s')
         plt.ylabel('Dirichlet data')
         plt.show()
+
+        #print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
         
     def print_c1(self):
         sid = 0

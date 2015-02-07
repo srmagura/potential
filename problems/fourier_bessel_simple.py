@@ -13,7 +13,7 @@ class FourierBesselSimple(PizzaProblem):
     homogeneous = True
     expected_known = True
     
-    m_values = range(8, 30)
+    m_values = [25]
 
     def __init__(self, **kwargs): 
         super().__init__(**kwargs)
