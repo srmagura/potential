@@ -5,6 +5,8 @@ from solver import cart_to_polar
 
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
+
+import problems.bdata
     
 class FourierBessel(PizzaProblem):
     
@@ -21,11 +23,8 @@ class FourierBessel(PizzaProblem):
         self.nu = np.pi / (2*np.pi - self.a)
         #print('b(m_max) =', self.get_b(self.m_max))
 
-    def get_b(self, m):
-        if m % 2 == 0:
-            return 0
-        else:
-            return 8/(2*np.pi - self.a) * 1/(m*self.nu)**3
+        self.bdata = problems.bdata.Hat()
+        self.b_coef = self.bdata.calc_coef(self.M)
 
     def eval_expected_polar(self, r, th):
         k = self.k
@@ -42,7 +41,7 @@ class FourierBessel(PizzaProblem):
         return u
 
     def eval_phi0(self, th):
-        return -(th - np.pi/6) * (th - 2*np.pi) 
+        return self.bdata.eval_phi0(th) 
         
     def eval_bc_extended(self, arg, sid):
         a = self.a
@@ -54,8 +53,7 @@ class FourierBessel(PizzaProblem):
             bc = self.eval_phi0(th)
             
             for m in range(1, self.M+1):
-                b = self.get_b(m)
-                bc -= b * np.sin(m*nu*(th - a))
+                bc -= self.b_coef[m-1] * np.sin(m*nu*(th - a))
             
             return bc
             

@@ -132,7 +132,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #return self.test_extend_basis()
 
         self.calc_c0()
-        self.c0_test()
         self.calc_c1()
         
         '''
