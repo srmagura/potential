@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.special import jv
+from sympy import mpmath
 
 from solver import cart_to_polar
 
@@ -7,13 +8,15 @@ from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
 
 import problems.bdata
+
+mpmath.mp.dps = 15
     
 class FourierBessel(PizzaProblem):
     
     k = 1
     homogeneous = True
-    #expected_known = True
-    #m_max = 99
+    expected_known = True
+    m_max = 99
     
     M = 7
 
@@ -21,22 +24,51 @@ class FourierBessel(PizzaProblem):
         super().__init__(**kwargs)
 
         self.nu = np.pi / (2*np.pi - self.a)
-        #print('b(m_max) =', self.get_b(self.m_max))
 
         self.bdata = problems.bdata.Hat()
-        self.b_coef = self.bdata.calc_coef(self.M)
 
-    def eval_expected_polar(self, r, th):
+        if self.expected_known:
+            m = self.m_max
+        else:
+            m = self.M
+
+        self.b_coef = self.bdata.calc_coef(m)
+
+        if self.expected_known:
+            print('b[m_max] =', self.b_coef[self.m_max-1])
+
+    def calc_bessel_ratio(self, m, r):
         k = self.k
         R = self.R
+        nu = self.nu
+
+        #ratio = mpmath.besselj(m*nu, k*r) / mpmath.besselj(m*nu, k*R)
+        ratio = jv(m*nu, k*r) / jv(m*nu, k*R)
+        return float(ratio)
+
+    def eval_expected_polar(self, r, th):
         a = self.a
         nu = self.nu
 
         u = 0
 
         for m in range(self.M+1, self.m_max):
-            b = self.get_b(m)
-            u += jv(m*nu, k*r)*b*np.sin(m*nu*(th-a))/jv(m*nu, k*R)
+            b = self.b_coef[m-1]
+            ratio = self.calc_bessel_ratio(m, r)
+            u += b * ratio * np.sin(m*nu*(th-a))
+        
+        return u
+
+    def eval_expected_polar(self, r, th):
+        a = self.a
+        nu = self.nu
+
+        u = 0
+
+        for m in range(self.M+1, self.m_max):
+            b = self.b_coef[m-1]
+            ratio = self.calc_bessel_ratio(m, r)
+            u += b * ratio * np.sin(m*nu*(th-a))
         
         return u
 
@@ -61,3 +93,8 @@ class FourierBessel(PizzaProblem):
             return 0 
         elif sid == 2:
             return 0
+
+    def eval_d_u_outwards(self, arg, sid):
+        a = self.a
+        
+        r, th = self.arg_to_polar(arg, sid)
