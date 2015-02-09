@@ -112,19 +112,24 @@ class PsDebug:
                 if setypes is None or data['setype'] in setypes:
                     diff = abs(exp - data['value'])
                     error.append(diff)
+
+        result = Result()
+        result.u_act = np.zeros((self.N-1)**2, dtype=complex)
         
-        if setypes is None:
-            reduced = self.mv_reduce(mv_ext)
-            
-            for l in range(len(self.union_gamma)):
-                node = self.union_gamma[l]
-                x, y = self.get_coord(*node)
+        reduced = self.mv_reduce(mv_ext)
+        
+        for l in range(len(self.union_gamma)):
+            node = self.union_gamma[l]
+            x, y = self.get_coord(*node)
+
+            index = matrices.get_index(self.N, *node)
+            result.u_act[index] = reduced[l]
+
+            if setypes is None:
                 exp = self.problem.eval_expected(x, y)  
-            
                 diff = abs(exp - reduced[l])
                 error.append(diff)
 
-        result = Result()
         result.error = max(error)
         return result
 

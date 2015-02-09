@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.special import jv
+from scipy.special import jv, jvp
 from sympy import mpmath
 
 from solver import cart_to_polar
@@ -35,6 +35,11 @@ class FourierBessel(PizzaProblem):
         self.b_coef = self.bdata.calc_coef(m)
 
         if self.expected_known:
+            self.bessel_R = np.zeros(len(self.b_coef))
+
+            for m in range(1, len(self.b_coef)+1):
+                self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
+
             print('b[m_max] =', self.b_coef[self.m_max-1])
 
     def calc_bessel_ratio(self, m, r):
@@ -43,7 +48,7 @@ class FourierBessel(PizzaProblem):
         nu = self.nu
 
         #ratio = mpmath.besselj(m*nu, k*r) / mpmath.besselj(m*nu, k*R)
-        ratio = jv(m*nu, k*r) / jv(m*nu, k*R)
+        ratio = jv(m*nu, k*r) / self.bessel_R[m-1]
         return float(ratio)
 
     def eval_expected_polar(self, r, th):
@@ -52,20 +57,7 @@ class FourierBessel(PizzaProblem):
 
         u = 0
 
-        for m in range(self.M+1, self.m_max):
-            b = self.b_coef[m-1]
-            ratio = self.calc_bessel_ratio(m, r)
-            u += b * ratio * np.sin(m*nu*(th-a))
-        
-        return u
-
-    def eval_expected_polar(self, r, th):
-        a = self.a
-        nu = self.nu
-
-        u = 0
-
-        for m in range(self.M+1, self.m_max):
+        for m in range(self.M+1, self.m_max+1):
             b = self.b_coef[m-1]
             ratio = self.calc_bessel_ratio(m, r)
             u += b * ratio * np.sin(m*nu*(th-a))
@@ -94,7 +86,36 @@ class FourierBessel(PizzaProblem):
         elif sid == 2:
             return 0
 
+    def calc_d_bessel_R(self):
+        self.d_bessel_R = np.zeros(len(self.b_coef))
+
+        for m in range(1, len(self.b_coef)+1):
+            self.d_bessel_R[m-1] = self.k * jvp(m*self.nu, self.k*self.R, 1)
+
     def eval_d_u_outwards(self, arg, sid):
+        if not hasattr(self, 'd_bessel_R'):
+            self.calc_d_bessel_R()
+
         a = self.a
-        
+        nu = self.nu
+        k = self.k
+
         r, th = self.arg_to_polar(arg, sid)
+
+        d_u_n = 0
+        if sid == 0:
+            for m in range(self.M+1, self.m_max+1):
+                ratio = self.d_bessel_R[m-1] / self.bessel_R[m-1]
+                b = self.b_coef[m-1]
+                d_u_n += ratio * b * np.sin(m*nu*(th-a))
+
+        else:
+            for m in range(self.M+1, self.m_max+1):
+                ratio = jv(m*nu, k*r) / self.bessel_R[m-1]
+                b = self.b_coef[m-1]
+                d_u_n += ratio * b * (m*nu)
+
+            if sid == 2:
+                d_u_n *= -1
+
+        return d_u_n

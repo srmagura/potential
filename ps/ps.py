@@ -124,6 +124,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #return self.ps_test_extend_src_f()
         #return self.test_extend_boundary()
+        return self.test_extend_boundary({
+            #(0, self.etypes['standard']),
+            #(0, self.etypes['left']),
+            #(0, self.etypes['right']),
+            (1, self.etypes['standard']),
+        })
         
         '''
         Uncomment to run the extend basis test. Just run the program on a
@@ -141,7 +147,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         if that the boundary data is known analytically.
         '''
         #self.c0_test()
-        #self.c1_test()
+        self.c1_test()
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f
