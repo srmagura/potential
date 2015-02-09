@@ -264,7 +264,7 @@ class PsDebug:
             plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
             
         plt.plot(s_data, expansion_data, label='Expansion')
-        plt.legend(loc=1)
+        plt.legend(loc=2)
         #plt.ylim(-1.5, 1.5)
         plt.title('c1')
         plt.xlabel('Arclength s')

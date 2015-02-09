@@ -16,7 +16,7 @@ class FourierBessel(PizzaProblem):
     k = 1
     homogeneous = True
     expected_known = True
-    m_max = 99
+    m_max = 149
     
     M = 7
 
@@ -113,7 +113,7 @@ class FourierBessel(PizzaProblem):
             for m in range(self.M+1, self.m_max+1):
                 ratio = jv(m*nu, k*r) / self.bessel_R[m-1]
                 b = self.b_coef[m-1]
-                d_u_n += ratio * b * (m*nu)
+                d_u_n += ratio * b * (m*nu) * np.cos(m*nu*(th-a))
 
             if sid == 2:
                 d_u_n *= -1
