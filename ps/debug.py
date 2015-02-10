@@ -113,6 +113,9 @@ class PsDebug:
                     diff = abs(exp - data['value'])
                     error.append(diff)
 
+                    if diff > 1e-3:
+                        print(node, diff)
+
         result = Result()
         result.u_act = np.zeros((self.N-1)**2, dtype=complex)
         

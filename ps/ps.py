@@ -113,6 +113,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.setup_B_desc(*n_basis_tuple)
         
         self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+
+        #self.plot_gamma()
         
         '''
         Uncomment one of the following lines and run the convergence test
@@ -147,7 +149,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         if that the boundary data is known analytically.
         '''
         #self.c0_test()
-        self.c1_test()
+        #self.c1_test()
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f
