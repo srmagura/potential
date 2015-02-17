@@ -50,7 +50,19 @@ class BData:
             coef[i] = coef_raw[J] / fourier_N
             i += 1
 
-        return (J_dict, coef)
+        return J_dict, coef
+
+    def calc_fft_sc(self, Jmax):
+        J_dict, coef = self.calc_fft(Jmax)
+
+        ccoef = np.zeros(Jmax+1)
+        ccoef[0] = coef[J_dict[0]].real
+        scoef = np.zeros(Jmax+1)
+        for J in range(1, Jmax+1):
+            ccoef[J] = (coef[J_dict[J]] + coef[J_dict[-J]]).real
+            scoef[J] = (1j*(coef[J_dict[J]] - coef[J_dict[-J]])).real
+
+        return ccoef, scoef
 
     def calc_coef(self, M):
         if self.analytic_known:
@@ -80,7 +92,7 @@ class Parabola(BData):
 class Hat(BData):
 
     def eval_phi0(self, th):
-        return np.sin(2*np.pi/(2*np.pi-a)*(th-a))
+        #return np.sin(2*np.pi/(2*np.pi-a)*(th-a))
         x = (2*th-(2*np.pi+a))/(2*np.pi-a)
 
         if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
