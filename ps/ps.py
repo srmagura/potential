@@ -140,7 +140,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #return self.test_extend_basis()
 
         self.calc_c0()
-        self.calc_c1()
+        #self.calc_c1()
+        self.calc_c1_exact()
         
         '''
         Uncomment one or both of the following lines to see a plot of the
@@ -148,7 +149,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         the boundary data the Chebyshev series is supposed to approximate, 
         if that the boundary data is known analytically.
         '''
-        #self.c0_test()
+        self.c0_test()
         #self.c1_test()
 
         ext = self.extend_boundary()

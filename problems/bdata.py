@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.integrate import quad
+import collections
 
 a = np.pi/6
 nu = np.pi / (2*np.pi - a)
@@ -31,6 +32,26 @@ class BData:
 
         return coef
 
+    def calc_fft(self, Jmax):
+        fourier_N = 2**10
+        th_data = np.linspace(a, 2*np.pi, fourier_N+1)[:-1]
+
+        discrete_phi0 = [self.eval_phi0(th) for th in th_data]
+        coef_raw = np.fft.fft(discrete_phi0)
+
+        J_dict = collections.OrderedDict(((J, None) for J in 
+            range(-Jmax, Jmax+1)))
+
+        i = 0
+        coef = np.zeros(len(J_dict), dtype=complex)
+
+        for J in J_dict:
+            J_dict[J] = i
+            coef[i] = coef_raw[J] / fourier_N
+            i += 1
+
+        return (J_dict, coef)
+
     def calc_coef(self, M):
         if self.analytic_known:
             return self.calc_coef_analytic(M)
@@ -59,9 +80,10 @@ class Parabola(BData):
 class Hat(BData):
 
     def eval_phi0(self, th):
+        return np.sin(2*np.pi/(2*np.pi-a)*(th-a))
         x = (2*th-(2*np.pi+a))/(2*np.pi-a)
 
-        if abs(abs(x)-1) < 1e-7 or abs(x) > 1:
+        if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
             return 0
         else:
             arg = -1/(1-abs(x)**2)
