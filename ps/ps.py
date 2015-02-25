@@ -149,8 +149,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         the boundary data the Chebyshev series is supposed to approximate, 
         if that the boundary data is known analytically.
         '''
-        self.c0_test()
-        #self.c1_test()
+        #self.c0_test()
+        self.c1_test()
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f

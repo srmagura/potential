@@ -50,6 +50,12 @@ class BData:
         assert np.max(np.abs(ccoef)) < 1e-13
         return scoef[1:]
 
+    def calc_coef(self, M):
+        if self.analytic_known:
+            return self.calc_coef_analytic(M)
+        else:
+            return self.calc_fft(M)
+
 
 class Parabola(BData):
 
