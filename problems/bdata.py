@@ -13,30 +13,15 @@ class BData:
     def __init__(self):
         self.quad_error = []
 
-    def calc_coef_numerical(self, M):
-        def eval_integrand(th):
-            phi = self.eval_phi0(th)
-            return phi * np.sin(m*nu*(th - a))
-
-        coef = np.zeros(M)
-
-        for m in range(1, M+1):
-            quad_result = quad(eval_integrand, a, 2*np.pi,
-                limit=100, epsabs=1e-11)
-            self.quad_error.append(quad_result[1])
-            
-            c = quad_result[0]
-            c *= 2 / (2*np.pi - a)
-
-            coef[m-1] = c
-
-        return coef
-
-    def calc_fft(self, Jmax):
+    def calc_fft_exp(self, Jmax):
         fourier_N = 2**10
         th_data = np.linspace(a, 2*np.pi, fourier_N+1)[:-1]
 
-        discrete_phi0 = [self.eval_phi0(th) for th in th_data]
+        discrete_phi0 = np.array([self.eval_phi0(th) for th in th_data])
+
+        # Half-wave FFT. It would be more efficient to use an actual 
+        # half-wave FFT routine
+        discrete_phi0 = np.concatenate((discrete_phi0, -discrete_phi0))
         coef_raw = np.fft.fft(discrete_phi0)
 
         J_dict = collections.OrderedDict(((J, None) for J in 
@@ -47,13 +32,13 @@ class BData:
 
         for J in J_dict:
             J_dict[J] = i
-            coef[i] = coef_raw[J] / fourier_N
+            coef[i] = coef_raw[J] / (fourier_N*2)
             i += 1
 
         return J_dict, coef
 
-    def calc_fft_sc(self, Jmax):
-        J_dict, coef = self.calc_fft(Jmax)
+    def calc_fft(self, Jmax):
+        J_dict, coef = self.calc_fft_exp(Jmax)
 
         ccoef = np.zeros(Jmax+1)
         ccoef[0] = coef[J_dict[0]].real
@@ -62,13 +47,8 @@ class BData:
             ccoef[J] = (coef[J_dict[J]] + coef[J_dict[-J]]).real
             scoef[J] = (1j*(coef[J_dict[J]] - coef[J_dict[-J]])).real
 
-        return ccoef, scoef
-
-    def calc_coef(self, M):
-        if self.analytic_known:
-            return self.calc_coef_analytic(M)
-        else:
-            return self.calc_coef_numerical(M)
+        assert np.max(np.abs(ccoef)) < 1e-13
+        return scoef[1:]
 
 
 class Parabola(BData):
