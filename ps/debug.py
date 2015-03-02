@@ -4,6 +4,7 @@ import scipy
 
 import itertools as it
 
+import matplotlib
 import matplotlib.pyplot as plt
 
 from solver import cart_to_polar, Result
@@ -345,7 +346,7 @@ class PsDebug:
                     
                 print(s)
                 
-    def plot_contour(self, u):
+    def plot_contour(self, u=None):
         N = self.N
     
         x_range = np.zeros(N-1)
@@ -356,12 +357,22 @@ class PsDebug:
         
         Z = np.zeros((N-1, N-1))
         for i, j in self.global_Mplus:            
-            Z[i-1, j-1] = u[matrices.get_index(N, i, j)].real
+            if u is not None:
+                Z[i-1, j-1] = u[matrices.get_index(N, i, j)].real
+            else:
+                x, y = self.get_coord(i, j)
+                Z[i-1, j-1] = self.problem.eval_expected(x, y)
     
         X, Y = np.meshgrid(x_range, y_range, indexing='ij')
-        fig = plt.contourf(X, Y, Z)
+
+        fig, ax = plt.subplots()
+        p = ax.pcolor(X, Y, Z,
+            vmin=np.min(Z),
+            vmax=np.max(Z)
+        )
+        ax.axis('tight')
         
-        plt.colorbar(fig)
+        cb = fig.colorbar(p, ax=ax)
         
         self.plot_Gamma()
         plt.show()
