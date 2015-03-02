@@ -113,27 +113,12 @@ class PsDebug:
                     diff = abs(exp - data['value'])
                     error.append(diff)
 
-                    if diff > 1e-3:
-                        print(node, diff)
+                    #if diff > 1e-3:
+                    #    print(node, diff)
 
         result = Result()
-        result.u_act = np.zeros((self.N-1)**2, dtype=complex)
-        
-        reduced = self.mv_reduce(mv_ext)
-        
-        for l in range(len(self.union_gamma)):
-            node = self.union_gamma[l]
-            x, y = self.get_coord(*node)
-
-            index = matrices.get_index(self.N, *node)
-            result.u_act[index] = reduced[l]
-
-            if setypes is None:
-                exp = self.problem.eval_expected(x, y)  
-                diff = abs(exp - reduced[l])
-                error.append(diff)
-
         result.error = max(error)
+        result.u_act = mv_ext
         return result
 
     def test_extend_basis(self):

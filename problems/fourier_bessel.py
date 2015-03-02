@@ -110,12 +110,13 @@ class FourierBessel(PizzaProblem):
                 d_u_n += ratio * b * np.sin(m*nu*(th-a))
 
         else:
-            for m in range(self.M+1, self.m_max+1):
-                ratio = jv(m*nu, k*r) / self.bessel_R[m-1]
+            d_u_n = 0
+            '''for m in range(self.M+1, self.m_max+1):
+                ratio = self.calc_bessel_ratio(m, r)
                 b = self.b_coef[m-1]
                 d_u_n += ratio * b * (m*nu) * np.cos(m*nu*(th-a))
 
             if sid == 2:
-                d_u_n *= -1
+                d_u_n *= -1'''
 
         return d_u_n
