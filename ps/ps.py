@@ -109,9 +109,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         The main procedure for PizzaSolver.
         '''
-        self.plot_contour()
-        return
-
         n_basis_tuple = self.problem.get_n_basis(self.N)
         self.setup_B_desc(*n_basis_tuple)
         

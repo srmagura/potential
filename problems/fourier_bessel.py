@@ -51,13 +51,18 @@ class FourierBessel(PizzaProblem):
         ratio = jv(m*nu, k*r) / self.bessel_R[m-1]
         return float(ratio)
 
-    def eval_expected_polar(self, r, th):
+    def eval_expected_polar(self, r, th, restored=False):
         a = self.a
         nu = self.nu
 
         u = 0
 
-        for m in range(self.M+1, self.m_max+1):
+        if restored:
+            m_start = 1
+        else:
+            m_start = self.M+1
+
+        for m in range(m_start, self.m_max+1):
             b = self.b_coef[m-1]
             ratio = self.calc_bessel_ratio(m, r)
             u += b * ratio * np.sin(m*nu*(th-a))
@@ -110,14 +115,16 @@ class FourierBessel(PizzaProblem):
                 d_u_n += ratio * b * np.sin(m*nu*(th-a))
 
         else:
-            d_u_n = 0
+            #d_u_n = 0
             
-            '''for m in range(self.M+1, self.m_max+1):
-                ratio = self.calc_bessel_ratio(m, r)
+            #for m in range(self.M+1, self.m_max+1):
+            for m in range(1, self.m_max+1):
+                #ratio = self.calc_bessel_ratio(m, r)
+                ratio = 1
                 b = self.b_coef[m-1]
                 d_u_n += ratio * b * (m*nu) * np.cos(m*nu*(th-a))
 
             if sid == 2:
-                d_u_n *= -1'''
+                d_u_n *= -1
 
         return d_u_n

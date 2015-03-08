@@ -346,7 +346,7 @@ class PsDebug:
                     
                 print(s)
                 
-    def plot_contour(self, u=None):
+    def color_plot(self, u=None):
         N = self.N
     
         x_range = np.zeros(N-1)

@@ -41,7 +41,9 @@ class Solver(SolverExtend, SolverDebug):
             print('Grid is {0} x {0}.'.format(self.N))
 
         self.construct_grids()
-        '''self.L = matrices.get_L(self.scheme_order, self.N, 
+
+        #'''
+        self.L = matrices.get_L(self.scheme_order, self.N, 
             self.AD_len, self.problem.k)
         self.LU_factorization = scipy.sparse.linalg.splu(self.L)
 
@@ -52,7 +54,8 @@ class Solver(SolverExtend, SolverDebug):
         self.B_src_f = self.B.dot(self.src_f)
 
         for i,j in self.global_Mminus:
-            self.B_src_f[matrices.get_index(N,i,j)] = 0'''
+            self.B_src_f[matrices.get_index(N,i,j)] = 0
+        #'''
 
     # Get the rectangular coordinates of grid point (i,j)
     def get_coord(self, i, j):
