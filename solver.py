@@ -22,6 +22,10 @@ class Result:
 
 class Solver(SolverExtend, SolverDebug): 
 
+    '''Set to True when debugging with test_extend_boundary() for 
+    significant performance benefit.'''
+    skip_matrix_build = False
+
     def __init__(self, problem, N, scheme_order, **kwargs):
         super().__init__()
         self.problem = problem
@@ -42,20 +46,19 @@ class Solver(SolverExtend, SolverDebug):
 
         self.construct_grids()
 
-        #'''
-        self.L = matrices.get_L(self.scheme_order, self.N, 
-            self.AD_len, self.problem.k)
-        self.LU_factorization = scipy.sparse.linalg.splu(self.L)
+        if not self.skip_matrix_build:
+            self.L = matrices.get_L(self.scheme_order, self.N, 
+                self.AD_len, self.problem.k)
+            self.LU_factorization = scipy.sparse.linalg.splu(self.L)
 
-        self.setup_src_f()
+            self.setup_src_f()
 
-        self.B = matrices.get_B(self.scheme_order, self.N,
-            self.AD_len, self.k)
-        self.B_src_f = self.B.dot(self.src_f)
+            self.B = matrices.get_B(self.scheme_order, self.N,
+                self.AD_len, self.k)
+            self.B_src_f = self.B.dot(self.src_f)
 
-        for i,j in self.global_Mminus:
-            self.B_src_f[matrices.get_index(N,i,j)] = 0
-        #'''
+            for i,j in self.global_Mminus:
+                self.B_src_f[matrices.get_index(N,i,j)] = 0
 
     # Get the rectangular coordinates of grid point (i,j)
     def get_coord(self, i, j):

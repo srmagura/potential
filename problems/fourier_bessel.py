@@ -12,13 +12,25 @@ import problems.bdata
 mpmath.mp.dps = 15
     
 class FourierBessel(PizzaProblem):
+
+    R = 10
+    AD_len = 24
     
     k = 1
     homogeneous = True
     expected_known = True
-    m_max = 149
+    m_max = 199
     
     M = 7
+
+    n_basis_dict = {
+        16: (21, 20), 
+        32: (28, 30), 
+        64: (60, 40), 
+        128: (80, 50), 
+        256: (120, 29),
+        512: (150, 34)
+    }
 
     def __init__(self, **kwargs): 
         super().__init__(**kwargs)
@@ -115,12 +127,9 @@ class FourierBessel(PizzaProblem):
                 d_u_n += ratio * b * np.sin(m*nu*(th-a))
 
         else:
-            #d_u_n = 0
-            
-            #for m in range(self.M+1, self.m_max+1):
-            for m in range(1, self.m_max+1):
-                #ratio = self.calc_bessel_ratio(m, r)
-                ratio = 1
+            #for m in range(1, self.m_max+1):
+            for m in range(self.M+1, self.m_max+1):
+                ratio = self.calc_bessel_ratio(m, r)
                 b = self.b_coef[m-1]
                 d_u_n += ratio * b * (m*nu) * np.cos(m*nu*(th-a))
 

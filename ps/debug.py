@@ -101,6 +101,9 @@ class PsDebug:
     def test_extend_boundary(self, setypes=None):
         self.calc_c0()
         self.calc_c1_exact()
+
+        self.c0_test(plot=False)
+        self.c1_test(plot=False)
         
         error = []
         mv_ext = self.mv_extend_boundary()
@@ -165,7 +168,7 @@ class PsDebug:
         result.error = max(error)
         return result
 
-    def c0_test(self):
+    def c0_test(self, plot=True):
         '''
         Plot the Dirichlet data along with its Chebyshev expansion. If there
         is more than a minor difference between the two, something is wrong.
@@ -189,6 +192,11 @@ class PsDebug:
                 expansion_data[l] +=\
                     (self.c0[JJ] *
                     self.eval_dn_B_arg(0, JJ, r, th)).real
+        
+        print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
+
+        if not plot:
+            return
 
         plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
         plt.plot(s_data, expansion_data, label='Expansion')
@@ -199,7 +207,6 @@ class PsDebug:
         plt.ylabel('Dirichlet data')
         plt.show()
 
-        #print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
         
     def print_c1(self):
         sid = 0
@@ -217,7 +224,7 @@ class PsDebug:
             i += n_basis
             sid += 1
 
-    def c1_test(self):
+    def c1_test(self, plot=True):
         '''
         Plot the reconstructed Neumann data, as approximated by a Chebyshev 
         expansion. If the Chebyshev expansion shows "spikes" near the
@@ -251,6 +258,9 @@ class PsDebug:
             print('c1 error: {}'.format(error))
             
             plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
+
+        if not plot:
+            return
             
         plt.plot(s_data, expansion_data, label='Expansion')
         plt.legend(loc=2)

@@ -13,11 +13,11 @@ from ps.debug import PsDebug
 
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
-    AD_len = 2*np.pi
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
         self.R = problem.R
+        self.AD_len = problem.AD_len
         
         super().__init__(problem, N, scheme_order, **kwargs)
         
@@ -104,6 +104,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         rhs = self.get_Q_rhs()
          
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
+
+    skip_matrix_build = True
         
     def run(self):
         '''
@@ -112,8 +114,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         n_basis_tuple = self.problem.get_n_basis(self.N)
         self.setup_B_desc(*n_basis_tuple)
         
-        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
-
         #self.plot_gamma()
         
         '''
@@ -126,12 +126,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #return self.ps_test_extend_src_f()
         #return self.test_extend_boundary()
-        #return self.test_extend_boundary({
-        #    (0, self.etypes['standard']),
-        #    (0, self.etypes['left']),
-        #    (0, self.etypes['right']),
-        #    (1, self.etypes['standard']),
-        #})
+        return self.test_extend_boundary({
+            #(0, self.etypes['standard']),
+            #(0, self.etypes['left']),
+            #(0, self.etypes['right']),
+            (1, self.etypes['standard']),
+        })
         
         '''
         Uncomment to run the extend basis test. Just run the program on a
@@ -139,18 +139,21 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #return self.test_extend_basis()
 
+        #self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+
         self.calc_c0()
-        #self.calc_c1()
-        self.calc_c1_exact()
-        
         '''
-        Uncomment one or both of the following lines to see a plot of the
-        Chebyshev series with coefficients c0 or c1. Also plots the
-        the boundary data the Chebyshev series is supposed to approximate, 
-        if that the boundary data is known analytically.
+        Uncomment the following line to see a plot of the boundary data and
+        its Chebyshev series, which has coefficients c0. There is also an
+        analogous function c1_test().
         '''
         #self.c0_test()
-        self.c1_test()
+
+
+        #self.calc_c1()
+        self.calc_c1_exact()
+        #self.c1_test()
+        
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f

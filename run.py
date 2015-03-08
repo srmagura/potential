@@ -25,10 +25,10 @@ class Interface:
 
         N = self.args.N
         while N <= self.args.c:
+            print('---- {0} x {0} ----'.format(N))
+
             my_solver = self.problem.get_solver(N, self.args.o)
             result = my_solver.run()
-
-            print('---- {0} x {0} ----'.format(N))
             
             if result.error is not None:
                 print('Error:', result.error)

@@ -9,6 +9,7 @@ class Problem:
     expected_known = False
     
     R = 2.3
+    AD_len = 2*np.pi
     
     def __init__(self, **kwargs):
         super().__init__()
@@ -55,7 +56,7 @@ class PizzaProblem(Problem):
     a = np.pi / 6
     solver_class = PizzaSolver
     
-    # Semi-optimal values, determined by experiment
+    # "Semi-optimal" values, determined by experiment
     n_basis_dict = {
         16: (21, 9), 
         32: (28, 8), 
