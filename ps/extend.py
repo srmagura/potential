@@ -224,6 +224,8 @@ class PsExtend:
         x, y = self.get_coord(i, j)
         options['sid'] = 1
         derivs = self.ext_calc_certain_xi_derivs(i, j, x, 2*np.pi, options)
+        if abs(x-5)<1e-5 and y > 1e-5:
+            print('xi1(5)=', derivs[1])
 
         return {'elen': abs(y), 'value': self.extend_from_radius(y, *derivs)}
                 

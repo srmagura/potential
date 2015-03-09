@@ -105,7 +105,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
          
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
-    skip_matrix_build = True
+    skip_matrix_build = False
         
     def run(self):
         '''
@@ -120,18 +120,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Uncomment one of the following lines and run the convergence test
         via the -c command-line flag to ensure that the extension procedures
         have the desired convergence rates. ps_test_extend_src_f() is
-        not valid for problems where f is not continuous everywhere (even
+        not valid for problems where f is not continuous everywhere (including
         outside the domain). test_extend_boundary() requires the Neumann
         data to be analytically known.
         '''
         #return self.ps_test_extend_src_f()
         #return self.test_extend_boundary()
-        return self.test_extend_boundary({
-            #(0, self.etypes['standard']),
-            #(0, self.etypes['left']),
-            #(0, self.etypes['right']),
-            (1, self.etypes['standard']),
-        })
         
         '''
         Uncomment to run the extend basis test. Just run the program on a
@@ -139,7 +133,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #return self.test_extend_basis()
 
-        #self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
 
         self.calc_c0()
         '''
@@ -149,11 +143,9 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #self.c0_test()
 
-
-        #self.calc_c1()
-        self.calc_c1_exact()
+        self.calc_c1()
+        #self.calc_c1_exact()
         #self.c1_test()
-        
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f

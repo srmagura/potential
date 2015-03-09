@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import jv, jvp
-from sympy import mpmath
 
 from solver import cart_to_polar
 
@@ -9,7 +8,6 @@ from .sympy_problem import SympyProblem
 
 import problems.bdata
 
-mpmath.mp.dps = 15
     
 class FourierBessel(PizzaProblem):
 
@@ -26,10 +24,10 @@ class FourierBessel(PizzaProblem):
     n_basis_dict = {
         16: (21, 20), 
         32: (28, 30), 
-        64: (60, 40), 
-        128: (80, 50), 
-        256: (120, 29),
-        512: (150, 34)
+        64: (60, 55), 
+        128: (80, 70), 
+        256: (120, 110),
+        512: (150, 140),
     }
 
     def __init__(self, **kwargs): 
@@ -59,13 +57,18 @@ class FourierBessel(PizzaProblem):
         R = self.R
         nu = self.nu
 
-        #ratio = mpmath.besselj(m*nu, k*r) / mpmath.besselj(m*nu, k*R)
         ratio = jv(m*nu, k*r) / self.bessel_R[m-1]
         return float(ratio)
 
-    def eval_expected_polar(self, r, th, restored=False):
+    def eval_expected_polar(self, r, th, restored=False, setype=None):
         a = self.a
         nu = self.nu
+
+        if setype is not None:
+            if setype[0] == 1:
+                if th < a:
+                    th += 2*np.pi
+                    #print('hit', r, th)
 
         u = 0
 
@@ -132,8 +135,11 @@ class FourierBessel(PizzaProblem):
                 ratio = self.calc_bessel_ratio(m, r)
                 b = self.b_coef[m-1]
                 d_u_n += ratio * b * (m*nu) * np.cos(m*nu*(th-a))
+            
+            d_u_n /= r
 
             if sid == 2:
                 d_u_n *= -1
+
 
         return d_u_n

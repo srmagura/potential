@@ -25,13 +25,13 @@ class Problem:
         else:
             return self.n_basis_dict[None]
 
-    def eval_expected(self, x, y):
+    def eval_expected(self, x, y, **kwargs):
         r, th = cart_to_polar(x, y)
         
         if th < self.a/2:
             th += 2*np.pi
             
-        return self.eval_expected_polar(r, th)
+        return self.eval_expected_polar(r, th, **kwargs)
 
     def eval_f(self, x, y):
         if self.homogeneous:

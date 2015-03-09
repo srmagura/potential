@@ -110,15 +110,14 @@ class PsDebug:
 
         for node in mv_ext:
             x, y = self.get_coord(*node)
-            exp = self.problem.eval_expected(x, y)  
             
             for data in mv_ext[node]:
                 if setypes is None or data['setype'] in setypes:
+                    exp = self.problem.eval_expected(x, y, setype=data['setype'])
                     diff = abs(exp - data['value'])
+                    if abs(x-5)<1e-5 and y > 1e-5:
+                        print(data['value'], exp)
                     error.append(diff)
-
-                    #if diff > 1e-3:
-                    #    print(node, diff)
 
         result = Result()
         result.error = max(error)
