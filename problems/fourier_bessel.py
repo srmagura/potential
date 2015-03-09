@@ -22,12 +22,12 @@ class FourierBessel(PizzaProblem):
     M = 7
 
     n_basis_dict = {
-        16: (21, 20), 
-        32: (28, 30), 
-        64: (60, 55), 
-        128: (80, 70), 
-        256: (120, 110),
-        512: (150, 140),
+        16: (14, 7), 
+        32: (26, 13), 
+        64: (30, 19), 
+        128: (45, 34), 
+        256: (65, 37),
+        512: (10, 10),
     }
 
     def __init__(self, **kwargs): 
@@ -50,7 +50,7 @@ class FourierBessel(PizzaProblem):
             for m in range(1, len(self.b_coef)+1):
                 self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
 
-            print('b[m_max] =', self.b_coef[self.m_max-1])
+            print('FourierBessel: b_coef[m_max] =', self.b_coef[self.m_max-1])
 
     def calc_bessel_ratio(self, m, r):
         k = self.k

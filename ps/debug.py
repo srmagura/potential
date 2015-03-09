@@ -331,20 +331,28 @@ class PsDebug:
         plt.show()
             
     def optimize_n_basis(self):
+        '''
+        Utility function for selecting a good number of basis functions.
+        Too many or too few basis functions will introduce numerical error.
+        True solution must be known. 
+        
+        Run without the -c flag. Run the program several times, varying
+        the value of the -N option.
+        
+        There may be a way to improve on this brute force method.
+        '''
         min_error = float('inf')
 
-        start_circle = 40
-        start_radius = 24
-        
-        for n_circle in range(start_circle, 50, 3):
-            for n_radius in range(start_radius, n_circle, 3):
+        # Tweak the following ranges as needed
+        for n_circle in range(45, 65, 3):
+            for n_radius in range(34, int(.8*n_circle), 3):
                 self.setup_B_desc(n_circle, n_radius)
                 
                 self.calc_c0()
                 self.calc_c1()
 
                 ext = self.extend_boundary()
-                u_act = self.get_potential(ext) #+ self.ap_sol_f
+                u_act = self.get_potential(ext) + self.ap_sol_f
 
                 error = self.eval_error(u_act)
                 s ='n_circle={}    n_radius={}    error={}'.format(n_circle, n_radius, error)

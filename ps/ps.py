@@ -135,6 +135,9 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
 
+        '''Utility function for selecting a good number of basis functions.'''
+        #self.optimize_n_basis()
+
         self.calc_c0()
         '''
         Uncomment the following line to see a plot of the boundary data and
