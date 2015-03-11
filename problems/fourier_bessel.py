@@ -16,8 +16,7 @@ class FourierBessel(PizzaProblem):
     
     k = 1
     homogeneous = True
-    expected_known = True
-    m_max = 199
+    expected_known = False
     
     M = 7
 
@@ -27,7 +26,7 @@ class FourierBessel(PizzaProblem):
         64: (30, 19), 
         128: (45, 34), 
         256: (65, 37),
-        512: (10, 10),
+        512: (90, 50),
     }
 
     def __init__(self, **kwargs): 
@@ -143,3 +142,22 @@ class FourierBessel(PizzaProblem):
 
 
         return d_u_n
+
+
+class FourierBesselHat(FourierBessel):
+
+    expected_known = True
+    m_max = 199
+
+    def __init__(self, **kwargs): 
+        self.bdata = problems.bdata.Hat()
+        super().__init__(**kwargs)
+
+
+class FourierBesselParabola(FourierBessel):
+
+    expected_known = False
+
+    def __init__(self, **kwargs): 
+        self.bdata = problems.bdata.Parabola()
+        super().__init__(**kwargs)

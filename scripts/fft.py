@@ -51,10 +51,9 @@ def convergence_test():
     Jmax = 4
     prev_error = None
 
-    while Jmax <= 512:
+    while Jmax <= 1024:
         prev_error = do_test(Jmax, prev_error)
         Jmax *= 2
 
-bdata = Hat()
+bdata = Parabola()
 convergence_test()
-#do_test(400, None)

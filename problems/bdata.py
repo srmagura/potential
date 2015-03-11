@@ -75,10 +75,10 @@ class Parabola(BData):
 
         return coef
 
+
 class Hat(BData):
 
     def eval_phi0(self, th):
-        #return np.sin(2*np.pi/(2*np.pi-a)*(th-a))
         x = (2*th-(2*np.pi+a))/(2*np.pi-a)
 
         if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
