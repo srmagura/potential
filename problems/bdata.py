@@ -5,6 +5,14 @@ import collections
 a = np.pi/6
 nu = np.pi / (2*np.pi - a)
 
+shc_n_basis_dict = {
+    16: (14, 7), 
+    32: (26, 13), 
+    64: (30, 19), 
+    128: (45, 34), 
+    256: (65, 37),
+    512: (90, 50),
+}
 
 class BData:
 
@@ -47,7 +55,10 @@ class BData:
             ccoef[J] = (coef[J_dict[J]] + coef[J_dict[-J]]).real
             scoef[J] = (1j*(coef[J_dict[J]] - coef[J_dict[-J]])).real
 
-        assert np.max(np.abs(ccoef)) < 1e-13
+        #assert np.max(np.abs(ccoef)) < 1e-13
+        if not np.max(np.abs(ccoef)) < 1e-13:
+            print('assertion failed')
+
         return scoef[1:]
 
     def calc_coef(self, M):

@@ -7,6 +7,7 @@ from scipy.integrate import quad
 import matplotlib.pyplot as plt
 
 from problems.bdata import Parabola, Hat
+from problems.shc_bessel import ShcBesselKnown
 
 k = 1
 
@@ -41,9 +42,9 @@ def do_test(M, prev_error):
 
     print()
 
-    #plt.plot(th_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
-    #plt.plot(th_data, expansion_data, label='Expansion')
-    #plt.show()
+    plt.plot(th_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
+    plt.plot(th_data, expansion_data, label='Expansion')
+    plt.show()
 
     return error
 
@@ -63,5 +64,7 @@ def numerical_test():
 
     print(np.max(np.abs(coef - coef_numerical)))
 
-bdata = Hat()
-convergence_test()
+problem = ShcBesselKnown()
+bdata = problem.bdata
+do_test(32, None)
+#convergence_test()
