@@ -42,9 +42,9 @@ def do_test(M, prev_error):
 
     print()
 
-    plt.plot(th_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
-    plt.plot(th_data, expansion_data, label='Expansion')
-    plt.show()
+    #plt.plot(th_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
+    #plt.plot(th_data, expansion_data, label='Expansion')
+    #plt.show()
 
     return error
 
@@ -66,5 +66,5 @@ def numerical_test():
 
 problem = ShcBesselKnown()
 bdata = problem.bdata
-do_test(32, None)
-#convergence_test()
+#do_test(32, None)
+convergence_test()

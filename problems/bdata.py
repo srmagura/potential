@@ -29,7 +29,7 @@ class BData:
 
         # Half-wave FFT. It would be more efficient to use an actual 
         # half-wave FFT routine
-        discrete_phi0 = np.concatenate((discrete_phi0, -discrete_phi0))
+        discrete_phi0 = np.concatenate((discrete_phi0, -discrete_phi0[-2::-1]))
         coef_raw = np.fft.fft(discrete_phi0)
 
         J_dict = collections.OrderedDict(((J, None) for J in 
@@ -40,7 +40,7 @@ class BData:
 
         for J in J_dict:
             J_dict[J] = i
-            coef[i] = coef_raw[J] / (fourier_N*2)
+            coef[i] = coef_raw[J] / (fourier_N*2-1)
             i += 1
 
         return J_dict, coef
@@ -56,8 +56,9 @@ class BData:
             scoef[J] = (1j*(coef[J_dict[J]] - coef[J_dict[-J]])).real
 
         #assert np.max(np.abs(ccoef)) < 1e-13
-        if not np.max(np.abs(ccoef)) < 1e-13:
-            print('assertion failed')
+        #if not np.max(np.abs(ccoef)) < 1e-13:
+        #    print('assertion failed')
+        #    print(ccoef)
 
         return scoef[1:]
 
