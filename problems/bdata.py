@@ -23,13 +23,16 @@ class BData:
 
     def calc_fft_exp(self, Jmax):
         fourier_N = 2**10
-        th_data = np.linspace(a, 2*np.pi, fourier_N+1)[:-1]
+        th_data = np.linspace(a, 2*np.pi, fourier_N+1)
 
         discrete_phi0 = np.array([self.eval_phi0(th) for th in th_data])
 
         # Half-wave FFT. It would be more efficient to use an actual 
         # half-wave FFT routine
-        discrete_phi0 = np.concatenate((discrete_phi0, -discrete_phi0[-2::-1]))
+
+        # Reverse array and remove last element
+        reflected = -discrete_phi0[::-1][:-1]
+        discrete_phi0 = np.concatenate((discrete_phi0[:-1], reflected))
         coef_raw = np.fft.fft(discrete_phi0)
 
         J_dict = collections.OrderedDict(((J, None) for J in 
@@ -40,7 +43,7 @@ class BData:
 
         for J in J_dict:
             J_dict[J] = i
-            coef[i] = coef_raw[J] / (fourier_N*2-1)
+            coef[i] = coef_raw[J] / (fourier_N*2)
             i += 1
 
         return J_dict, coef

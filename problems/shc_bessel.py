@@ -70,7 +70,6 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
 
     def __init__(self, **kwargs): 
         kwargs['f_expr'] = get_reg_f_expr()
-        kwargs['lambdify_module'] = 'mpmath'
         super().__init__(**kwargs)
         
         self.v_asympt_lambda = lambdify(symbols('k R r th'), get_v_asympt_expr())
