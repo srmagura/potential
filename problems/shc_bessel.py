@@ -86,7 +86,9 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         r, th = self.arg_to_polar(arg, sid)
         
         if sid == 0:
-            bc = self.bdata.eval_phi0(th)
+            bc = (th - a) / (2*np.pi - a)
+            bc *= jv(nu/2, k*R)
+            bc -= self.v_asympt_lambda(k, R, r, th)
             
             for m in range(1, self.M+1):
                 bc -= b_coef[m-1] * np.sin(m*nu*(th - a))
@@ -94,6 +96,9 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
             return bc
             
         elif sid == 1:
+            if th < 1.5*np.pi:
+                return 0
+
             bc = jv(nu/2, k*r)
             bc -= self.v_asympt_lambda(k, R, r, th)
             return bc
