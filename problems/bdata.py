@@ -5,15 +5,6 @@ import collections
 a = np.pi/6
 nu = np.pi / (2*np.pi - a)
 
-shc_n_basis_dict = {
-    16: (14, 7), 
-    32: (26, 13), 
-    64: (30, 19), 
-    128: (45, 34), 
-    256: (65, 37),
-    512: (90, 50),
-}
-
 class BData:
 
     analytic_known = False

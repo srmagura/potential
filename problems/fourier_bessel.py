@@ -20,7 +20,14 @@ class FourierBessel(PizzaProblem):
     
     M = 7
 
-    n_basis_dict = problems.bdata.shc_n_basis_dict
+    n_basis_dict = {
+        16: (14, 7), 
+        32: (26, 13), 
+        64: (30, 19), 
+        128: (45, 34), 
+        256: (65, 37),
+        512: (90, 50),
+    }
 
     def __init__(self, **kwargs): 
         super().__init__(**kwargs)

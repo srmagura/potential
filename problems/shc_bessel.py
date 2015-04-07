@@ -66,7 +66,16 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
     M = 7
 
-    n_basis_dict = problems.bdata.shc_n_basis_dict
+
+    n_basis_dict = {
+        16: (13, 6), 
+        32: (18, 9), 
+        64: (28, 15), 
+        128: (40, 24), 
+        256: (45, 40),
+        512: (50, 60),
+        1024: (70, 80)
+    }
 
     def __init__(self, **kwargs): 
         kwargs['f_expr'] = get_reg_f_expr()
