@@ -52,19 +52,29 @@ class MyBData(problems.bdata.BData):
         return phi0
 
 class ShcBesselAbstract(SympyProblem, PizzaProblem):
-    
+
     k = 1
     expected_known = False
     
     M = 7
 
+    ''' v + hat
     n_basis_dict = {
-        16: (14, 7), 
-        32: (26, 13), 
-        64: (30, 19), 
-        128: (29, 11), 
-        256: (65, 37),
-        512: (90, 50),
+        16: (21, 7), 
+        32: (33, 7), 
+        64: (51, 17), 
+        128: (60, 19), 
+        256: (75, 25),
+        512: (90, 30),
+    }'''
+
+    n_basis_dict = {
+        16: (15, 6), 
+        32: (20, 7), 
+        64: (25, 13), 
+        128: (35, 22), 
+        256: (60, 35),
+        512: (70, 45),
     }
 
     def __init__(self, **kwargs): 
@@ -84,9 +94,11 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         return jv(nu/2, k*r) * np.sin(nu*(th - a)/2)
 
     def eval_phi0(self, r, th):
+        k = self.k
         nu = self.nu
         a = self.a
-        return self.eval_v(r, th) + np.sin(8*nu*(th - a))
+        #return self.eval_v(r, th) + problems.bdata.eval_hat(th)
+        return jv(nu/2, k*r) / (2*np.pi - a) * (th - a)
 
     def _eval_bc_extended(self, arg, sid, b_coef):
         k = self.k
@@ -119,8 +131,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
 
 class ShcBesselKnown(ShcBesselAbstract):
 
-    expected_known = True
-    m_max = 13
+    #expected_known = True
+    m_max = 299
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -131,7 +143,6 @@ class ShcBesselKnown(ShcBesselAbstract):
             m = self.M
 
         self.b_coef = self.bdata.calc_coef(m)
-        #print(self.b_coef)
 
         if self.expected_known:
             self.bessel_R = np.zeros(len(self.b_coef))
@@ -139,7 +150,7 @@ class ShcBesselKnown(ShcBesselAbstract):
             for m in range(1, len(self.b_coef)+1):
                 self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
 
-        #    print('ShcBesselKnown: b_coef[m_max] =', self.b_coef[self.m_max-1])
+            print('ShcBesselKnown: b_coef[m_max] =', self.b_coef[self.m_max-1])
 
     def calc_bessel_ratio(self, m, r):
         k = self.k
