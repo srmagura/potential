@@ -86,7 +86,11 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
     def eval_phi0(self, r, th):
         nu = self.nu
         a = self.a
-        return self.eval_v(r, th) + np.sin(8*nu*(th - a))
+
+        phi0 = self.eval_v(r, th)
+        phi0 += np.sin(2*nu*(th - a))
+        phi0 += np.sin(8*nu*(th - a))
+        return phi0
 
     def _eval_bc_extended(self, arg, sid, b_coef):
         k = self.k
