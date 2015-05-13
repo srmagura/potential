@@ -65,7 +65,6 @@ class FourierBessel(PizzaProblem):
             if setype[0] == 1:
                 if th < a:
                     th += 2*np.pi
-                    #print('hit', r, th)
 
         u = 0
 

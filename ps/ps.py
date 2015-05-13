@@ -111,6 +111,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         The main procedure for PizzaSolver.
         '''
+        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+
+        '''
+        Debugging function for choosing an appropriate number of basis
+        functions.
+        '''
+        #self.optimize_n_basis()
+
         n_basis_tuple = self.problem.get_n_basis(self.N)
         self.setup_B_desc(*n_basis_tuple)
         
@@ -133,7 +141,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #return self.test_extend_basis()
 
-        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
 
         '''Utility function for selecting a good number of basis functions.'''
         #self.optimize_n_basis()

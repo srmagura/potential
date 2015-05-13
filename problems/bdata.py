@@ -1,8 +1,9 @@
 import numpy as np
 from scipy.integrate import quad
 import collections
+from .problem import PizzaProblem
 
-a = np.pi/6
+a = PizzaProblem.a
 nu = np.pi / (2*np.pi - a)
 
 class BData:
@@ -81,14 +82,16 @@ class Parabola(BData):
 
         return coef
 
+def eval_hat(th):
+    x = (2*th-(2*np.pi+a))/(2*np.pi-a)
+
+    if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
+        return 0
+    else:
+        arg = -1/(1-abs(x)**2)
+        return np.exp(arg)
 
 class Hat(BData):
 
     def eval_phi0(self, th):
-        x = (2*th-(2*np.pi+a))/(2*np.pi-a)
-
-        if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
-            return 0
-        else:
-            arg = -1/(1-abs(x)**2)
-            return np.exp(arg)
+        return eval_hat(th)

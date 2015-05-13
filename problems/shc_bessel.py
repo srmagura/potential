@@ -42,21 +42,13 @@ def get_reg_f_expr():
 
 class MyBData(problems.bdata.BData):
 
-    def __init__(self, k, R, a, nu):
-        self.k = k
-        self.R = R
-        self.a = a
-        self.nu = nu
+    def __init__(self, problem):
+        self.problem = problem
 
     def eval_phi0(self, th):
-        k = self.k
-        R = self.R
-        a = self.a
-        nu = self.nu
-
-        phi0 = (th - a) / (2*np.pi - a)
-        phi0 -= np.sin(nu*(th - a)/2)
-        phi0 *= jv(nu/2, k*R)
+        R = self.problem.R
+        phi0 = self.problem.eval_phi0(R, th)
+        phi0 -= self.problem.eval_v(R, th)
         return phi0
 
 class ShcBesselAbstract(SympyProblem, PizzaProblem):
@@ -66,15 +58,13 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
     M = 7
 
-
     n_basis_dict = {
-        16: (13, 6), 
-        32: (18, 9), 
-        64: (28, 15), 
-        128: (40, 24), 
-        256: (45, 40),
-        512: (50, 60),
-        1024: (70, 80)
+        16: (14, 7), 
+        32: (26, 13), 
+        64: (30, 19), 
+        128: (29, 11), 
+        256: (65, 37),
+        512: (90, 50),
     }
 
     def __init__(self, **kwargs): 
@@ -84,7 +74,19 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         self.v_asympt_lambda = lambdify(symbols('k R r th'), get_v_asympt_expr())
         self.nu = np.pi / (2*np.pi - self.a)
 
-        self.bdata = MyBData(self.k, self.R, self.a, self.nu)
+        self.bdata = MyBData(self)
+
+    def eval_v(self, r, th):
+        k = self.k
+        nu = self.nu
+        a = self.a
+
+        return jv(nu/2, k*r) * np.sin(nu*(th - a)/2)
+
+    def eval_phi0(self, r, th):
+        nu = self.nu
+        a = self.a
+        return self.eval_v(r, th) + np.sin(8*nu*(th - a))
 
     def _eval_bc_extended(self, arg, sid, b_coef):
         k = self.k
@@ -95,8 +97,7 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         r, th = self.arg_to_polar(arg, sid)
         
         if sid == 0:
-            bc = (th - a) / (2*np.pi - a)
-            bc *= jv(nu/2, k*R)
+            bc = self.eval_phi0(r, th)
             bc -= self.v_asympt_lambda(k, R, r, th)
             
             for m in range(1, self.M+1):
@@ -108,7 +109,7 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
             if th < 1.5*np.pi:
                 return 0
 
-            bc = jv(nu/2, k*r)
+            bc = self.eval_v(r, th)
             bc -= self.v_asympt_lambda(k, R, r, th)
             return bc
 
@@ -118,12 +119,54 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
 
 class ShcBesselKnown(ShcBesselAbstract):
 
+    expected_known = True
+    m_max = 13
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.b_coef = self.bdata.calc_coef(self.M)
+
+        if self.expected_known:
+            m = self.m_max
+        else:
+            m = self.M
+
+        self.b_coef = self.bdata.calc_coef(m)
+        #print(self.b_coef)
+
+        if self.expected_known:
+            self.bessel_R = np.zeros(len(self.b_coef))
+
+            for m in range(1, len(self.b_coef)+1):
+                self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
+
+        #    print('ShcBesselKnown: b_coef[m_max] =', self.b_coef[self.m_max-1])
+
+    def calc_bessel_ratio(self, m, r):
+        k = self.k
+        R = self.R
+        nu = self.nu
+
+        ratio = jv(m*nu, k*r) / self.bessel_R[m-1]
+        return float(ratio)
+
+    def eval_expected_polar(self, r, th):
+        a = self.a
+        k = self.k
+        R = self.R
+        nu = self.nu
+
+        v = self.eval_v(r, th)
+        u = v - self.v_asympt_lambda(k, R, r, th)
+
+        for m in range(self.M+1, self.m_max+1):
+            b = self.b_coef[m-1]
+            ratio = self.calc_bessel_ratio(m, r)
+            u += b * ratio * np.sin(m*nu*(th-a))
+
+        return u
     
     def eval_bc_extended(self, arg, sid):
-        return self._eval_bc_extended(arg, sid, self.b_coef)
+        return self._eval_bc_extended(arg, sid, self.b_coef[:self.M])
         
         
 class ShcBessel(ShcBesselAbstract):
