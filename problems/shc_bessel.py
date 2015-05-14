@@ -47,7 +47,7 @@ class MyBData(problems.bdata.BData):
 
     def eval_phi0(self, th):
         R = self.problem.R
-        phi0 = self.problem.eval_phi0(R, th)
+        phi0 = self.problem.eval_phi0(th)
         phi0 -= self.problem.eval_v(R, th)
         return phi0
 
@@ -93,12 +93,18 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
 
         return jv(nu/2, k*r) * np.sin(nu*(th - a)/2)
 
-    def eval_phi0(self, r, th):
+    def eval_phi0(self, th):
         k = self.k
+        R = self.R
         nu = self.nu
         a = self.a
-        #return self.eval_v(r, th) + problems.bdata.eval_hat(th)
-        return jv(nu/2, k*r) / (2*np.pi - a) * (th - a)
+
+        phi0 = self.eval_v(R, th)
+
+        for m in range(1, 30):
+            phi0 += (1/4)**m * np.sin(m*nu*(th-a))
+
+        return phi0
 
     def _eval_bc_extended(self, arg, sid, b_coef):
         k = self.k
@@ -109,7 +115,7 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         r, th = self.arg_to_polar(arg, sid)
         
         if sid == 0:
-            bc = self.eval_phi0(r, th)
+            bc = self.eval_phi0(th)
             bc -= self.v_asympt_lambda(k, R, r, th)
             
             for m in range(1, self.M+1):
@@ -131,8 +137,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
 
 class ShcBesselKnown(ShcBesselAbstract):
 
-    #expected_known = True
-    m_max = 299
+    expected_known = True
+    m_max = 30
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
