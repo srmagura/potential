@@ -47,24 +47,34 @@ class MyBData(problems.bdata.BData):
 
     def eval_phi0(self, th):
         R = self.problem.R
-        phi0 = self.problem.eval_phi0(R, th)
+        phi0 = self.problem.eval_phi0(th)
         phi0 -= self.problem.eval_v(R, th)
         return phi0
 
 class ShcBesselAbstract(SympyProblem, PizzaProblem):
-    
+
     k = 1
     expected_known = False
     
     M = 7
 
+    ''' v + hat
     n_basis_dict = {
-        16: (14, 7), 
-        32: (26, 13), 
-        64: (30, 19), 
-        128: (29, 11), 
-        256: (65, 37),
-        512: (90, 50),
+        16: (21, 7), 
+        32: (33, 7), 
+        64: (51, 17), 
+        128: (60, 19), 
+        256: (75, 25),
+        512: (90, 30),
+    }'''
+
+    n_basis_dict = {
+        16: (15, 6), 
+        32: (20, 7), 
+        64: (25, 13), 
+        128: (35, 22), 
+        256: (60, 35),
+        512: (70, 45),
     }
 
     def __init__(self, **kwargs): 
@@ -83,13 +93,17 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
 
         return jv(nu/2, k*r) * np.sin(nu*(th - a)/2)
 
-    def eval_phi0(self, r, th):
+    def eval_phi0(self, th):
+        k = self.k
+        R = self.R
         nu = self.nu
         a = self.a
 
-        phi0 = self.eval_v(r, th)
-        phi0 += np.sin(2*nu*(th - a))
-        phi0 += np.sin(8*nu*(th - a))
+        phi0 = self.eval_v(R, th)
+
+        for m in range(1, 30):
+            phi0 += (1/4)**m * np.sin(m*nu*(th-a))
+
         return phi0
 
     def _eval_bc_extended(self, arg, sid, b_coef):
@@ -101,7 +115,7 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         r, th = self.arg_to_polar(arg, sid)
         
         if sid == 0:
-            bc = self.eval_phi0(r, th)
+            bc = self.eval_phi0(th)
             bc -= self.v_asympt_lambda(k, R, r, th)
             
             for m in range(1, self.M+1):
@@ -124,7 +138,7 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
 class ShcBesselKnown(ShcBesselAbstract):
 
     expected_known = True
-    m_max = 13
+    m_max = 30
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -135,7 +149,6 @@ class ShcBesselKnown(ShcBesselAbstract):
             m = self.M
 
         self.b_coef = self.bdata.calc_coef(m)
-        #print(self.b_coef)
 
         if self.expected_known:
             self.bessel_R = np.zeros(len(self.b_coef))
@@ -143,7 +156,7 @@ class ShcBesselKnown(ShcBesselAbstract):
             for m in range(1, len(self.b_coef)+1):
                 self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
 
-        #    print('ShcBesselKnown: b_coef[m_max] =', self.b_coef[self.m_max-1])
+            print('ShcBesselKnown: b_coef[m_max] =', self.b_coef[self.m_max-1])
 
     def calc_bessel_ratio(self, m, r):
         k = self.k
