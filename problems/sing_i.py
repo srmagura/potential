@@ -36,7 +36,7 @@ def eval_expected_polar(k, R, r, th):
     return jv(nu_float, k*r) * np.sin(nu_float*(th-np.pi/6))
     
     
-class BesselNoCorrection(PizzaProblem):
+class SingINoCorrection(PizzaProblem):
 
     k = shared_k
 
@@ -55,7 +55,7 @@ class BesselNoCorrection(PizzaProblem):
 
         return eval_expected_polar(k, R, r, th) 
     
-class BesselReg(SympyProblem, PizzaProblem):
+class SingIReg(SympyProblem, PizzaProblem):
     
     k = shared_k
     expected_known = True
@@ -82,7 +82,7 @@ class BesselReg(SympyProblem, PizzaProblem):
         
         return bc_nc - float(u_asympt)
         
-class Bessel(BesselReg):
+class SingI(SingIReg):
     
     def eval_expected_polar(self, r, th):
         return eval_expected_polar(self.k, self.R, r, th)
