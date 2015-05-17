@@ -58,24 +58,26 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
     
     M = 7
 
-    ''' v + hat
+    '''#v + hat
     n_basis_dict = {
-        16: (21, 7), 
+        16: (90, 60), 
+        #16: (21, 7), 
         32: (33, 7), 
         64: (51, 17), 
-        128: (60, 19), 
+        128: (85, 19),  
         256: (75, 25),
         512: (90, 30),
     }'''
 
+    '''# linear
     n_basis_dict = {
         16: (15, 6), 
         32: (20, 7), 
         64: (25, 13), 
         128: (35, 22), 
-        256: (60, 35),
-        512: (70, 45),
-    }
+        256: (65, 40),
+        512: (90, 65),
+    }'''
 
     def __init__(self, **kwargs): 
         kwargs['f_expr'] = get_reg_f_expr()
@@ -99,11 +101,9 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         nu = self.nu
         a = self.a
 
-        phi0 = self.eval_v(R, th)
-
-        for m in range(1, 30):
-            phi0 += (1/4)**m * np.sin(m*nu*(th-a))
-
+        #phi0 = self.eval_v(R, th)
+        #phi0 += problems.bdata.eval_hat(th)
+        #phi0 = jv(nu/2, k*R) / (2*np.pi - a) * (th - a) 
         return phi0
 
     def _eval_bc_extended(self, arg, sid, b_coef):
@@ -137,8 +137,8 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
 
 class ShcBesselKnown(ShcBesselAbstract):
 
-    expected_known = True
-    m_max = 30
+    expected_known = False
+    m_max = 29
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

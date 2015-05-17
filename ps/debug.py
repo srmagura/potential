@@ -192,6 +192,9 @@ class PsDebug:
                     (self.c0[JJ] *
                     self.eval_dn_B_arg(0, JJ, r, th)).real
         
+        print('[Basis sizes]  arc: {}  radius: {}'.format(
+            self.segment_desc[0]['n_basis'],
+            self.segment_desc[1]['n_basis']))
         print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
 
         if not plot:
