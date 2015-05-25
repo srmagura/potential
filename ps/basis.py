@@ -29,11 +29,13 @@ class PsBasis:
                 JJ += 1
 
     def get_span_center(self, sid):
+        eps = 1e-3
+
         if sid == 0:
-            span = np.pi - np.pi/24      # 23/24 pi
-            center = np.pi + .5*self.a   # 26/24 pi
+            span = np.pi - .5*self.a + eps
+            center = np.pi + .5*self.a
         elif sid == 1 or sid == 2:
-            span = 6/10*self.R
+            span = self.R/2 + eps
             center = self.R/2
 
         if sid == 1:
@@ -79,7 +81,7 @@ class PsBasis:
         Do Chebyshev fits on the Dirichlet data of each segment to get
         the coefficients c0.
         '''
-        t_data = get_chebyshev_roots(1000)
+        t_data = get_chebyshev_roots(1024)
         self.c0 = []
 
         for sid in range(self.N_SEGMENT):

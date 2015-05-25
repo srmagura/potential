@@ -7,6 +7,7 @@ from ps.ps import PizzaSolver
 class Problem:
     homogeneous = False
     expected_known = False
+    force_relative = False
     
     R = 2.3
     AD_len = 2*np.pi
