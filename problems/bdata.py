@@ -82,16 +82,18 @@ class Parabola(BData):
 
         return coef
 
-def eval_hat(th):
-    x = (2*th-(2*np.pi+a))/(2*np.pi-a)
-
+def eval_hat_x(x):
     if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
         return 0
     else:
-        arg = -1/(1-abs(x)**2)
+        arg = -1/(1-x**2)
         return np.exp(arg)
+
+def eval_hat_th(th):
+    x = (2*th-(2*np.pi+a))/(2*np.pi-a)
+    return eval_hat_x(x)
 
 class Hat(BData):
 
     def eval_phi0(self, th):
-        return eval_hat(th)
+        return eval_hat_th(th)

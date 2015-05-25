@@ -40,7 +40,14 @@ def get_reg_f_expr():
     
     return f
 
-class MyBData(problems.bdata.BData):
+def eval_v(k, r, th):
+    a = np.pi/6
+    nu = np.pi / (2*np.pi - a)
+
+    return jv(nu/2, k*r) * np.sin(nu*(th - a)/2)
+
+
+class SingIHBData(problems.bdata.BData):
 
     def __init__(self, problem):
         self.problem = problem
@@ -51,33 +58,13 @@ class MyBData(problems.bdata.BData):
         phi0 -= self.problem.eval_v(R, th)
         return phi0
 
-class ShcBesselAbstract(SympyProblem, PizzaProblem):
+
+class SingIHAbstract(SympyProblem, PizzaProblem):
 
     k = 1
     expected_known = False
     
     M = 7
-
-    '''#v + hat
-    n_basis_dict = {
-        16: (90, 60), 
-        #16: (21, 7), 
-        32: (33, 7), 
-        64: (51, 17), 
-        128: (85, 19),  
-        256: (75, 25),
-        512: (90, 30),
-    }'''
-
-    '''# linear
-    n_basis_dict = {
-        16: (15, 6), 
-        32: (20, 7), 
-        64: (25, 13), 
-        128: (35, 22), 
-        256: (65, 40),
-        512: (90, 65),
-    }'''
 
     def __init__(self, **kwargs): 
         kwargs['f_expr'] = get_reg_f_expr()
@@ -86,25 +73,10 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
         self.v_asympt_lambda = lambdify(symbols('k R r th'), get_v_asympt_expr())
         self.nu = np.pi / (2*np.pi - self.a)
 
-        self.bdata = MyBData(self)
+        self.bdata = SingIHBData(self)
 
     def eval_v(self, r, th):
-        k = self.k
-        nu = self.nu
-        a = self.a
-
-        return jv(nu/2, k*r) * np.sin(nu*(th - a)/2)
-
-    def eval_phi0(self, th):
-        k = self.k
-        R = self.R
-        nu = self.nu
-        a = self.a
-
-        #phi0 = self.eval_v(R, th)
-        #phi0 += problems.bdata.eval_hat(th)
-        #phi0 = jv(nu/2, k*R) / (2*np.pi - a) * (th - a) 
-        return phi0
+        return eval_v(self.k, r, th)
 
     def _eval_bc_extended(self, arg, sid, b_coef):
         k = self.k
@@ -135,10 +107,7 @@ class ShcBesselAbstract(SympyProblem, PizzaProblem):
             return 0
 
 
-class ShcBesselKnown(ShcBesselAbstract):
-
-    expected_known = False
-    m_max = 29
+class SingIHKnown(SingIHAbstract):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -156,7 +125,7 @@ class ShcBesselKnown(ShcBesselAbstract):
             for m in range(1, len(self.b_coef)+1):
                 self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
 
-            print('ShcBesselKnown: b_coef[m_max] =', self.b_coef[self.m_max-1])
+            print('ShcIHKnown: b_coef[m_max] =', self.b_coef[self.m_max-1])
 
     def calc_bessel_ratio(self, m, r):
         k = self.k
@@ -184,9 +153,51 @@ class ShcBesselKnown(ShcBesselAbstract):
     
     def eval_bc_extended(self, arg, sid):
         return self._eval_bc_extended(arg, sid, self.b_coef[:self.M])
-        
-        
-class ShcBessel(ShcBesselAbstract):
-                
-    def eval_bc_extended(self, arg, sid):
-        return self._eval_bc_extended(arg, sid, [0])
+
+
+class SingIHKnownLine(SingIHKnown):
+
+    
+    n_basis_dict = {
+        16: (15, 6), 
+        32: (20, 7), 
+        64: (25, 13), 
+        128: (35, 22), 
+        256: (65, 40),
+        512: (90, 65),
+    } 
+
+    def eval_phi0(self, th):
+        k = self.k
+        R = self.R
+        nu = self.nu
+        a = self.a
+
+        phi0 = jv(nu/2, k*R) / (2*np.pi - a) * (th - a) 
+        return phi0
+
+
+class SingIHKnownHat(SingIHKnown):
+
+    expected_known = True
+    force_relative = True
+    m_max = 249
+
+    n_basis_dict = {
+        16: (14, 7), 
+        32: (26, 13), 
+        64: (30, 19), 
+        128: (45, 34), 
+        256: (65, 34), 
+        512: (90, 34), 
+    }
+
+    def eval_phi0(self, th):
+        k = self.k
+        R = self.R
+        nu = self.nu
+        a = self.a
+
+        phi0 = self.eval_v(R, th)
+        phi0 += problems.bdata.eval_hat_th(th)
+        return phi0

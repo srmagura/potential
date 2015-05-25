@@ -16,7 +16,9 @@ class Interface:
         Perform the convergence test. Prints in TeX-friendly
         format if the `--tex` option was given.
         '''
-        do_rel_conv = self.args.r or not self.problem.expected_known
+        do_rel_conv = (self.args.r or 
+            not self.problem.expected_known or
+            self.problem.force_relative)
         prev_error = None
         
         u2 = None

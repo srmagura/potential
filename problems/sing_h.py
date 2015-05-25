@@ -9,7 +9,7 @@ from .sympy_problem import SympyProblem
 import problems.bdata
 
     
-class FourierBessel(PizzaProblem):
+class SingH(PizzaProblem):
 
     R = 10
     AD_len = 24
@@ -17,6 +17,7 @@ class FourierBessel(PizzaProblem):
     k = 1
     homogeneous = True
     expected_known = False
+    force_relative = True
     
     M = 7
 
@@ -25,8 +26,8 @@ class FourierBessel(PizzaProblem):
         32: (26, 13), 
         64: (30, 19), 
         128: (45, 34), 
-        256: (65, 37),
-        512: (90, 50),
+        256: (65, 34), 
+        512: (90, 34), 
     }
 
     def __init__(self, **kwargs): 
@@ -141,7 +142,7 @@ class FourierBessel(PizzaProblem):
         return d_u_n
 
 
-class FourierBesselHat(FourierBessel):
+class SingHHat(SingH):
 
     expected_known = True
     m_max = 199
@@ -151,7 +152,7 @@ class FourierBesselHat(FourierBessel):
         super().__init__(**kwargs)
 
 
-class FourierBesselParabola(FourierBessel):
+class SingHParabola(SingH):
 
     expected_known = False
 
