@@ -156,15 +156,14 @@ class SingIHKnown(SingIHAbstract):
 
 
 class SingIHKnownLine(SingIHKnown):
-
     
     n_basis_dict = {
         16: (15, 6), 
         32: (20, 7), 
         64: (25, 13), 
         128: (35, 22), 
-        256: (65, 40),
-        512: (90, 65),
+        256: (45, 34),
+        512: (50, 34),
     } 
 
     def eval_phi0(self, th):
@@ -200,4 +199,25 @@ class SingIHKnownHat(SingIHKnown):
 
         phi0 = self.eval_v(R, th)
         phi0 += problems.bdata.eval_hat_th(th)
+        return phi0
+
+class SingIHKnownPoly(SingIHKnown):
+
+    n_basis_dict = {
+        16: (15, 6), 
+        32: (20, 7), 
+        64: (25, 13), 
+        128: (35, 22), 
+        256: (45, 34),
+        512: (50, 34),
+    } 
+
+    def eval_phi0(self, th):
+        k = self.k
+        R = self.R
+        nu = self.nu
+        a = self.a
+
+        phi0 = self.eval_v(R, th)
+        phi0 += (th-a) * (th-2*np.pi) * th**2
         return phi0
