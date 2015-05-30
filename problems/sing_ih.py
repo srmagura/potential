@@ -61,6 +61,9 @@ class SingIHBData(problems.bdata.BData):
 
 class SingIHAbstract(SympyProblem, PizzaProblem):
 
+    R = 10
+    AD_len = 24
+
     k = 1
     expected_known = False
     
@@ -178,7 +181,7 @@ class SingIHKnownLine(SingIHKnown):
 
 class SingIHKnownHat(SingIHKnown):
 
-    expected_known = True
+    expected_known = False
     force_relative = True
     m_max = 249
 
@@ -219,5 +222,5 @@ class SingIHKnownPoly(SingIHKnown):
         a = self.a
 
         phi0 = self.eval_v(R, th)
-        phi0 += (th-a) * (th-2*np.pi) * th**2
+        phi0 += (th-a) * (th-2*np.pi)
         return phi0
