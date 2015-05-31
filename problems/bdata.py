@@ -82,6 +82,7 @@ class Parabola(BData):
 
         return coef
 
+
 def eval_hat_x(x):
     if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
         return 0
@@ -97,3 +98,15 @@ class Hat(BData):
 
     def eval_phi0(self, th):
         return eval_hat_th(th)
+
+
+class FiniteSines(BData):
+
+    def eval_phi0(self, th):
+        phi0 = 0
+
+        #for m in range(1, 30):
+        #    phi0 += (1/4)**m * np.sin(m*nu*(th-a))
+        phi0 += np.sin(8*nu*(th-a))
+
+        return phi0

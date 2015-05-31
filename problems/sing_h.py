@@ -11,8 +11,10 @@ import problems.bdata
     
 class SingH(PizzaProblem):
 
-    R = 10
-    AD_len = 24
+    #R = 10
+    #AD_len = 24
+    R = 2.3
+    AD_len = 2*np.pi
     
     k = 1
     homogeneous = True
@@ -158,4 +160,14 @@ class SingHParabola(SingH):
 
     def __init__(self, **kwargs): 
         self.bdata = problems.bdata.Parabola()
+        super().__init__(**kwargs)
+
+
+class SingHFiniteSines(SingH):
+
+    expected_known = True
+    m_max = 8
+
+    def __init__(self, **kwargs): 
+        self.bdata = problems.bdata.FiniteSines()
         super().__init__(**kwargs)
