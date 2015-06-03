@@ -141,17 +141,13 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #return self.test_extend_basis()
 
-
-        '''Utility function for selecting a good number of basis functions.'''
-        #self.optimize_n_basis()
-
         self.calc_c0()
         '''
         Uncomment the following line to see a plot of the boundary data and
         its Chebyshev series, which has coefficients c0. There is also an
         analogous function c1_test().
         '''
-        #self.c0_test(plot=False)
+        self.c0_test(plot=False)
 
         self.calc_c1()
         #self.calc_c1_exact()

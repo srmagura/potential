@@ -100,13 +100,7 @@ class Hat(BData):
         return eval_hat_th(th)
 
 
-class FiniteSines(BData):
+class Sine(BData):
 
     def eval_phi0(self, th):
-        phi0 = 0
-
-        #for m in range(1, 30):
-        #    phi0 += (1/4)**m * np.sin(m*nu*(th-a))
-        phi0 += np.sin(8*nu*(th-a))
-
-        return phi0
+        return np.sin(8*nu*(th-a))

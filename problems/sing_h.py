@@ -144,7 +144,35 @@ class SingH(PizzaProblem):
         return d_u_n
 
 
+class SingHSine(SingH):
+
+    n_basis_dict = {
+        16: (20, 5), 
+        32: (24, 11), 
+        64: (41, 18), 
+        128: (53, 28), 
+        256: (65, 34), 
+        512: (80, 34), 
+    }
+
+    expected_known = True
+    m_max = 8
+
+    def __init__(self, **kwargs): 
+        self.bdata = problems.bdata.Sine()
+        super().__init__(**kwargs)
+
+
 class SingHHat(SingH):
+
+    n_basis_dict = {
+        16: (24, 6), 
+        32: (33, 8), 
+        64: (42, 12), 
+        128: (65, 18), 
+        256: (80, 24), 
+        512: (100, 30), 
+    }
 
     expected_known = True
     m_max = 199
@@ -160,14 +188,4 @@ class SingHParabola(SingH):
 
     def __init__(self, **kwargs): 
         self.bdata = problems.bdata.Parabola()
-        super().__init__(**kwargs)
-
-
-class SingHFiniteSines(SingH):
-
-    expected_known = True
-    m_max = 8
-
-    def __init__(self, **kwargs): 
-        self.bdata = problems.bdata.FiniteSines()
         super().__init__(**kwargs)

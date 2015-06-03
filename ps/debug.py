@@ -347,8 +347,8 @@ class PsDebug:
         min_error = float('inf')
 
         # Tweak the following ranges as needed
-        for n_circle in range(24, 40, 3):
-            for n_radius in range(11, int(.6*n_circle), 3):
+        for n_circle in range(65, 85, 5):
+            for n_radius in range(12, int(.4*n_circle), 3):
                 self.setup_B_desc(n_circle, n_radius)
                 
                 self.calc_c0()
