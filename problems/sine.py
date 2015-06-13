@@ -29,6 +29,15 @@ class SinePizza(PizzaProblem):
     k = 1
     homogeneous = True
     expected_known = True
+
+    n_basis_dict = {
+        16: (21, 9), 
+        32: (28, 9), 
+        64: (34, 17), 
+        128: (40, 24), 
+        256: (45, 29),
+        512: (53, 34)
+    }
     
     def eval_expected(self, x, y):
         return sin(self.k*x)

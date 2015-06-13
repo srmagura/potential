@@ -9,7 +9,7 @@ from .problem import Problem, PizzaProblem
 class YCosineShared:
 
     # Note: this problem becomes homogeneous if k=1.
-    k = 2/3
+    k = 1.75
 
     expected_known = True
     
@@ -65,6 +65,14 @@ class YCosine(YCosineShared, Problem):
         return self.eval_expected(self.R*cos(th), self.R*sin(th))
  
 class YCosinePizza(YCosineShared, PizzaProblem):
+
+    n_basis_dict = {
+        16: (23, 7),
+        32: (25, 7),
+        64: (31, 15),
+        128: (37, 21),
+        None: (45, 25),
+    }
     
     def eval_expected(self, x, y):
         return y*cos(x)

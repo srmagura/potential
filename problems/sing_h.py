@@ -7,30 +7,16 @@ from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
 
 import problems.bdata
-
     
 class SingH(PizzaProblem):
 
-    #R = 10
-    #AD_len = 24
     R = 2.3
     AD_len = 2*np.pi
     
-    k = 1
     homogeneous = True
     expected_known = False
-    force_relative = True
     
     M = 7
-
-    n_basis_dict = {
-        16: (14, 7), 
-        32: (26, 13), 
-        64: (30, 19), 
-        128: (45, 34), 
-        256: (65, 34), 
-        512: (90, 34), 
-    }
 
     def __init__(self, **kwargs): 
         super().__init__(**kwargs)
@@ -50,7 +36,7 @@ class SingH(PizzaProblem):
             for m in range(1, len(self.b_coef)+1):
                 self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
 
-            print('FourierBessel: b_coef[m_max] =', self.b_coef[self.m_max-1])
+            print('[sing-h] b_coef[m_max] =', self.b_coef[self.m_max-1])
 
     def calc_bessel_ratio(self, m, r):
         k = self.k
@@ -146,6 +132,8 @@ class SingH(PizzaProblem):
 
 class SingHSine(SingH):
 
+    k = 1.75
+
     n_basis_dict = {
         16: (20, 5), 
         32: (24, 11), 
@@ -164,6 +152,8 @@ class SingHSine(SingH):
 
 
 class SingHHat(SingH):
+
+    k = 5.5
 
     n_basis_dict = {
         16: (24, 6), 

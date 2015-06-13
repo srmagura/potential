@@ -8,10 +8,11 @@ import argparse
 import problems
 import solver
 
-
 class Interface:
 
-    def test_convergence(self):
+    prec_str = '{:.5}'
+
+    def run_solver(self, N_list):
         '''
         Perform the convergence test. Prints in TeX-friendly
         format if the `--tex` option was given.
@@ -25,15 +26,14 @@ class Interface:
         u1 = None
         u0 = None
 
-        N = self.args.N
-        while N <= self.args.c:
-            print('---- {0} x {0} ----'.format(N))
-
+        for N in N_list:
             my_solver = self.problem.get_solver(N, self.args.o)
+
+            print('---- {0} x {0} ----'.format(N))
             result = my_solver.run()
             
             if result.error is not None:
-                print('Error:', result.error)
+                print('Error: ' + self.prec_str.format(result.error))
                 
             u2 = u1
             u1 = u0
@@ -49,11 +49,11 @@ class Interface:
                 if self.args.tex:
                     tex += str(convergence)
                 else:
-                    print('Convergence:', convergence)
+                    print('Convergence: ' + self.prec_str.format(convergence))
             
             if do_rel_conv and u2 is not None:
                 convergence = my_solver.calc_convergence3(u0, u1, u2)
-                print('Rel convergence:', convergence)
+                print('Rel convergence: ' + self.prec_str.format(convergence))
 
             if self.args.tex:
                 print(tex + r'\\')
@@ -61,7 +61,6 @@ class Interface:
                 print()
                           
             prev_error = result.error  
-            N *= 2
 
     def run(self):
         '''
@@ -93,14 +92,29 @@ class Interface:
         self.problem = problems.problem_dict[self.args.problem](scheme_order=self.args.o)
 
         if self.args.c is None:
-            my_solver = self.problem.get_solver(self.args.N, 
-                self.args.o, verbose=True)
-            result = my_solver.run()
-            
-            if result.error is not None:
-                print('Error:', result.error)
+            N_list = [self.args.N]
         else:
-            self.test_convergence()
+            N_list = []
+
+            N = self.args.N
+            while N <= self.args.c:
+                N_list.append(N)
+                N *= 2
+
+        print('[{}]'.format(self.args.problem))
+        print('k = ' + self.prec_str.format(float(self.problem.k)))
+        print('R = ' + self.prec_str.format(self.problem.R))
+        print('AD_len = ' + self.prec_str.format(self.problem.AD_len))
+        print()
+
+
+        if hasattr(self.problem, 'get_n_basis'):
+            print('[Basis sets]')
+            for N in N_list:
+                print('{}: {}'.format(N, self.problem.get_n_basis(N)))
+
+        print()
+        self.run_solver(N_list)
 
 
 if __name__ == '__main__':

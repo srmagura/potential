@@ -192,9 +192,6 @@ class PsDebug:
                     (self.c0[JJ] *
                     self.eval_dn_B_arg(0, JJ, r, th)).real
         
-        print('[Basis sizes]  arc: {}  radius: {}'.format(
-            self.segment_desc[0]['n_basis'],
-            self.segment_desc[1]['n_basis']))
         print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
 
         if not plot:
@@ -347,8 +344,8 @@ class PsDebug:
         min_error = float('inf')
 
         # Tweak the following ranges as needed
-        for n_circle in range(65, 85, 5):
-            for n_radius in range(12, int(.4*n_circle), 3):
+        for n_circle in range(31, 50, 3):
+            for n_radius in range(15, int(.6*n_circle), 2):
                 self.setup_B_desc(n_circle, n_radius)
                 
                 self.calc_c0()

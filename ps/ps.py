@@ -147,7 +147,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         its Chebyshev series, which has coefficients c0. There is also an
         analogous function c1_test().
         '''
-        self.c0_test(plot=False)
+        #self.c0_test(plot=False)
 
         self.calc_c1()
         #self.calc_c1_exact()

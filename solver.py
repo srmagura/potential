@@ -33,16 +33,11 @@ class Solver(SolverExtend, SolverDebug):
         self.N = N
         self.scheme_order = scheme_order
 
+        # verbose is currently not used
         if 'verbose' in kwargs:
             self.verbose = kwargs['verbose']
         else:
             self.verbose = False
-
-        if self.verbose:
-            print('Problem is `{}`.'.format(self.problem.__class__.__name__))
-            print('Using `{}`.'.format(self.__class__.__name__))
-            print('Using scheme of order {}.'.format(self.scheme_order))
-            print('Grid is {0} x {0}.'.format(self.N))
 
         self.construct_grids()
 

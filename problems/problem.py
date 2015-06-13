@@ -18,14 +18,6 @@ class Problem:
     def get_solver(self, *args, **kwargs):
         return self.solver_class(self, *args, **kwargs)
         
-    def get_n_basis(self, N):
-        if 'constant' in self.n_basis_dict:
-            return self.n_basis_dict['constant']
-        elif N in self.n_basis_dict:
-            return self.n_basis_dict[N]
-        else:
-            return self.n_basis_dict[None]
-
     def eval_expected(self, x, y, **kwargs):
         r, th = cart_to_polar(x, y)
         
@@ -48,19 +40,16 @@ class Problem:
         y = r * sin(th)
         return self.eval_f(x, y)
 
-    def get_restore_polar(self, r, th):
-        return 0
-    
        
 class PizzaProblem(Problem):
     
     a = np.pi / 6
     solver_class = PizzaSolver
     
-    # "Semi-optimal" values, determined by experiment
+    # These values probably need to be adjusted for your specific problem
     n_basis_dict = {
         16: (21, 9), 
-        32: (28, 8), 
+        32: (28, 9), 
         64: (34, 17), 
         128: (40, 24), 
         256: (45, 29),
@@ -115,3 +104,13 @@ class PizzaProblem(Problem):
             return 0
         elif abs(th - a) < tol:
             return 2
+
+    def get_n_basis(self, N):
+        if N in self.n_basis_dict:
+            return self.n_basis_dict[N]
+        else:
+            return self.n_basis_dict[None]
+
+    def get_restore_polar(self, r, th):
+        return 0
+    
