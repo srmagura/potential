@@ -181,11 +181,13 @@ class SingHParabola(SingH):
         16: (17, 3), 
         32: (33, 7), 
         64: (36, 15), 
-        128: (45, 20), 
-        None: (65, 34), 
+        128: (39, 21), 
+        256: (42, 23), 
+        None: (65, 35), 
     }
 
     expected_known = False
+    m_max = 199
 
     def __init__(self, **kwargs): 
         self.bdata = problems.bdata.Parabola()

@@ -345,7 +345,7 @@ class PsDebug:
 
         # Tweak the following ranges as needed
         for n_circle in range(36, 60, 3):
-            for n_radius in range(15, int(.6*n_circle), 1):
+            for n_radius in range(15, int(.6*n_circle), 2):
                 self.setup_B_desc(n_circle, n_radius)
                 
                 self.calc_c0()
