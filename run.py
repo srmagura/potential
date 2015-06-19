@@ -107,7 +107,6 @@ class Interface:
         print('AD_len = ' + self.prec_str.format(self.problem.AD_len))
         print()
 
-
         if hasattr(self.problem, 'get_n_basis'):
             print('[Basis sets]')
             for N in N_list:

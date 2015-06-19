@@ -140,7 +140,7 @@ class SingHSine(SingH):
         64: (41, 18), 
         128: (53, 28), 
         256: (65, 34), 
-        512: (80, 34), 
+        None: (80, 34), 
     }
 
     expected_known = True
@@ -162,6 +162,7 @@ class SingHHat(SingH):
         128: (65, 18), 
         256: (80, 24), 
         512: (100, 30), 
+        1024: (120, 35), 
     }
 
     expected_known = True
