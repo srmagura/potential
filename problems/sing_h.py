@@ -175,15 +175,14 @@ class SingHHat(SingH):
 
 class SingHParabola(SingH):
 
-    k = 1
+    k = 5.5
 
     n_basis_dict = {
-        16: (20, 5), 
-        32: (24, 11), 
-        64: (41, 18), 
-        128: (53, 28), 
-        256: (65, 34), 
-        None: (80, 34), 
+        16: (17, 3), 
+        32: (33, 7), 
+        64: (36, 15), 
+        128: (45, 20), 
+        None: (65, 34), 
     }
 
     expected_known = False
