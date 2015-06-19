@@ -175,6 +175,17 @@ class SingHHat(SingH):
 
 class SingHParabola(SingH):
 
+    k = 1
+
+    n_basis_dict = {
+        16: (20, 5), 
+        32: (24, 11), 
+        64: (41, 18), 
+        128: (53, 28), 
+        256: (65, 34), 
+        None: (80, 34), 
+    }
+
     expected_known = False
 
     def __init__(self, **kwargs): 
