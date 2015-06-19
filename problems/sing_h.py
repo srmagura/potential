@@ -165,7 +165,7 @@ class SingHHat(SingH):
         1024: (120, 35), 
     }
 
-    expected_known = True
+    expected_known = False
     m_max = 199
 
     def __init__(self, **kwargs): 
