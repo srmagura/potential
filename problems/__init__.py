@@ -3,9 +3,9 @@ Defines choices for the problem command-line argument.
 '''
 from .sine import Sine, SinePizza
 from .ycosine import YCosine, YCosinePizza
-from .sing_i import SingINoCorrection, SingIReg, SingI
+from .sing_i import SingINoCorrection, SingI
 from .sing_h import SingHHat, SingHParabola, SingHSine
-from .sing_ih import SingIHKnownLine, SingIHKnownHat, SingIHKnownPoly
+from .sing_ih import SingIH_FFT_Line, SingIH_FFT_Hat
 
 problem_dict = {
     'sine': Sine,
@@ -17,7 +17,6 @@ problem_dict = {
     'sing-h-hat': SingHHat,
     'sing-h-parabola': SingHParabola,
     'sing-h-sine': SingHSine,
-    'sing-ih-known-line': SingIHKnownLine,
-    'sing-ih-known-hat': SingIHKnownHat,
-    'sing-ih-known-poly': SingIHKnownPoly,
+    'sing-ih-fft-line': SingIH_FFT_Line,
+    'sing-ih-fft-hat': SingIH_FFT_Hat,
 }

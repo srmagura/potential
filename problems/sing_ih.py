@@ -61,12 +61,6 @@ class SingIHBData(problems.bdata.BData):
 
 class SingIHAbstract(SympyProblem, PizzaProblem):
 
-    R = 10
-    AD_len = 24
-
-    k = 1
-    expected_known = False
-    
     M = 7
 
     def __init__(self, **kwargs): 
@@ -110,7 +104,7 @@ class SingIHAbstract(SympyProblem, PizzaProblem):
             return 0
 
 
-class SingIHKnown(SingIHAbstract):
+class SingIH_FFT(SingIHAbstract):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -128,7 +122,7 @@ class SingIHKnown(SingIHAbstract):
             for m in range(1, len(self.b_coef)+1):
                 self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
 
-            print('ShcIHKnown: b_coef[m_max] =', self.b_coef[self.m_max-1])
+            print('SingIH_FFT: b_coef[m_max] =', self.b_coef[self.m_max-1])
 
     def calc_bessel_ratio(self, m, r):
         k = self.k
@@ -158,7 +152,58 @@ class SingIHKnown(SingIHAbstract):
         return self._eval_bc_extended(arg, sid, self.b_coef[:self.M])
 
 
-class SingIHKnownLine(SingIHKnown):
+class SingIH_FFT_Sine(SingIH_FFT):
+
+    k = 1.75
+
+    n_basis_dict = {
+        16: (20, 5), 
+        32: (24, 11), 
+        64: (41, 18), 
+        128: (53, 28), 
+        256: (65, 34), 
+        None: (80, 34), 
+    }
+
+    def eval_phi0(self, th):
+        k = self.k
+        R = self.R
+        nu = self.nu
+        a = self.a
+
+        phi0 = self.eval_v(R, th)
+        phi0 += problems.bdata.eval_hat_th(th)
+        return phi0
+
+
+class SingIH_FFT_Hat(SingIH_FFT):
+
+    k = 5.5
+
+    n_basis_dict = {
+        16: (24, 6), 
+        32: (33, 8), 
+        64: (42, 12), 
+        128: (65, 18), 
+        256: (80, 24), 
+        512: (100, 30), 
+        1024: (120, 35), 
+    }
+
+    def eval_phi0(self, th):
+        k = self.k
+        R = self.R
+        nu = self.nu
+        a = self.a
+
+        phi0 = self.eval_v(R, th)
+        phi0 += problems.bdata.eval_hat_th(th)
+        return phi0
+        
+
+
+
+class SingIH_FFT_Line(SingIH_FFT):
     
     n_basis_dict = {
         16: (15, 6), 
@@ -179,48 +224,3 @@ class SingIHKnownLine(SingIHKnown):
         return phi0
 
 
-class SingIHKnownHat(SingIHKnown):
-
-    expected_known = False
-    force_relative = True
-    m_max = 249
-
-    n_basis_dict = {
-        16: (14, 7), 
-        32: (26, 13), 
-        64: (30, 19), 
-        128: (45, 34), 
-        256: (65, 34), 
-        512: (90, 34), 
-    }
-
-    def eval_phi0(self, th):
-        k = self.k
-        R = self.R
-        nu = self.nu
-        a = self.a
-
-        phi0 = self.eval_v(R, th)
-        phi0 += problems.bdata.eval_hat_th(th)
-        return phi0
-
-class SingIHKnownPoly(SingIHKnown):
-
-    n_basis_dict = {
-        16: (15, 6), 
-        32: (20, 7), 
-        64: (25, 13), 
-        128: (35, 22), 
-        256: (45, 34),
-        512: (50, 34),
-    } 
-
-    def eval_phi0(self, th):
-        k = self.k
-        R = self.R
-        nu = self.nu
-        a = self.a
-
-        phi0 = self.eval_v(R, th)
-        phi0 += (th-a) * (th-2*np.pi)
-        return phi0

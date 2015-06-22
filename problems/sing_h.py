@@ -5,14 +5,10 @@ from solver import cart_to_polar
 
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
-
-import problems.bdata
+from .bdata import BData
     
 class SingH(PizzaProblem):
 
-    R = 2.3
-    AD_len = 2*np.pi
-    
     homogeneous = True
     expected_known = False
     
@@ -20,8 +16,6 @@ class SingH(PizzaProblem):
 
     def __init__(self, **kwargs): 
         super().__init__(**kwargs)
-
-        self.nu = np.pi / (2*np.pi - self.a)
         
         if self.expected_known:
             m = self.m_max
@@ -91,6 +85,7 @@ class SingH(PizzaProblem):
         elif sid == 2:
             return 0
 
+    ## Begin debugging functions ##
     def calc_d_bessel_R(self):
         self.d_bessel_R = np.zeros(len(self.b_coef))
 
@@ -130,6 +125,17 @@ class SingH(PizzaProblem):
         return d_u_n
 
 
+###### sing-h-sine ######
+
+class SineBData(BData):
+
+    def eval_phi0(self, th):
+        a = PizzaProblem.a
+        nu = PizzaProblem.nu
+
+        return np.sin(8*nu*(th-a))
+
+
 class SingHSine(SingH):
 
     k = 1.75
@@ -147,8 +153,28 @@ class SingHSine(SingH):
     m_max = 8
 
     def __init__(self, **kwargs): 
-        self.bdata = problems.bdata.Sine()
+        self.bdata = SineBData()
         super().__init__(**kwargs)
+
+
+###### sing-h-hat ######
+
+def eval_hat_x(x):
+    if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
+        return 0
+    else:
+        arg = -1/(1-x**2)
+        return np.exp(arg)
+
+def eval_hat_th(th):
+    a = PizzaProblem.a
+    x = (2*th-(2*np.pi+a))/(2*np.pi-a)
+    return eval_hat_x(x)
+
+class HatBData(BData):
+    
+    def eval_phi0(self, th):
+        return eval_hat_th(th)
 
 
 class SingHHat(SingH):
@@ -169,8 +195,30 @@ class SingHHat(SingH):
     m_max = 199
 
     def __init__(self, **kwargs): 
-        self.bdata = problems.bdata.Hat()
+        self.bdata = HatBData() 
         super().__init__(**kwargs)
+
+
+###### sing-h-parabola ######
+
+class ParabolaBData(BData):
+
+    def eval_phi0(self, th):
+        return -(th - np.pi/6) * (th - 2*np.pi) 
+
+    def calc_coef_analytic(self, M):
+        a = PizzaProblem.a
+        nu = PizzaProblem.nu
+
+        coef = np.zeros(M)
+
+        for m in range(1, M+1):
+            if m % 2 == 0:
+                coef[m-1] = 0
+            else:
+                coef[m-1] = 8/(2*np.pi - a) * 1/(m*nu)**3
+
+        return coef
 
 
 class SingHParabola(SingH):
@@ -191,5 +239,5 @@ class SingHParabola(SingH):
     m_max = 199
 
     def __init__(self, **kwargs): 
-        self.bdata = problems.bdata.Parabola()
+        self.bdata = ParabolaBData()
         super().__init__(**kwargs)

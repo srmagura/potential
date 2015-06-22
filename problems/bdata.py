@@ -7,11 +7,23 @@ a = PizzaProblem.a
 nu = np.pi / (2*np.pi - a)
 
 class BData:
+    '''
+    A abstract class that represents Dirichlet data on the outer arc. You should 
+    make a subclass that defines a function:
 
-    analytic_known = False
+        eval_phi0(self, th)
 
-    def __init__(self):
-        self.quad_error = []
+    which gives the Dirichlet data at the angle th on the arc. The purpose of
+    this class is to compute the sine Fourier coefficients of the given function
+    phi0. The function calc_coef() exposes this functionality. 
+    
+    If you have an analytic expression for the sine Fourier coefficients,
+    you should write a function in your subclass:
+        
+        calc_coef_analytic(self, M):
+
+    that returns the first M of these coefficients.
+    '''    
 
     def calc_fft_exp(self, Jmax):
         fourier_N = 2**10
@@ -50,57 +62,12 @@ class BData:
             ccoef[J] = (coef[J_dict[J]] + coef[J_dict[-J]]).real
             scoef[J] = (1j*(coef[J_dict[J]] - coef[J_dict[-J]])).real
 
-        #assert np.max(np.abs(ccoef)) < 1e-13
-        #if not np.max(np.abs(ccoef)) < 1e-13:
-        #    print('assertion failed')
-        #    print(ccoef)
-
+        assert np.max(np.abs(ccoef)) < 1e-13
         return scoef[1:]
 
     def calc_coef(self, M):
-        if self.analytic_known:
+        ''' Return the first M sine Fourier series coefficients.'''
+        if hasattr(self, 'calc_coef_analytic'):
             return self.calc_coef_analytic(M)
         else:
             return self.calc_fft(M)
-
-
-class Parabola(BData):
-
-    analytic_known = True
-
-    def eval_phi0(self, th):
-        return -(th - np.pi/6) * (th - 2*np.pi) 
-
-    def calc_coef_analytic(self, M):
-        coef = np.zeros(M)
-
-        for m in range(1, M+1):
-            if m % 2 == 0:
-                coef[m-1] = 0
-            else:
-                coef[m-1] = 8/(2*np.pi - a) * 1/(m*nu)**3
-
-        return coef
-
-
-def eval_hat_x(x):
-    if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
-        return 0
-    else:
-        arg = -1/(1-x**2)
-        return np.exp(arg)
-
-def eval_hat_th(th):
-    x = (2*th-(2*np.pi+a))/(2*np.pi-a)
-    return eval_hat_x(x)
-
-class Hat(BData):
-
-    def eval_phi0(self, th):
-        return eval_hat_th(th)
-
-
-class Sine(BData):
-
-    def eval_phi0(self, th):
-        return np.sin(8*nu*(th-a))

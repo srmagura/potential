@@ -40,10 +40,14 @@ class Problem:
         y = r * sin(th)
         return self.eval_f(x, y)
 
+
+_a = np.pi / 6
+_nu = np.pi / (2*np.pi - _a)
        
 class PizzaProblem(Problem):
     
-    a = np.pi / 6
+    a = _a
+    nu = _nu
     solver_class = PizzaSolver
     
     # These values probably need to be adjusted for your specific problem
@@ -55,6 +59,9 @@ class PizzaProblem(Problem):
         256: (45, 29),
         None: (53, 34)
     }
+
+    def __init__(self, **kwargs): 
+        super().__init__(**kwargs)
             
     def wrap_func(self, arg, sid):
         '''
