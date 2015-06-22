@@ -55,10 +55,19 @@ class SingINoCorrection(PizzaProblem):
 
         return eval_expected_polar(k, R, r, th) 
     
-class SingIReg(SympyProblem, PizzaProblem):
+class SingI(SympyProblem, PizzaProblem):
     
     k = shared_k
     expected_known = True
+
+    n_basis_dict = {
+        16: (21, 9), 
+        32: (28, 9), 
+        64: (34, 17), 
+        128: (40, 24), 
+        256: (45, 29),
+        None: (53, 34)
+    }
 
     def __init__(self, **kwargs): 
         kwargs['f_expr'] = get_reg_f_expr()
@@ -81,11 +90,3 @@ class SingIReg(SympyProblem, PizzaProblem):
         u_asympt = self.u_asympt_lambda(k, R, r, th)
         
         return bc_nc - float(u_asympt)
-        
-class SingI(SingIReg):
-    
-    def eval_expected_polar(self, r, th):
-        return eval_expected_polar(self.k, self.R, r, th)
-        
-    def get_restore_polar(self, r, th):
-        return self.u_asympt_lambda(self.k, self.R, r, th)

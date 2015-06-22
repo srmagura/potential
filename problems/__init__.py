@@ -13,7 +13,6 @@ problem_dict = {
     'ycosine': YCosine,
     'ycosine-pizza': YCosinePizza,
     'sing-i-nc': SingINoCorrection,
-    'sing-i-reg': SingIReg,
     'sing-i': SingI,
     'sing-h-hat': SingHHat,
     'sing-h-parabola': SingHParabola,

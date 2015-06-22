@@ -53,7 +53,7 @@ class PizzaProblem(Problem):
         64: (34, 17), 
         128: (40, 24), 
         256: (45, 29),
-        512: (53, 34)
+        None: (53, 34)
     }
             
     def wrap_func(self, arg, sid):
