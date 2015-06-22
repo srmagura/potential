@@ -183,7 +183,8 @@ class SingHParabola(SingH):
         64: (36, 15), 
         128: (39, 21), 
         256: (42, 23), 
-        None: (65, 35), 
+        512: (65, 43), 
+        1024: (80, 45), 
     }
 
     expected_known = False
