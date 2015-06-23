@@ -223,6 +223,8 @@ class SingIH_FFT_Parabola(SingIH_FFT):
 
 
 class SingIH_FFT_Line(SingIH_FFT):
+
+    k = 1
     
     n_basis_dict = {
         16: (15, 6), 

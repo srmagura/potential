@@ -1,16 +1,16 @@
 '''
-Derivatives and roots of the Chebyshev polynomials
+Derivatives and roots of the Chebyshev polynomials. The expressions for the
+derivatives were derived using SymPy.
 '''
 
 from numpy import pi, sqrt, cos, arccos as acos, sin
 
-def eval_weight(t):
-    return 1 / sqrt(1 - t**2)
-
 def eval_T(J, t):
+    '''Chebyshev polynomial of degree J evaluated at t'''
     return cos(J * acos(t))
 
 def eval_d_T_t(J, t):
+    '''First derivative of Chebyshev polynomial of degree J evaluated at t'''
     return J*sin(J*acos(t))/sqrt(-t**2 + 1)
 
 def eval_d2_T_t(J, t):
@@ -26,12 +26,15 @@ def eval_d5_T_t(J, t):
     return J*(J**4*sin(J*acos(t))/(-t**2 + 1)**(5/2) - 10*J**3*t*cos(J*acos(t))/(t**2 - 1)**3 - 45*J**2*t**2*sin(J*acos(t))/(-t**2 + 1)**(7/2) - 10*J**2*sin(J*acos(t))/(-t**2 + 1)**(5/2) - 105*J*t**3*cos(J*acos(t))/(t**2 - 1)**4 + 55*J*t*cos(J*acos(t))/(t**2 - 1)**3 + 105*t**4*sin(J*acos(t))/(-t**2 + 1)**(9/2) + 90*t**2*sin(J*acos(t))/(-t**2 + 1)**(7/2) + 9*sin(J*acos(t))/(-t**2 + 1)**(5/2))
 
 
+derivs = (
+    eval_T, eval_d_T_t, eval_d2_T_t, eval_d3_T_t, eval_d4_T_t, eval_d5_T_t
+)
+
 def eval_dn_T_t(n, J, t):
-    derivs = (
-        eval_T, eval_d_T_t, eval_d2_T_t, eval_d3_T_t, eval_d4_T_t, eval_d5_T_t
-    )
+    '''Evaluate the n-th derivative of the Chebyshev polynomial of degree J'''
 
     return derivs[n](J, t)
 
 def get_chebyshev_roots(J):
+    '''Roots of the Chebyshev polynomial of degree J'''
     return [cos(pi/2* (2*l-1)/J) for l in range(J, 0, -1)]
