@@ -117,7 +117,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Debugging function for choosing an appropriate number of basis
         functions.
         '''
-        self.optimize_n_basis()
+        #self.optimize_n_basis()
 
         n_basis_tuple = self.problem.get_n_basis(self.N)
         self.setup_B_desc(*n_basis_tuple)

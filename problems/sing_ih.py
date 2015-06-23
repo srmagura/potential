@@ -120,7 +120,7 @@ class SingIH_FFT(SingIHAbstract):
             for m in range(1, len(self.b_coef)+1):
                 self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
 
-            print('SingIH_FFT: b_coef[m_max] =', self.b_coef[self.m_max-1])
+            print('[sing-ih-fft] b_coef[m_max] =', self.b_coef[self.m_max-1])
 
     def calc_bessel_ratio(self, m, r):
         k = self.k
@@ -224,16 +224,19 @@ class SingIH_FFT_Parabola(SingIH_FFT):
 
 class SingIH_FFT_Line(SingIH_FFT):
 
-    k = 1
+    k = 5.5
     
     n_basis_dict = {
-        16: (15, 6), 
-        32: (20, 7), 
-        64: (25, 13), 
-        128: (35, 22), 
-        256: (45, 34),
-        512: (50, 34),
+        16: (19, 6), 
+        32: (25, 8), 
+        64: (28, 12), 
+        128: (28, 16), 
+        256: (32, 20),
+        None: (40, 26),
     } 
+
+    #expected_known = True
+    m_max = 149
 
     def eval_phi0(self, th):
         k = self.k
