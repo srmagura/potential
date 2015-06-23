@@ -47,7 +47,7 @@ def eval_v(k, r, th):
     return jv(nu/2, k*r) * np.sin(nu*(th - a)/2)
 
 
-class SingIHBData(problems.bdata.BData):
+class SingIH_BData(problems.bdata.BData):
 
     def __init__(self, problem):
         self.problem = problem
@@ -68,9 +68,7 @@ class SingIHAbstract(SympyProblem, PizzaProblem):
         super().__init__(**kwargs)
         
         self.v_asympt_lambda = lambdify(symbols('k R r th'), get_v_asympt_expr())
-        self.nu = np.pi / (2*np.pi - self.a)
-
-        self.bdata = SingIHBData(self)
+        self.bdata = SingIH_BData(self)
 
     def eval_v(self, r, th):
         return eval_v(self.k, r, th)
@@ -172,7 +170,7 @@ class SingIH_FFT_Sine(SingIH_FFT):
         a = self.a
 
         phi0 = self.eval_v(R, th)
-        phi0 += problems.bdata.eval_hat_th(th)
+        phi0 += np.sin(8*nu*(th-a))
         return phi0
 
 
@@ -201,6 +199,27 @@ class SingIH_FFT_Hat(SingIH_FFT):
         return phi0
         
 
+class SingIH_FFT_Parabola(SingIH_FFT):
+
+    k = 5.5
+
+    n_basis_dict = {
+        16: (17, 3), 
+        32: (33, 7), 
+        64: (36, 15), 
+        128: (39, 21), 
+        256: (42, 23), 
+        512: (65, 43), 
+        1024: (80, 45), 
+    }
+
+    def eval_phi0(self, th):
+        R = self.R
+        a = self.a
+
+        phi0 = self.eval_v(R, th)
+        phi0 += -(th - a) * (th - 2*np.pi) 
+        return phi0
 
 
 class SingIH_FFT_Line(SingIH_FFT):
