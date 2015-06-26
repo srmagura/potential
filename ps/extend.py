@@ -298,6 +298,7 @@ class PsExtend:
         return self.do_extend_12_right(i, j, options)
 
     def mv_add(self, ext1, ext2):
+        '''Return the sum of two multivalue grid functions.'''
         result = {}
         
         for node in ext1:
@@ -321,6 +322,8 @@ class PsExtend:
         return result
 
     def mv_reduce(self, mv_ext):
+        '''Reduce a multivalue grid function to a single-valued grid function.
+        At nodes where there are two values, a weighted average is used.'''
         ext = np.zeros(len(self.union_gamma), dtype=complex)
         
         for l in range(len(self.union_gamma)):
@@ -339,14 +342,18 @@ class PsExtend:
                 if elen0 == 0 and elen1 == 0:
                     elen0 = elen1 = 1
                 
+                # Weighted average
                 ext[l] = (elen1*value0 + elen0*value1) / (elen0 + elen1)
                 
             else:
+                # We should never have 3 or more values at one node
                 assert False
                 
         return ext
             
     def mv_extend_boundary(self, options={}):
+        '''Extend the boundary data to the discrete boundary. Returns a
+        multivalued grid function.'''
         R = self.R
         k = self.problem.k
 
@@ -401,5 +408,7 @@ class PsExtend:
             return self.mv_add(mv_ext, self.mv_extend_inhomo_f())
             
     def extend_boundary(self, options={}):
+        '''Extend the boundary data to the discrete boundary. Returns
+        a single-valued function defined on the discrete boundary.'''
         mv_ext = self.mv_extend_boundary(options)
         return self.mv_reduce(mv_ext)
