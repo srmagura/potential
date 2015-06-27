@@ -69,9 +69,10 @@ class Interface:
         '''
         parser = argparse.ArgumentParser()
 
+        problem_choices = problems.problem_dict.keys()
         parser.add_argument('problem', metavar='problem', 
-            choices=problems.problem_dict.keys(),
-            help='name of the problem to run')
+            choices=problem_choices,
+            help='name of the problem to run: ' + ', '.join(problem_choices))
 
         parser.add_argument('-N', type=int, default=16,
             help='initial grid size')

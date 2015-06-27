@@ -82,8 +82,9 @@ class SingH(PizzaProblem):
         if sid == 0:
             bc = self.eval_phi0(th)
             
-            for m in range(1, self.M+1):
-                bc -= self.b_coef[m-1] * np.sin(m*nu*(th - a))
+            if b_known:
+                for m in range(1, self.M+1):
+                    bc -= self.b_coef[m-1] * np.sin(m*nu*(th - a))
             
             return bc
             
@@ -94,12 +95,25 @@ class SingH(PizzaProblem):
 
 
 class SingH_FFT(SingH):
+    """
+    A SingH problem where the b coefficients are calculated using FFT.
+    """
 
     def eval_bc_extended(self, arg, sid):
         return self._eval_bc_extended(arg, sid, True)
 
 
-class SingH_FFT_Sine(SingH_FFT):
+class SingH_Var(SingH):
+    """
+    A SingH problem where the b coefficients are calculated during
+    the solution of the ``variational formulation''.
+    """
+
+    def eval_bc_extended(self, arg, sid):
+        return self._eval_bc_extended(arg, sid, False)
+
+
+class Sine:
 
     k = 1.75
 
@@ -118,7 +132,14 @@ class SingH_FFT_Sine(SingH_FFT):
     def eval_phi0(self, th):
         a = self.a
         nu = self.nu
-        return np.sin(8*nu*(th-a))
+        return np.sin(2*nu*(th-a)) + np.sin(8*nu*(th-a))
+
+
+class SingH_FFT_Sine(Sine, SingH_FFT):
+    pass
+
+class SingH_Var_Sine(Sine, SingH_Var):
+    pass
 
 
 class SingH_FFT_Hat(SingH_FFT):
