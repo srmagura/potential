@@ -6,8 +6,19 @@ from solver import cart_to_polar
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
 from .bdata import BData
+import problems.functions as functions
+
+class SingH_BData(BData):
+
+    def __init__(self, problem):
+        self.problem = problem
+
+    def eval_phi0(self, th):
+        return self.problem.eval_phi0(th)
+
     
 class SingH(PizzaProblem):
+    """A singular problem whose singularity only has a homogeneous part."""
 
     homogeneous = True
     expected_known = False
@@ -16,6 +27,8 @@ class SingH(PizzaProblem):
 
     def __init__(self, **kwargs): 
         super().__init__(**kwargs)
+
+        self.bdata = SingH_BData(self)
         
         if self.expected_known:
             m = self.m_max
@@ -40,33 +53,27 @@ class SingH(PizzaProblem):
         ratio = jv(m*nu, k*r) / self.bessel_R[m-1]
         return float(ratio)
 
-    def eval_expected_polar(self, r, th, restored=False, setype=None):
+    def eval_expected_polar(self, r, th):
         a = self.a
         nu = self.nu
 
-        if setype is not None:
-            if setype[0] == 1:
-                if th < a:
-                    th += 2*np.pi
-
         u = 0
 
-        if restored:
-            m_start = 1
-        else:
-            m_start = self.M+1
-
-        for m in range(m_start, self.m_max+1):
+        for m in range(self.M+1, self.m_max+1):
             b = self.b_coef[m-1]
             ratio = self.calc_bessel_ratio(m, r)
             u += b * ratio * np.sin(m*nu*(th-a))
         
         return u
-
-    def eval_phi0(self, th):
-        return self.bdata.eval_phi0(th) 
         
-    def eval_bc_extended(self, arg, sid):
+    def _eval_bc_extended(self, arg, sid, b_known):
+        """
+        Evaluate extended boundary condition. To be called by subclasses
+        SingH only.
+
+        b_known -- boolean; whether or not the b coefficients are assumed 
+        known via FFT.
+        """
         a = self.a
         nu = self.nu
         
@@ -85,58 +92,14 @@ class SingH(PizzaProblem):
         elif sid == 2:
             return 0
 
-    ## Begin debugging functions ##
-    def calc_d_bessel_R(self):
-        self.d_bessel_R = np.zeros(len(self.b_coef))
 
-        for m in range(1, len(self.b_coef)+1):
-            self.d_bessel_R[m-1] = self.k * jvp(m*self.nu, self.k*self.R, 1)
+class SingH_FFT(SingH):
 
-    def eval_d_u_outwards(self, arg, sid):
-        if not hasattr(self, 'd_bessel_R'):
-            self.calc_d_bessel_R()
-
-        a = self.a
-        nu = self.nu
-        k = self.k
-
-        r, th = self.arg_to_polar(arg, sid)
-
-        d_u_n = 0
-        if sid == 0:
-            for m in range(self.M+1, self.m_max+1):
-                ratio = self.d_bessel_R[m-1] / self.bessel_R[m-1]
-                b = self.b_coef[m-1]
-                d_u_n += ratio * b * np.sin(m*nu*(th-a))
-
-        else:
-            #for m in range(1, self.m_max+1):
-            for m in range(self.M+1, self.m_max+1):
-                ratio = self.calc_bessel_ratio(m, r)
-                b = self.b_coef[m-1]
-                d_u_n += ratio * b * (m*nu) * np.cos(m*nu*(th-a))
-            
-            d_u_n /= r
-
-            if sid == 2:
-                d_u_n *= -1
+    def eval_bc_extended(self, arg, sid):
+        return self._eval_bc_extended(arg, sid, True)
 
 
-        return d_u_n
-
-
-###### sing-h-sine ######
-
-class SineBData(BData):
-
-    def eval_phi0(self, th):
-        a = PizzaProblem.a
-        nu = PizzaProblem.nu
-
-        return np.sin(8*nu*(th-a))
-
-
-class SingHSine(SingH):
+class SingH_FFT_Sine(SingH_FFT):
 
     k = 1.75
 
@@ -152,32 +115,13 @@ class SingHSine(SingH):
     expected_known = True
     m_max = 8
 
-    def __init__(self, **kwargs): 
-        self.bdata = SineBData()
-        super().__init__(**kwargs)
-
-
-###### sing-h-hat ######
-
-def eval_hat_x(x):
-    if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
-        return 0
-    else:
-        arg = -1/(1-x**2)
-        return np.exp(arg)
-
-def eval_hat_th(th):
-    a = PizzaProblem.a
-    x = (2*th-(2*np.pi+a))/(2*np.pi-a)
-    return eval_hat_x(x)
-
-class HatBData(BData):
-    
     def eval_phi0(self, th):
-        return eval_hat_th(th)
+        a = self.a
+        nu = self.nu
+        return np.sin(8*nu*(th-a))
 
 
-class SingHHat(SingH):
+class SingH_FFT_Hat(SingH_FFT):
 
     k = 5.5
 
@@ -194,34 +138,11 @@ class SingHHat(SingH):
     expected_known = False
     m_max = 199
 
-    def __init__(self, **kwargs): 
-        self.bdata = HatBData() 
-        super().__init__(**kwargs)
-
-
-###### sing-h-parabola ######
-
-class ParabolaBData(BData):
-
     def eval_phi0(self, th):
-        return -(th - np.pi/6) * (th - 2*np.pi) 
-
-    def calc_coef_analytic(self, M):
-        a = PizzaProblem.a
-        nu = PizzaProblem.nu
-
-        coef = np.zeros(M)
-
-        for m in range(1, M+1):
-            if m % 2 == 0:
-                coef[m-1] = 0
-            else:
-                coef[m-1] = 8/(2*np.pi - a) * 1/(m*nu)**3
-
-        return coef
+        return functions.eval_hat_th(th)
 
 
-class SingHParabola(SingH):
+class SingH_FFT_Parabola(SingH_FFT):
 
     k = 5.5
 
@@ -238,6 +159,5 @@ class SingHParabola(SingH):
     expected_known = False
     m_max = 199
 
-    def __init__(self, **kwargs): 
-        self.bdata = ParabolaBData()
-        super().__init__(**kwargs)
+    def eval_phi0(self, th):
+        return -(th - np.pi/6) * (th - 2*np.pi) 
