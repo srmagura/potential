@@ -10,4 +10,4 @@ If you don't understand the mathematical algorithm that this code implements, yo
 
 ## References
 * M. Medvinsky, S. Tsynkov, E. Turkel. "The Method of Difference Potentials for the Helmholtz Equation Using Compact High Order Schemes." Journal of Scientific Computation (2012) 53.
-* S. Magura. ["Solving the Helmholtz equation via difference potentials on a domain with a reentrant corner"](http://www4.ncsu.edu/~srmagura/media/ma491_paper.pdf).
+* S. Magura. ["Solving the Helmholtz equation via difference potentials on a domain with a reentrant corner."](http://www4.ncsu.edu/~srmagura/media/ma491_paper.pdf)

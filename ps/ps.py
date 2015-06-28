@@ -76,18 +76,38 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             
         return trace
 
-    def get_Q(self, index):
+    def get_Q_sub(self, sid, index):
+        """
+        Get one of the three submatrices that make up Q.
+        """
         columns = []
 
-        for JJ in range(len(self.B_desc)):
+        for JJ in self.segment_desc[sid]['JJ_list']:
             ext = self.extend_basis(JJ, index)
             potential = self.get_potential(ext)
             projection = self.get_trace(potential)
 
             columns.append(projection - ext)
         
-        Q = np.column_stack(columns)
-                    
+        return np.column_stack(columns)
+
+    def get_Q(self, index):
+        """
+        Get Q0 or Q1, depending on the value of index. 
+        
+        These matrices are the main components of the variational formulation,
+        an overdetermined linear system used to solve for the unknown Neumann
+        coefficients. Q0 operates on the (known) Dirichlet Chebyshev 
+        coefficients, while Q1 operates on the vector of unknowns (Neumann
+        Chebyshev coefficients and Fourier b coefficients).
+
+        index -- 0 or 1
+        """
+        Q_0 = self.get_Q_sub(0, index)
+        Q_1 = self.get_Q_sub(1, index)
+        Q_2 = self.get_Q_sub(2, index)
+
+        Q = np.concatenate((Q_0, Q_1, Q_2), axis=1)
         return Q
         
     def get_Q_rhs(self):
@@ -105,12 +125,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
          
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
+    # Set to True when debugging with test_extend_boundary() for 
+    # significant performance benefit.
     skip_matrix_build = False
         
     def run(self):
-        '''
+        """
         The main procedure for PizzaSolver.
-        '''
+        """
         self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
 
         '''
@@ -120,7 +142,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #self.optimize_n_basis()
 
         n_basis_tuple = self.problem.get_n_basis(self.N)
-        self.setup_B_desc(*n_basis_tuple)
+        self.setup_basis(*n_basis_tuple)
         
         #self.plot_gamma()
         

@@ -22,8 +22,8 @@ class Result:
 
 class Solver(SolverExtend, SolverDebug): 
 
-    '''Set to True when debugging with test_extend_boundary() for 
-    significant performance benefit.'''
+    # Set to True when debugging with test_extend_boundary() for 
+    # significant performance benefit.
     skip_matrix_build = False
 
     def __init__(self, problem, N, scheme_order, **kwargs):

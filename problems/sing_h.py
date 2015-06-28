@@ -18,7 +18,12 @@ class SingH_BData(BData):
 
     
 class SingH(PizzaProblem):
-    """A singular problem whose singularity only has a homogeneous part."""
+    """
+    A singular problem whose singularity only has a homogeneous part.
+    
+    The Dirichlet data on segments 1 and 2 is 0. The Dirichlet data on
+    segment 0 is given by a function phi0.
+    """
 
     homogeneous = True
     expected_known = False

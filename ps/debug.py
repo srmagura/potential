@@ -12,6 +12,12 @@ from chebyshev import get_chebyshev_roots
 import matrices
 
 class PsDebug:
+    """
+    A collection of functions for debugging PizzaSolver.
+
+    In a normal execution of PizzaSolver, none of these functions are used.
+    I.e. there's no core functionality in this module.
+    """
     
     def get_boundary_sample(self, n=100):
         ep = 1e-5
@@ -72,10 +78,10 @@ class PsDebug:
         return points
 
     def calc_c1_exact(self):
-        '''
+        """
         Do Chebyshev fits on the analytically-known Neumann data of 
         each segment to get the "exact" values of the coefficients c1. 
-        '''
+        """
         t_data = get_chebyshev_roots(1000)
         self.c1 = []
 
@@ -168,10 +174,10 @@ class PsDebug:
         return result
 
     def c0_test(self, plot=True):
-        '''
+        """
         Plot the Dirichlet data along with its Chebyshev expansion. If there
         is more than a minor difference between the two, something is wrong.
-        '''
+        """
         sample = self.get_boundary_sample()
 
         s_data = np.zeros(len(sample))
@@ -224,11 +230,11 @@ class PsDebug:
             sid += 1
 
     def c1_test(self, plot=True):
-        '''
+        """
         Plot the reconstructed Neumann data, as approximated by a Chebyshev 
         expansion. If the Chebyshev expansion shows "spikes" near the
         interfaces of the segments, something is probably wrong.
-        '''
+        """
         sample = self.get_boundary_sample()
 
         do_exact = hasattr(self.problem, 'eval_d_u_outwards')       
@@ -331,7 +337,7 @@ class PsDebug:
         plt.show()
             
     def optimize_n_basis(self):
-        '''
+        """
         Utility function for selecting a good number of basis functions.
         Too many or too few basis functions will introduce numerical error.
         True solution must be known. 
@@ -340,13 +346,13 @@ class PsDebug:
         the value of the -N option.
         
         There may be a way to improve on this brute force method.
-        '''
+        """
         min_error = float('inf')
 
         # Tweak the following ranges as needed
         for n_circle in range(28, 60, 3):
             for n_radius in range(12, int(.7*n_circle), 2):
-                self.setup_B_desc(n_circle, n_radius)
+                self.setup_basis(n_circle, n_radius)
                 
                 self.calc_c0()
                 self.calc_c1()
