@@ -16,20 +16,22 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         self.a = problem.a
+        self.nu = problem.nu
+
         self.R = problem.R
         self.AD_len = problem.AD_len
-        
+
         super().__init__(problem, N, scheme_order, **kwargs)
-        
+
         self.ps_construct_grids()
-           
+
     def get_sid(self, th):
         return self.problem.get_sid(th)
 
     def is_interior(self, i, j):
         r, th = self.get_polar(i, j)
-        return r <= self.R and th >= self.a  
-    
+        return r <= self.R and th >= self.a
+
     def get_radius_point(self, sid, x, y):
         assert sid == 2
 
@@ -37,7 +39,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         x1 = (x/m + y)/(m + 1/m)
         y1 = m*x1
 
-        return (x1, y1) 
+        return (x1, y1)
 
     def dist_to_radius(self, sid, x, y):
         assert sid == 2
@@ -52,7 +54,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             return -unsigned
         else:
             return unsigned
-        
+
     def get_potential(self, ext):
         w = np.zeros([(self.N-1)**2], dtype=complex)
 
@@ -65,20 +67,21 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             Lw[matrices.get_index(self.N, i, j)] = 0
 
         return w - self.LU_factorization.solve(Lw)
-        
+
     def get_trace(self, w):
         trace = np.zeros(len(self.union_gamma), dtype=complex)
-        
+
         for l in range(len(self.union_gamma)):
             i, j = self.union_gamma[l]
             index = matrices.get_index(self.N, i, j)
             trace[l] = w[index]
-            
+
         return trace
 
-    def get_Q_sub(self, sid, index):
+    def get_Q(self, index, sid):
         """
-        Get one of the three submatrices that make up Q.
+        Get one of the three submatrices that are used in the construction of
+        V.
         """
         columns = []
 
@@ -88,47 +91,74 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             projection = self.get_trace(potential)
 
             columns.append(projection - ext)
-        
+
         return np.column_stack(columns)
 
-    def get_Q(self, index):
+    def get_V(self):
         """
-        Get Q0 or Q1, depending on the value of index. 
-        
+        Get the matrices V0 and V1.
+
         These matrices are the main components of the variational formulation,
         an overdetermined linear system used to solve for the unknown Neumann
-        coefficients. Q0 operates on the (known) Dirichlet Chebyshev 
-        coefficients, while Q1 operates on the vector of unknowns (Neumann
+        coefficients. V0 operates on the (known) Dirichlet Chebyshev
+        coefficients, while V1 operates on the vector of unknowns (Neumann
         Chebyshev coefficients and Fourier b coefficients).
 
         index -- 0 or 1
         """
-        Q_0 = self.get_Q_sub(0, index)
-        Q_1 = self.get_Q_sub(1, index)
-        Q_2 = self.get_Q_sub(2, index)
 
-        Q = np.concatenate((Q_0, Q_1, Q_2), axis=1)
-        return Q
-        
-    def get_Q_rhs(self):
-        Q0 = self.get_Q(0)
+        # Put the Q-submatrices in a 2x3 multidimensional list. The first row
+        # corresponds to V0, while the second row corresponds to V1.
+        submatrices = []
+        for index in (0, 1):
+            row = []
+            for sid in range(self.N_SEGMENT):
+                row.append(self.get_Q(index, sid))
 
-        ext_f = self.extend_inhomo_f()           
+            submatrices.append(row)
+
+        if self.problem.var_compute_b:
+            a = self.a
+            nu = self.nu
+
+            for m in range(1, self.problem.M+1):
+                def func(th):
+                    return np.sin(m*nu*(th-a))
+
+                d = self.get_chebyshev_coef(0, func)
+                d = np.matrix(d.reshape((len(d), 1)))
+                submatrices[1].append(-submatrices[0][0].dot(d))
+
+        V0 = np.concatenate(submatrices[0], axis=1)
+        V1 = np.concatenate(submatrices[1], axis=1)
+        return (V0, V1)
+
+    def get_var_rhs(self, V0):
+        """
+        Get the RHS of the variational formulation.
+        """
+        ext_f = self.extend_inhomo_f()
         proj_f = self.get_potential(ext_f)
-        
-        term = self.get_trace(proj_f + self.ap_sol_f)
-        return -Q0.dot(self.c0) + ext_f - term    
-        
-    def calc_c1(self):
-        Q1 = self.get_Q(1)
-        rhs = self.get_Q_rhs()
-         
-        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
-    # Set to True when debugging with test_extend_boundary() for 
+        term = self.get_trace(proj_f + self.ap_sol_f)
+        return -V0.dot(self.c0) + ext_f - term
+
+    def solve_var(self):
+        """
+        Setup and solve the variational formulation.
+        """
+        V0, V1 = self.get_V()
+        rhs = self.get_var_rhs(V0)
+
+        var_result = np.linalg.lstsq(V1, rhs)[0]
+        self.c1 = var_result[:len(self.c0)]
+        b_coef = var_result[len(self.c0):]
+        print(np.round(b_coef, 4))
+
+    # Set to True when debugging with test_extend_boundary() for
     # significant performance benefit.
     skip_matrix_build = False
-        
+
     def run(self):
         """
         The main procedure for PizzaSolver.
@@ -143,9 +173,9 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         n_basis_tuple = self.problem.get_n_basis(self.N)
         self.setup_basis(*n_basis_tuple)
-        
+
         #self.plot_gamma()
-        
+
         '''
         Uncomment one of the following lines and run the convergence test
         via the -c command-line flag to ensure that the extension procedures
@@ -156,7 +186,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #return self.ps_test_extend_src_f()
         #return self.test_extend_boundary()
-        
+
         '''
         Uncomment to run the extend basis test. Just run the program on a
         single grid --- don't run the convergence test.
@@ -171,14 +201,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #self.c0_test(plot=False)
 
-        self.calc_c1()
+        self.solve_var()
         #self.calc_c1_exact()
         #self.c1_test()
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f
         u_act = potential
-        
+
         for i, j in self.M0:
             index = matrices.get_index(self.N, i, j)
             r, th = self.get_polar(i, j)
@@ -187,7 +217,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #self.plot_contour(u_act)
 
         error = self.eval_error(u_act)
-        
+
         result = Result()
         result.error = error
         result.u_act = u_act

@@ -23,7 +23,7 @@ class PsBasis:
         """
         self.segment_desc = []
         self.B_desc = []
-        
+
         n_basis_by_sid = (n_circle, n_radius, n_radius)
 
         JJ = 0
@@ -35,11 +35,11 @@ class PsBasis:
             self.segment_desc.append(s_desc)
 
             for J in range(s_desc['n_basis']):
-                b_desc = {} 
+                b_desc = {}
                 b_desc['J'] = J
                 b_desc['sid'] = sid
                 self.B_desc.append(b_desc)
-                
+
                 s_desc['JJ_list'].append(JJ)
                 JJ += 1
 
@@ -104,15 +104,15 @@ class PsBasis:
         """
         t_data = self.chebyshev_roots
         boundary_data = np.zeros(len(t_data))
-        
+
         for i in range(len(t_data)):
             arg = self.eval_g(sid, t_data[i])
             boundary_data[i] = func(arg)
 
         n_basis = self.segment_desc[sid]['n_basis']
-        return np.polynomial.chebyshev.chebfit(t_data, boundary_data, 
+        return np.polynomial.chebyshev.chebfit(t_data, boundary_data,
             n_basis-1)
-        
+
 
     def calc_c0(self):
         """
@@ -124,7 +124,7 @@ class PsBasis:
         for sid in range(self.N_SEGMENT):
             def func(arg):
                 return self.problem.eval_bc_extended(arg, sid)
-                
+
             self.c0.extend(self.get_chebyshev_coef(sid, func))
 
     def extend_basis(self, JJ, index):
