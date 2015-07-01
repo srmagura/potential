@@ -1,6 +1,6 @@
-'''
+"""
 Command-line interface to the solvers
-'''
+"""
 import numpy as np
 import sys
 import argparse
@@ -13,15 +13,16 @@ class Interface:
     prec_str = '{:.5}'
 
     def run_solver(self, N_list):
-        '''
+        """
         Perform the convergence test. Prints in TeX-friendly
         format if the `--tex` option was given.
-        '''
-        do_rel_conv = (self.args.r or 
+        """
+        do_rel_conv = (self.args.r or
             not self.problem.expected_known or
             self.problem.force_relative)
         prev_error = None
-        
+        prev_b_error = None
+
         u2 = None
         u1 = None
         u0 = None
@@ -31,46 +32,56 @@ class Interface:
 
             print('---- {0} x {0} ----'.format(N))
             result = my_solver.run()
-            
+
+            if result.b_error is not None:
+                print('b error: ' + self.prec_str.format(result.b_error))
+
+                if prev_b_error is not None:
+                    b_convergence = np.log2(prev_b_error / result.b_error)
+                    print('b convergence: ' + self.prec_str.format(b_convergence))
+
+                print()
+
             if result.error is not None:
                 print('Error: ' + self.prec_str.format(result.error))
-                
+
             u2 = u1
             u1 = u0
             u0 = result.u_act
 
-            if self.args.tex:            
-                tex = '\\grid{' + str(N) + '} &'
-                tex += '\\error{' + str(result.error) + '} &'
+            #if self.args.tex:
+            #    tex = '\\grid{' + str(N) + '} &'
+            #    tex += '\\error{' + str(result.error) + '} &'
 
             if prev_error is not None:
                 convergence = np.log2(prev_error / result.error)
-                
-                if self.args.tex:
-                    tex += str(convergence)
-                else:
-                    print('Convergence: ' + self.prec_str.format(convergence))
-            
+
+                #if self.args.tex:
+                #    tex += str(convergence)
+                #else:
+                print('Convergence: ' + self.prec_str.format(convergence))
+
             if do_rel_conv and u2 is not None:
                 convergence = my_solver.calc_convergence3(u0, u1, u2)
                 print('Rel convergence: ' + self.prec_str.format(convergence))
 
-            if self.args.tex:
-                print(tex + r'\\')
-            else:
-                print()
-                          
-            prev_error = result.error  
+            #if self.args.tex:
+            #    print(tex + r'\\')
+            #else:
+            print()
+
+            prev_error = result.error
+            prev_b_error = result.b_error
 
     def run(self):
-        '''
+        """
         Main routine. Parse command-line arguments and run a solver
         or start the convergence test.
-        '''
+        """
         parser = argparse.ArgumentParser()
 
         problem_choices = problems.problem_dict.keys()
-        parser.add_argument('problem', metavar='problem', 
+        parser.add_argument('problem', metavar='problem',
             choices=problem_choices,
             help='name of the problem to run: ' + ', '.join(problem_choices))
 

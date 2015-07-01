@@ -121,13 +121,18 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             a = self.a
             nu = self.nu
 
+            d_columns = []
+
             for m in range(1, self.problem.M+1):
                 def func(th):
                     return np.sin(m*nu*(th-a))
 
                 d = self.get_chebyshev_coef(0, func)
                 d = np.matrix(d.reshape((len(d), 1)))
-                submatrices[1].append(-submatrices[0][0].dot(d))
+                d_columns.append(d)
+
+            self.d_matrix = np.column_stack(d_columns)
+            submatrices[1].append(-submatrices[0][0].dot(self.d_matrix))
 
         V0 = np.concatenate(submatrices[0], axis=1)
         V1 = np.concatenate(submatrices[1], axis=1)
@@ -152,8 +157,15 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         var_result = np.linalg.lstsq(V1, rhs)[0]
         self.c1 = var_result[:len(self.c0)]
-        b_coef = var_result[len(self.c0):]
-        print(np.round(b_coef, 4))
+
+        if self.problem.var_compute_b:
+            b_coef = var_result[len(self.c0):]
+            self.problem.b_coef = b_coef
+
+            for m in range(1, self.problem.M+1):
+                n_circle = self.segment_desc[0]['n_basis']
+                d = np.ravel(self.d_matrix[:,m-1])
+                self.c0[:n_circle] -= b_coef[m-1] * d
 
     # Set to True when debugging with test_extend_boundary() for
     # significant performance benefit.
@@ -221,4 +233,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         result = Result()
         result.error = error
         result.u_act = u_act
+
+        if self.problem.var_compute_b:
+            result.b_error = self.problem.get_b_error()
+
         return result

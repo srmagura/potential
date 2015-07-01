@@ -8,6 +8,7 @@ from .sympy_problem import SympyProblem
 from .bdata import BData
 import problems.functions as functions
 
+
 class SingH_BData(BData):
 
     def __init__(self, problem):
@@ -31,8 +32,6 @@ class SingH(PizzaProblem):
     M = 7
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
         self.bdata = SingH_BData(self)
 
         if self.expected_known:
@@ -40,15 +39,15 @@ class SingH(PizzaProblem):
         else:
             m = self.M
 
-        self.b_coef = self.bdata.calc_coef(m)
+        self.fft_b_coef = self.bdata.calc_coef(m)
 
         if self.expected_known:
-            self.bessel_R = np.zeros(len(self.b_coef))
+            self.bessel_R = np.zeros(len(self.fft_b_coef))
 
-            for m in range(1, len(self.b_coef)+1):
+            for m in range(1, len(self.fft_b_coef)+1):
                 self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
 
-            print('[sing-h] b_coef[m_max] =', self.b_coef[self.m_max-1])
+            print('[sing-h] fft_b_coef[m_max] =', self.fft_b_coef[self.m_max-1])
 
     def calc_bessel_ratio(self, m, r):
         k = self.k
@@ -65,19 +64,17 @@ class SingH(PizzaProblem):
         u = 0
 
         for m in range(self.M+1, self.m_max+1):
-            b = self.b_coef[m-1]
+            b = self.fft_b_coef[m-1]
             ratio = self.calc_bessel_ratio(m, r)
             u += b * ratio * np.sin(m*nu*(th-a))
 
         return u
 
-    def _eval_bc_extended(self, arg, sid, b_known):
+    def eval_bc_extended(self, arg, sid):
         """
-        Evaluate extended boundary condition. To be called by subclasses
-        SingH only.
+        Evaluate extended boundary condition.
 
-        b_known -- boolean; whether or not the b coefficients are assumed
-        known via FFT.
+        If self.var_compute_b is false, subtract the sines.
         """
         a = self.a
         nu = self.nu
@@ -87,9 +84,9 @@ class SingH(PizzaProblem):
         if sid == 0:
             bc = self.eval_phi0(th)
 
-            if b_known:
+            if not self.var_compute_b:
                 for m in range(1, self.M+1):
-                    bc -= self.b_coef[m-1] * np.sin(m*nu*(th - a))
+                    bc -= self.fft_b_coef[m-1] * np.sin(m*nu*(th - a))
 
             return bc
 
@@ -99,25 +96,16 @@ class SingH(PizzaProblem):
             return 0
 
 
-class SingH_FFT(SingH):
+class VarProblem:
     """
-    A SingH problem where the b coefficients are calculated using FFT.
+    A problem where the b coefficients are calculated during the solution
+    of the variational formulation.
     """
-
-    def eval_bc_extended(self, arg, sid):
-        return self._eval_bc_extended(arg, sid, True)
-
-
-class SingH_Var(SingH):
-    """
-    A SingH problem where the b coefficients are calculated during
-    the solution of the ``variational formulation''.
-    """
-
     var_compute_b = True
 
-    def eval_bc_extended(self, arg, sid):
-        return self._eval_bc_extended(arg, sid, False)
+    def get_b_error(self):
+        diff = self.fft_b_coef[:self.M] - self.b_coef
+        return np.abs(np.max(diff))
 
 
 class Sine:
@@ -142,14 +130,14 @@ class Sine:
         return np.sin(2*nu*(th-a)) + np.sin(8*nu*(th-a))
 
 
-class SingH_FFT_Sine(Sine, SingH_FFT):
+class SingH_FFT_Sine(Sine, SingH):
     pass
 
-class SingH_Var_Sine(Sine, SingH_Var):
+class SingH_Var_Sine(VarProblem, Sine, SingH):
     pass
 
 
-class SingH_FFT_Hat(SingH_FFT):
+class SingH_FFT_Hat(SingH):
 
     k = 5.5
 
@@ -170,7 +158,7 @@ class SingH_FFT_Hat(SingH_FFT):
         return functions.eval_hat_th(th)
 
 
-class SingH_FFT_Parabola(SingH_FFT):
+class SingH_FFT_Parabola(SingH):
 
     k = 5.5
 

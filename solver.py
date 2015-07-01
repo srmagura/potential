@@ -15,14 +15,14 @@ def cart_to_polar(x, y):
         th += 2*np.pi
 
     return r, th
-    
+
 class Result:
     u_act = None
-    
+    b_error = None
 
-class Solver(SolverExtend, SolverDebug): 
+class Solver(SolverExtend, SolverDebug):
 
-    # Set to True when debugging with test_extend_boundary() for 
+    # Set to True when debugging with test_extend_boundary() for
     # significant performance benefit.
     skip_matrix_build = False
 
@@ -42,7 +42,7 @@ class Solver(SolverExtend, SolverDebug):
         self.construct_grids()
 
         if not self.skip_matrix_build:
-            self.L = matrices.get_L(self.scheme_order, self.N, 
+            self.L = matrices.get_L(self.scheme_order, self.N,
                 self.AD_len, self.problem.k)
             self.LU_factorization = scipy.sparse.linalg.splu(self.L)
 
@@ -79,7 +79,7 @@ class Solver(SolverExtend, SolverDebug):
 
         self.global_Mplus = set()
         for i, j  in self.M0:
-            if self.is_interior(i, j): 
+            if self.is_interior(i, j):
                 self.global_Mplus.add((i, j))
 
         self.global_Mminus = self.M0 - self.global_Mplus
@@ -90,7 +90,7 @@ class Solver(SolverExtend, SolverDebug):
 
             if self.scheme_order > 2:
               Nm |= set([(i-1, j), (i+1, j), (i, j-1), (i, j+1)])
-            
+
             self.Kplus |= Nm
 
     def setup_src_f(self):
@@ -102,13 +102,13 @@ class Solver(SolverExtend, SolverDebug):
 
         if hasattr(self, 'extend_src_f'):
             self.extend_src_f()
-            
-    # Returns || u_act - u_exp ||_inf, the error between 
-    # actual and expected solutions under the infinity-norm. 
+
+    # Returns || u_act - u_exp ||_inf, the error between
+    # actual and expected solutions under the infinity-norm.
     def eval_error(self, u_act):
         if not self.problem.expected_known:
             return None
-    
+
         u_exp = np.zeros((self.N-1)**2, dtype=complex)
         for i,j in self.M0:
             x, y = self.get_coord(i,j)
@@ -117,14 +117,14 @@ class Solver(SolverExtend, SolverDebug):
 
         error = []
         max_error = 0
-        
+
         for i,j in self.global_Mplus:
             l = matrices.get_index(self.N, i,j)
             diff = abs(u_exp[l] - u_act[l])
-            error.append(diff)  
+            error.append(diff)
 
         return max(error)
-        
+
     def calc_convergence3(self, u0, u1, u2):
         if type(u0) is np.ndarray:
             return self._array_calc_convergence3(u0, u1, u2)
@@ -135,18 +135,18 @@ class Solver(SolverExtend, SolverDebug):
         N = self.N
         diff12 = []
         diff01 = []
-    
+
         for i, j in self.global_Mplus:
             k0 = matrices.get_index(N, i, j)
             k1 = matrices.get_index(N//2, i//2, j//2)
             k2 = matrices.get_index(N//4, i//4, j//4)
-        
+
             if i % 4 == 0 and j % 4 == 0:
                 diff12.append(abs(u1[k1] - u2[k2]))
-                
+
             if i % 2 == 0 and j % 2 == 0:
                 diff01.append(abs(u0[k0] - u1[k1]))
-                
+
         return np.log2(max(diff12) / max(diff01))
 
     def _mv_calc_convergence3(self, u0, u1, u2):
@@ -170,7 +170,7 @@ class Solver(SolverExtend, SolverDebug):
 
                     if data1:
                         diff12.append(abs(data1['value'] - data2['value']))
-                
+
             if i % 2 == 0 and j % 2 == 0:
                 for l in range(len(u1[i1, j1])):
                     data0 = None
@@ -181,8 +181,8 @@ class Solver(SolverExtend, SolverDebug):
                         if _data0['setype'] == data1['setype']:
                             data0 = _data0
                             break
-                    
+
                     if data0:
                         diff01.append(abs(data0['value'] - data1['value']))
-                
+
         return np.log2(max(diff12) / max(diff01))
