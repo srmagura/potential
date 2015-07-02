@@ -136,21 +136,13 @@ class SingH_FFT_Sine(Sine, SingH):
 class SingH_Var_Sine(VarProblem, Sine, SingH):
 
     n_basis_dict = {
-        16: (20, 5),
-        32: (24, 11),
-        64: (41, 18),
-        128: (53, 28),
-        256: (65, 34),
-        None: (80, 34),
-    }
-    '''n_basis_dict = {
         16: (21, 9),
         32: (24, 15),
         64: (42, 27),
         128: (55, 31),
         256: (65, 34),
         None: (80, 34),
-    }'''
+    }
 
 
 class SingH_FFT_Hat(SingH):
