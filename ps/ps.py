@@ -14,14 +14,15 @@ from ps.debug import PsDebug
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
-    def __init__(self, problem, N, scheme_order, **kwargs):
+    def __init__(self, problem, N, options, **kwargs):
         self.a = problem.a
         self.nu = problem.nu
 
         self.R = problem.R
         self.AD_len = problem.AD_len
 
-        super().__init__(problem, N, scheme_order, **kwargs)
+        self.do_optimize = options['do_optimize']
+        super().__init__(problem, N, options, **kwargs)
 
         self.ps_construct_grids()
 
@@ -167,6 +168,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
                 d = np.ravel(self.d_matrix[:,m-1])
                 self.c0[:n_circle] -= b_coef[m-1] * d
 
+
     # Set to True when debugging with test_extend_boundary() for
     # significant performance benefit.
     skip_matrix_build = False
@@ -181,7 +183,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Debugging function for choosing an appropriate number of basis
         functions.
         '''
-        #self.optimize_n_basis()
+        if self.do_optimize:
+            self.optimize_n_basis()
 
         n_basis_tuple = self.problem.get_n_basis(self.N)
         self.setup_basis(*n_basis_tuple)

@@ -53,7 +53,7 @@ class CsFourier(CircleSolver, CsDebug):
         discrete_phi = [self.problem.eval_bc(th) for th in grid]
         c0_raw = np.fft.fft(discrete_phi)
 
-        while True: 
+        while True:
             Jminus = self.choose_n_basis(range(-fourier_N // 2, 1), c0_raw)
             Jplus = self.choose_n_basis(range(fourier_N // 2, 0, -1), c0_raw)
             Jmax = max(Jminus, Jplus)
@@ -65,7 +65,7 @@ class CsFourier(CircleSolver, CsDebug):
         if Jmax < 5:
             Jmax = 5
 
-        self.J_dict = collections.OrderedDict(((J, None) for J in 
+        self.J_dict = collections.OrderedDict(((J, None) for J in
             range(-Jmax, Jmax+1)))
 
         i = 0
@@ -90,11 +90,11 @@ class CsFourier(CircleSolver, CsDebug):
             if index == 0:
                 ext[l] = self.extend_circle(r, exp, 0, -J**2 * exp, 0, J**4 * exp)
             else:
-                ext[l] = self.extend_circle(r, 0, exp, 0, -J**2 * exp, 0)  
+                ext[l] = self.extend_circle(r, 0, exp, 0, -J**2 * exp, 0)
 
         return ext
 
-    def extend_boundary(self): 
+    def extend_boundary(self):
         '''
         Construct the equation-based extension for the boundary data,
         as approximated by the Fourier coefficients c0 and c1.
@@ -106,12 +106,12 @@ class CsFourier(CircleSolver, CsDebug):
             r, th = self.get_polar(i, j)
 
             xi0 = xi1 = 0
-            d2_xi0_th = d2_xi1_th = 0 
+            d2_xi0_th = d2_xi1_th = 0
             d4_xi0_th = 0
 
             for J, i in self.J_dict.items():
                 exp = np.exp(complex(0, J*th))
-                xi0 += self.c0[i] * exp 
+                xi0 += self.c0[i] * exp
                 d2_xi0_th += -J**2 * self.c0[i] * exp
                 d4_xi0_th += J**4 * self.c0[i] * exp
 
@@ -136,7 +136,7 @@ class CsFourier(CircleSolver, CsDebug):
         u_act = self.get_potential(ext) + self.ap_sol_f
 
         error = self.eval_error(u_act)
-        
+
         result = Result()
         result.error = error
         result.u_act = u_act

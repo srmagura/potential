@@ -14,8 +14,7 @@ class Interface:
 
     def run_solver(self, N_list):
         """
-        Perform the convergence test. Prints in TeX-friendly
-        format if the `--tex` option was given.
+        Perform the convergence test.
         """
         do_rel_conv = (self.args.r or
             not self.problem.expected_known or
@@ -27,8 +26,15 @@ class Interface:
         u1 = None
         u0 = None
 
+        # Options to pass to the solver
+        options = {
+            'verbose': (len(N_list) == 1),
+            'scheme_order': self.args.o,
+            'do_optimize': self.args.p,
+        }
+
         for N in N_list:
-            my_solver = self.problem.get_solver(N, self.args.o)
+            my_solver = self.problem.get_solver(N, options)
 
             print('---- {0} x {0} ----'.format(N))
             result = my_solver.run()
@@ -49,25 +55,15 @@ class Interface:
             u1 = u0
             u0 = result.u_act
 
-            #if self.args.tex:
-            #    tex = '\\grid{' + str(N) + '} &'
-            #    tex += '\\error{' + str(result.error) + '} &'
-
             if prev_error is not None:
                 convergence = np.log2(prev_error / result.error)
 
-                #if self.args.tex:
-                #    tex += str(convergence)
-                #else:
                 print('Convergence: ' + self.prec_str.format(convergence))
 
             if do_rel_conv and u2 is not None:
                 convergence = my_solver.calc_convergence3(u0, u1, u2)
                 print('Rel convergence: ' + self.prec_str.format(convergence))
 
-            #if self.args.tex:
-            #    print(tex + r'\\')
-            #else:
             print()
 
             prev_error = result.error
@@ -94,16 +90,19 @@ class Interface:
             choices=(2, 4),
             help='order of scheme')
 
+        parser.add_argument('-p', action='store_true',
+            help=' PizzaSolver: run optimize_n_basis')
+
         parser.add_argument('-r', action='store_true',
             help='show relative convergence, even if the problem\'s '
             'true solution is known')
-        parser.add_argument('--tex', action='store_true',
-            help='print convergence test results in TeX-friendly format')
+        #parser.add_argument('--tex', action='store_true',
+        #    help='print convergence test results in TeX-friendly format')
 
         self.args = parser.parse_args()
         self.problem = problems.problem_dict[self.args.problem](scheme_order=self.args.o)
 
-        if self.args.c is None:
+        if self.args.c is None or self.args.p:
             N_list = [self.args.N]
         else:
             N_list = []

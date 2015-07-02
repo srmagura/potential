@@ -18,11 +18,11 @@ class PsDebug:
     In a normal execution of PizzaSolver, none of these functions are used.
     I.e. there's no core functionality in this module.
     """
-    
+
     def get_boundary_sample(self, n=100):
         ep = 1e-5
         th_data = np.linspace(self.a+ep, 2*np.pi-ep, 3*n)
-        
+
         r_data = np.arange(ep, self.R, self.R/n)
 
         points = []
@@ -33,10 +33,10 @@ class PsDebug:
 
         return points
 
-    def get_boundary_sample_by_sid(self, sid, arg_data):        
+    def get_boundary_sample_by_sid(self, sid, arg_data):
         a = self.a
         R = self.R
-        
+
         points = []
 
         if sid == 0:
@@ -79,15 +79,15 @@ class PsDebug:
 
     def calc_c1_exact(self):
         """
-        Do Chebyshev fits on the analytically-known Neumann data of 
-        each segment to get the "exact" values of the coefficients c1. 
+        Do Chebyshev fits on the analytically-known Neumann data of
+        each segment to get the "exact" values of the coefficients c1.
         """
         t_data = get_chebyshev_roots(1000)
         self.c1 = []
 
         for sid in range(self.N_SEGMENT):
             boundary_data = np.zeros(len(t_data))
-            
+
             for i in range(len(t_data)):
                 arg = self.eval_g(sid, t_data[i])
                 boundary_data[i] = self.problem.eval_d_u_outwards(arg, sid)
@@ -110,13 +110,13 @@ class PsDebug:
 
         self.c0_test(plot=False)
         self.c1_test(plot=False)
-        
+
         error = []
         mv_ext = self.mv_extend_boundary()
 
         for node in mv_ext:
             x, y = self.get_coord(*node)
-            
+
             for data in mv_ext[node]:
                 if setypes is None or data['setype'] in setypes:
                     exp = self.problem.eval_expected(x, y, setype=data['setype'])
@@ -150,25 +150,25 @@ class PsDebug:
                 print('index={}  JJ={}  error={}'.format(index, JJ, error[-1]))
 
         error = np.array(error)
-        
+
         result = Result()
         result.error = np.max(np.abs(error))
         return result
-        
+
     def ps_test_extend_src_f(self, setypes=None):
         error = []
-        
+
         for node in self.Kplus:
             x, y = self.get_coord(*node)
-                
+
             sid = self._extend_src_f_get_sid(*node)
             etype = self.get_etype(sid, *node)
-                
+
             if setypes is None or (sid, etype) in setypes:
-                l = matrices.get_index(self.N, *node)         
+                l = matrices.get_index(self.N, *node)
                 diff = abs(self.problem.eval_f(x, y) - self.src_f[l])
-                error.append(diff)             
-                        
+                error.append(diff)
+
         result = Result()
         result.error = max(error)
         return result
@@ -187,17 +187,17 @@ class PsDebug:
         for l in range(len(sample)):
             p = sample[l]
             s_data[l] = p['s']
-            
+
             r, th = cart_to_polar(p['x'], p['y'])
-            sid = self.get_sid(th) 
-            
-            exact_data[l] = self.problem.eval_bc_extended(p['arg'], sid).real          
-            
+            sid = self.get_sid(th)
+
+            exact_data[l] = self.problem.eval_bc_extended(p['arg'], sid).real
+
             for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\
                     (self.c0[JJ] *
                     self.eval_dn_B_arg(0, JJ, r, th)).real
-        
+
         print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
 
         if not plot:
@@ -205,68 +205,68 @@ class PsDebug:
 
         plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
         plt.plot(s_data, expansion_data, label='Expansion')
-        
+
         plt.legend(loc=0)
         plt.title('c0')
         plt.xlabel('Arclength s')
         plt.ylabel('Dirichlet data')
         plt.show()
 
-        
+
     def print_c1(self):
         sid = 0
         i = 0
-        
+
         print()
         print('print_c1: not showing complex part.')
         for desc in self.segment_desc:
             n_basis = desc['n_basis']
             print('c1(segment {}): {}'.format(sid, n_basis))
-            
+
             print(scipy.real(np.round(self.c1[i:i+n_basis], 2)))
             print()
-            
+
             i += n_basis
             sid += 1
 
     def c1_test(self, plot=True):
         """
-        Plot the reconstructed Neumann data, as approximated by a Chebyshev 
+        Plot the reconstructed Neumann data, as approximated by a Chebyshev
         expansion. If the Chebyshev expansion shows "spikes" near the
         interfaces of the segments, something is probably wrong.
         """
         sample = self.get_boundary_sample()
 
-        do_exact = hasattr(self.problem, 'eval_d_u_outwards')       
+        do_exact = hasattr(self.problem, 'eval_d_u_outwards')
 
         s_data = np.zeros(len(sample))
         expansion_data = np.zeros(len(sample))
-        
+
         if do_exact:
             exact_data = np.zeros(len(sample))
 
         for l in range(len(sample)):
             p = sample[l]
             s_data[l] = p['s']
-            
+
             if do_exact:
                 exact_data[l] = self.problem.eval_d_u_outwards(p['arg'], p['sid']).real
 
-            r, th = cart_to_polar(p['x'], p['y'])            
-            for JJ in range(len(self.B_desc)):                             
+            r, th = cart_to_polar(p['x'], p['y'])
+            for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\
                     (self.c1[JJ] *
-                    self.eval_dn_B_arg(0, JJ, r, th)).real        
+                    self.eval_dn_B_arg(0, JJ, r, th)).real
 
         if do_exact:
             error = np.max(np.abs(exact_data - expansion_data))
             print('c1 error: {}'.format(error))
-            
+
             plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
 
         if not plot:
             return
-            
+
         plt.plot(s_data, expansion_data, label='Expansion')
         plt.legend(loc=2)
         #plt.ylim(-1.5, 1.5)
@@ -304,14 +304,14 @@ class PsDebug:
 
     def plot_gamma(self):
         self.plot_Gamma()
-        
+
         colors = ('red', 'green', 'blue')
         markers = ('o', 'x', '^')
-        
+
         for sid in range(3):
             gamma = self.all_gamma[sid]
             x_data, y_data = self.nodes_to_plottable(gamma)
-            
+
             label_text = '$\gamma_{}$'.format(sid)
             plt.plot(x_data, y_data, markers[sid], label=label_text,
                 mfc='none', mec=colors[sid], mew=1)
@@ -324,68 +324,68 @@ class PsDebug:
 
     def plot_union_gamma(self):
         self.plot_Gamma()
-        
+
         for sid in range(3):
             gamma = self.all_gamma[sid]
             x_data, y_data = self.nodes_to_plottable(gamma)
-            
+
             plt.plot(x_data, y_data, 'o', mfc='purple')
 
         plt.title('union_gamma')
         plt.xlim(-3,3)
         plt.ylim(-3,3)
         plt.show()
-            
+
     def optimize_n_basis(self):
         """
         Utility function for selecting a good number of basis functions.
         Too many or too few basis functions will introduce numerical error.
-        True solution must be known. 
-        
+        True solution must be known.
+
         Run without the -c flag. Run the program several times, varying
         the value of the -N option.
-        
+
         There may be a way to improve on this brute force method.
         """
         min_error = float('inf')
 
         # Tweak the following ranges as needed
-        for n_circle in range(28, 60, 3):
-            for n_radius in range(12, int(.7*n_circle), 2):
+        for n_circle in range(25, 60, 3):
+            for n_radius in range(15, int(.7*n_circle), 2):
                 self.setup_basis(n_circle, n_radius)
-                
+
                 self.calc_c0()
-                self.calc_c1()
+                self.solve_var()
 
                 ext = self.extend_boundary()
                 u_act = self.get_potential(ext) + self.ap_sol_f
 
                 error = self.eval_error(u_act)
                 s ='n_circle={}    n_radius={}    error={}'.format(n_circle, n_radius, error)
-                
+
                 if error < min_error:
                     min_error = error
                     s = '!!!    ' + s
-                    
+
                 print(s)
-                
+
     def color_plot(self, u=None):
         N = self.N
-    
+
         x_range = np.zeros(N-1)
         y_range = np.zeros(N-1)
-        
+
         for i in range(1, N):
             x_range[i-1] = y_range[i-1] = self.get_coord(i, 0)[0]
-        
+
         Z = np.zeros((N-1, N-1))
-        for i, j in self.global_Mplus:            
+        for i, j in self.global_Mplus:
             if u is not None:
                 Z[i-1, j-1] = u[matrices.get_index(N, i, j)].real
             else:
                 x, y = self.get_coord(i, j)
                 Z[i-1, j-1] = self.problem.eval_expected(x, y)
-    
+
         X, Y = np.meshgrid(x_range, y_range, indexing='ij')
 
         fig, ax = plt.subplots()
@@ -394,8 +394,8 @@ class PsDebug:
             vmax=np.max(Z)
         )
         ax.axis('tight')
-        
+
         cb = fig.colorbar(p, ax=ax)
-        
+
         self.plot_Gamma()
         plt.show()
