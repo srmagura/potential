@@ -104,9 +104,10 @@ class VarProblem:
     var_compute_b = True
 
     def get_b_error(self):
-        print(self.fft_b_coef[:self.M] - self.b_coef)
-        diff = self.fft_b_coef[:self.M] - self.b_coef
-        return np.abs(np.max(diff))
+        expected = self.fft_b_coef[:self.M]
+        actual = self.b_coef
+
+        return np.max(np.abs(expected-actual))
 
 
 class Sine:
