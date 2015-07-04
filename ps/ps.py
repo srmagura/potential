@@ -162,6 +162,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         if self.problem.var_compute_b:
             b_coef = var_result[len(self.c0):]
             self.problem.b_coef = b_coef
+            #print(list(b_coef))
 
             for m in range(1, self.problem.M+1):
                 n_circle = self.segment_desc[0]['n_basis']

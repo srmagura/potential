@@ -104,6 +104,7 @@ class VarProblem:
     var_compute_b = True
 
     def get_b_error(self):
+        print(self.fft_b_coef[:self.M] - self.b_coef)
         diff = self.fft_b_coef[:self.M] - self.b_coef
         return np.abs(np.max(diff))
 
@@ -131,6 +132,11 @@ class SingH_FFT_Sine(Sine, SingH):
         256: (65, 34),
         None: (80, 34),
     }
+
+    # FIXME
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self.fft_b_coef[:self.M] = [(-3.775343926371022e-10+0j), (1.0000000065477552+0j), (-4.3618320468008509e-07+0j), (2.8230524225958398e-05+0j), (5.3406956589119314e-05+0j), (0.0027372637409038281+0j), (0.20246020611282922+0j)]
 
 
 class SingH_Var_Sine(VarProblem, Sine, SingH):
