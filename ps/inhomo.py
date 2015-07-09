@@ -3,13 +3,14 @@ import math
 
 import matrices
 from solver import cart_to_polar
+from .multivalue import Multivalue
 
 class PsInhomo:
-        
+
     def _extend_src_f_get_sid(self, i, j):
         R = self.R
         a = self.a
-        
+
         r, th = self.get_polar(i, j)
 
         if self.get_etype(0, i, j) == self.etypes['standard']:
@@ -20,7 +21,7 @@ class PsInhomo:
             else:
                 return 2
         else:
-            return 0   
+            return 0
 
     def extend_src_f(self):
         R = self.R
@@ -33,8 +34,8 @@ class PsInhomo:
         for i,j in self.Kplus - self.global_Mplus:
             x, y = self.get_coord(i, j)
             r, th = self.get_polar(i, j)
-            
-            sid = self._extend_src_f_get_sid(i, j)     
+
+            sid = self._extend_src_f_get_sid(i, j)
             etype = self.get_etype(sid, i, j)
 
             if sid == 1:
@@ -75,7 +76,7 @@ class PsInhomo:
         k = self.problem.k
 
         derivs = [0, 0, f]
-        
+
         if self.scheme_order == 4:
             derivs.extend([d_f_Y, -d2_f_X - k**2 * f + d2_f_Y])
 
@@ -100,7 +101,7 @@ class PsInhomo:
         p = self.problem
         R = self.R
         a = self.a
-        
+
         x, y = self.get_coord(i, j)
 
         if radius_sid == 1:
@@ -120,7 +121,7 @@ class PsInhomo:
         dir_X, dir_Y = self.get_dir_XY(radius_sid)
 
         f0 = p.eval_f(x0, y0)
-        
+
         if self.scheme_order == 4:
             grad_f0 = p.eval_grad_f(x0, y0)
             hessian_f0 = p.eval_hessian_f(x0, y0)
@@ -129,7 +130,7 @@ class PsInhomo:
             hessian_f0 = np.zeros((2, 2))
 
         f_derivs = (
-            f0, 
+            f0,
             grad_f0.dot(dir_X),
             hessian_f0.dot(dir_X).dot(dir_X)
         )
@@ -175,14 +176,14 @@ class PsInhomo:
         else:
             return self._extend_inhomo_outer_taylor12(
                 x, y, radius_sid)
-                
+
     def do_extend_inhomo_0_standard(self, i, j):
         r, th = self.get_polar(i, j)
         return {
             'elen': abs(self.R - r),
             'value': self.calc_inhomo_circle(r, th),
         }
-            
+
     def _extend_inhomo_0_outer(self, i, j, radius_sid):
         p = self.problem
         R = self.R
@@ -190,7 +191,7 @@ class PsInhomo:
 
         x, y = self.get_coord(i, j)
         r, th = self.get_polar(i, j)
-        
+
         if radius_sid == 1:
             delta = th
             th0 = 2*np.pi
@@ -200,7 +201,7 @@ class PsInhomo:
 
         f0 = p.eval_f_polar(R, th0)
         f_derivs = [f0]
-        
+
         if self.scheme_order == 4:
             d_f_th0 = p.eval_d_f_th(R, th0)
             d2_f_th0 = p.eval_d2_f_th(R, th0)
@@ -211,7 +212,7 @@ class PsInhomo:
         for l in range(len(f_derivs)):
             f += f_derivs[l] * delta**l / math.factorial(l)
 
-        d_f_r = 0       
+        d_f_r = 0
         if self.scheme_order == 4:
             d_f_r0 = p.eval_d_f_r(R, th0)
             d2_f_r_th0 = p.eval_d2_f_r_th(R, th0)
@@ -223,7 +224,7 @@ class PsInhomo:
 
             d2_f_r = p.eval_d2_f_r(R, th0)
             d2_f_th = p.eval_d2_f_th(R, th0)
-            
+
         else:
             d2_f_r = 0
             d2_f_th = 0
@@ -235,10 +236,10 @@ class PsInhomo:
 
     def do_extend_inhomo_0_left(self, i, j):
         return self._extend_inhomo_0_outer(i, j, 2)
-        
+
     def do_extend_inhomo_0_right(self, i, j):
         return self._extend_inhomo_0_outer(i, j, 1)
-        
+
     def _calc_inhomo_radius(self, x0, y0, dir_X, dir_Y, Y):
         p = self.problem
         f = p.eval_f(x0, y0)
@@ -247,54 +248,54 @@ class PsInhomo:
             if x0 == 0 and y0 == 0:
                 '''
                 Use Taylor's theorem to construct a smooth extension of
-                f (?), grad_f, and hessian_f at the origin, since they may 
+                f (?), grad_f, and hessian_f at the origin, since they may
                 be undefined or annoying to calculate at this point.
                 '''
                 h = self.AD_len / (10*self.N)
-                
+
                 hessian_f = p.eval_hessian_f(-h, 0)
-                
+
                 _grad_f = p.eval_grad_f(-h, 0)
                 grad_f = _grad_f + h * hessian_f.dot((1, 0))
-                
+
             else:
                 grad_f = p.eval_grad_f(x0, y0)
                 hessian_f = p.eval_hessian_f(x0, y0)
         else:
             grad_f = np.zeros(2)
             hessian_f = np.zeros((2, 2))
-        
+
         d_f_Y = grad_f.dot(dir_Y)
 
         d2_f_X = hessian_f.dot(dir_X).dot(dir_X)
         d2_f_Y = hessian_f.dot(dir_Y).dot(dir_Y)
-        
+
         elen = abs(Y)
-        
+
         # Only so that elen matches that of the homogeneous extension
         r, th = cart_to_polar(x0, y0)
         if x0 < 0 or r > self.R:
             elen += r
-         
+
         return {
             'elen': elen,
             'value':self.inhomo_extend_from_radius(
                 Y, f, d_f_Y, d2_f_X, d2_f_Y)
         }
-            
+
     def _extend_inhomo_radius(self, i, j, radius_sid):
         x, y = self.get_coord(i, j)
 
         if radius_sid == 1:
             x0, y0 = (x, 0)
             Y = y
-        elif radius_sid == 2: 
-            x0, y0 = self.get_radius_point(radius_sid, x, y) 
+        elif radius_sid == 2:
+            x0, y0 = self.get_radius_point(radius_sid, x, y)
             Y = self.signed_dist_to_radius(radius_sid, x, y)
 
         dir_X, dir_Y = self.get_dir_XY(radius_sid)
         return self._calc_inhomo_radius(x0, y0, dir_X, dir_Y, Y)
-        
+
     def do_extend_inhomo_1_standard(self, i, j):
         return self._extend_inhomo_radius(i, j, 1)
 
@@ -313,30 +314,22 @@ class PsInhomo:
     def do_extend_inhomo_2_right(self, i, j):
         return self._extend_inhomo_12_outer(i, j, 2)
 
-    def mv_extend_inhomo_f(self):    
+    def mv_extend_inhomo_f(self):
         R = self.R
         k = self.problem.k
 
-        mv_ext = {}
-        
-        for sid in range(3):
-            gamma = self.all_gamma[sid]         
+        mv_ext = Multivalue(self.union_gamma)
 
-            for l in range(len(gamma)):
-                i, j = gamma[l]
+        for sid in range(self.N_SEGMENT):
+            gamma = self.all_gamma[sid]
+
+            for (i, j) in gamma:
                 etype = self.get_etype(sid, i, j)
-            
-                if (i, j) not in mv_ext:
-                    mv_ext[(i, j)] = []
-                    
-                ext_list = mv_ext[(i, j)]
-                
                 result = None
-                
+
                 if self.problem.homogeneous:
-                    # Change elen to None to avoid confusion?
-                    result = {'elen': 1, 'value': 0}
-                    
+                    result = {'elen': 0, 'value': 0}
+
                 elif sid == 0:
                     if etype == self.etypes['standard']:
                         result = self.do_extend_inhomo_0_standard(i, j)
@@ -344,15 +337,15 @@ class PsInhomo:
                         result = self.do_extend_inhomo_0_left(i, j)
                     elif etype == self.etypes['right']:
                         result = self.do_extend_inhomo_0_right(i, j)
-                        
+
                 elif sid == 1:
                     if etype == self.etypes['standard']:
-                        result = self.do_extend_inhomo_1_standard(i, j)                        
+                        result = self.do_extend_inhomo_1_standard(i, j)
                     elif etype == self.etypes['left']:
-                        result = self.do_extend_inhomo_1_left(i, j)                       
+                        result = self.do_extend_inhomo_1_left(i, j)
                     elif etype == self.etypes['right']:
                         result = self.do_extend_inhomo_1_right(i, j)
-                        
+
                 elif sid == 2:
                     if etype == self.etypes['standard']:
                         result = self.do_extend_inhomo_2_standard(i, j)
@@ -362,9 +355,9 @@ class PsInhomo:
                         result = self.do_extend_inhomo_2_right(i, j)
 
                 result['setype'] = (sid, etype)
-                ext_list.append(result)
+                mv_ext[(i, j)].append(result)
 
         return mv_ext
 
     def extend_inhomo_f(self):
-        return self.mv_reduce(self.mv_extend_inhomo_f())
+        return self.mv_extend_inhomo_f().reduce()

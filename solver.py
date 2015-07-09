@@ -128,13 +128,33 @@ class Solver(SolverExtend, SolverDebug):
 
         return max(error)
 
-    def calc_convergence3(self, u0, u1, u2):
-        if type(u0) is np.ndarray:
-            return self._array_calc_convergence3(u0, u1, u2)
-        else:
-            return self._mv_calc_convergence3(u0, u1, u2)
+    def calc_rel_convergence(self, u0, u1, u2):
+        """
+        Calculate the relative convergence of the sequence (u0, u1, u2).
 
-    def _array_calc_convergence3(self, u0, u1, u2):
+        In the typical case, u0, u1, and u2 are arrays representing the
+        numerical solution on grid sizes N//4, N//2, and N, respectively.
+
+        The relative convergene is, roughly speaking,
+
+           log2(abs(u0-u1) / abs(u1-u2)).
+
+        However, note that when the differences u0-u1 and u1-u2 are
+        computed, we can only compare the two solutions at nodes where
+        they are both defined.
+        """
+        if type(u0) is np.ndarray:
+            return self._array_calc_rel_convergence(u0, u1, u2)
+        else:
+            # If the u's are not numpy arrays, then they are required to
+            # implement their own calc_rel_convergence function
+            return u0.calc_rel_convergence(u1, u2)
+
+    def _array_calc_rel_convergence(self, u0, u1, u2):
+        """
+        Calculate the relative convergence of the sequence (u0, u1, u2)
+        where the u's are numpy arrays.
+        """
         N = self.N
         diff12 = []
         diff01 = []
@@ -149,43 +169,5 @@ class Solver(SolverExtend, SolverDebug):
 
             if i % 2 == 0 and j % 2 == 0:
                 diff01.append(abs(u0[k0] - u1[k1]))
-
-        return np.log2(max(diff12) / max(diff01))
-
-    def _mv_calc_convergence3(self, u0, u1, u2):
-        diff12 = []
-        diff01 = []
-
-        for i, j in u0:
-            i1, j1 = i//2, j//2
-            i2, j2 = i//4, j//4
-
-            if i % 4 == 0 and j % 4 == 0:
-                for l in range(len(u2[i2, j2])):
-                    data1 = None
-                    data2 = u2[i2, j2][l]
-
-                    for ll in range(len(u1[i1, j1])):
-                        _data1 = u1[i1, j1][ll]
-                        if _data1['setype'] == data2['setype']:
-                            data1 = _data1
-                            break
-
-                    if data1:
-                        diff12.append(abs(data1['value'] - data2['value']))
-
-            if i % 2 == 0 and j % 2 == 0:
-                for l in range(len(u1[i1, j1])):
-                    data0 = None
-                    data1 = u1[i1, j1][l]
-
-                    for ll in range(len(u0[i, j])):
-                        _data0 = u0[i, j][ll]
-                        if _data0['setype'] == data1['setype']:
-                            data0 = _data0
-                            break
-
-                    if data0:
-                        diff01.append(abs(data0['value'] - data1['value']))
 
         return np.log2(max(diff12) / max(diff01))
