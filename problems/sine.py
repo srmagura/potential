@@ -8,12 +8,12 @@ def eval_d_u_r(k, R, th):
     return k*cos(th) * cos(k*R*cos(th))
 
 class Sine(Problem):
-    
+
     k = 1
     solver_class = CsFourier
     homogeneous = True
     expected_known = True
-    
+
     def eval_bc(self, th):
         return self.eval_expected(self.R*cos(th), self.R*sin(th))
 
@@ -22,37 +22,44 @@ class Sine(Problem):
 
     def eval_d_u_r(self, th):
         return eval_d_u_r(self.k, self.R, th)
-        
+
 
 class SinePizza(PizzaProblem):
-    
+
     k = 1
     homogeneous = True
     expected_known = True
 
     n_basis_dict = {
-        16: (21, 9), 
-        32: (28, 9), 
-        64: (34, 17), 
-        128: (40, 24), 
+        16: (21, 9),
+        32: (28, 9),
+        64: (34, 17),
+        128: (40, 24),
         256: (45, 29),
         512: (53, 34)
     }
-    
+
+    # TEMPORARY / EXPERIMENTAL
+    var_compute_b = True
+    M = 7
+
+    def get_b_error(self):
+        return np.max(np.abs(self.b_coef))
+
     def eval_expected(self, x, y):
         return sin(self.k*x)
-    
+
     def eval_bc_extended(self, arg, sid):
-        r, th = self.arg_to_polar(arg, sid) 
+        r, th = self.arg_to_polar(arg, sid)
         x, y = r*cos(th), r*sin(th)
-        
+
         return self.eval_expected(x, y)
-    
+
     def eval_d_u_outwards(self, arg, sid):
         a = self.a
         k = self.k
         R = self.R
-        
+
         r, th = self.arg_to_polar(arg, sid)
         x = r*cos(th)
 
