@@ -36,7 +36,7 @@ class SinePizza(PizzaProblem):
         64: (34, 17),
         128: (40, 24),
         256: (45, 29),
-        512: (53, 34)
+        None: (53, 34)
     }
 
     # TEMPORARY / EXPERIMENTAL
