@@ -1,28 +1,34 @@
-'''
-Extension procedures available to all Solvers
-'''
-
 import math
 import numpy as np
 
 class SolverExtend:
+    """
+    Extension procedures available to all Solvers.
+    """
 
     def extend_circle(self, r, xi0, xi1,
         d2_xi0_th, d2_xi1_th, d4_xi0_th):
-        '''Homogeneous extension from the circle/arc'''
+        """
+        Homogeneous extension from the circle/arc.
+
+        Computes a Taylor expansion with five derivatives. See [R1]
+        section 4.2.
+
+        r -- polar radius of the point we are extending to
+        """
 
         R = self.R
         k = self.k
 
         derivs = []
-        derivs.append(xi0) 
+        derivs.append(xi0)
         derivs.append(xi1)
         derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
 
         derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
             d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
 
-        derivs.append(-6 * xi1 / R**3 + 
+        derivs.append(-6 * xi1 / R**3 +
             (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
             6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
             (3*k**2 / R**2 - k**4) * xi0 +
@@ -35,10 +41,10 @@ class SolverExtend:
         return v
 
     def calc_inhomo_circle(self, r, th):
-        '''
+        """
         Inhomogeneous extension from the circle/arc, including the
         calculation of the necessary derivatives of f.
-        '''
+        """
         p = self.problem
         if p.homogeneous:
             return 0
@@ -62,12 +68,12 @@ class SolverExtend:
             r, f, d_f_r, d2_f_r, d2_f_th)
 
     def extend_inhomo_circle(self, r, f, d_f_r, d2_f_r, d2_f_th):
-        ''' Inhomogeneous extension from the circle/arc. '''
+        """ Inhomogeneous extension from the circle/arc. """
         R = self.R
         k = self.k
 
         derivs = [0, 0, f]
-        
+
         # Don't need any more derivatives if using second order scheme
         if self.scheme_order == 4:
             derivs.extend([
