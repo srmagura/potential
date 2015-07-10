@@ -134,13 +134,45 @@ class SingH_FFT_Sine(Sine, SingH):
         None: (80, 34),
     }
 
-    # FIXME
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        self.fft_b_coef[:self.M] = [(-3.775343926371022e-10+0j), (1.0000000065477552+0j), (-4.3618320468008509e-07+0j), (2.8230524225958398e-05+0j), (5.3406956589119314e-05+0j), (0.0027372637409038281+0j), (0.20246020611282922+0j)]
-
 
 class SingH_Var_Sine(VarProblem, Sine, SingH):
+
+    n_basis_dict = {
+        16: (21, 9),
+        32: (24, 15),
+        64: (42, 27),
+        128: (55, 31),
+        256: (65, 34),
+        None: (80, 34),
+    }
+
+
+class Sine8:
+
+    k = 1.75
+
+    expected_known = True
+    m_max = 8
+
+    def eval_phi0(self, th):
+        a = self.a
+        nu = self.nu
+        return np.sin(8*nu*(th-a))
+
+
+class SingH_FFT_Sine8(Sine8, SingH):
+
+    n_basis_dict = {
+        16: (20, 5),
+        32: (24, 11),
+        64: (41, 18),
+        128: (53, 28),
+        256: (65, 34),
+        None: (80, 34),
+    }
+
+
+class SingH_Var_Sine8(VarProblem, Sine8, SingH):
 
     n_basis_dict = {
         16: (21, 9),
