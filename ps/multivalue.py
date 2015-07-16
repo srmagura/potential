@@ -8,40 +8,42 @@ class Multivalue:
     The underlying data structure is the dictionary `_data`. It should be
     considered private.
 
-    The keys of _data are the nodes of union_gamma. For each node in
-    union_gamma, _data contains an (initially empty) list. The list
+    For each node in
+    nodes, _data contains an (initially empty) list. The list
     should contain items that are dictionaries with keys 'value',
     'setype', and 'elen'. The current algorithm computes at most 2
     extension values at a given node, so reduce() with throw an
     AssertionError if there are 3 or more items in the list.
     """
 
-    def __init__(self, union_gamma):
-        self.union_gamma = union_gamma
+    def __init__(self, nodes):
+        self.nodes = nodes
         self._data = {}
 
-        for node in union_gamma:
+        for node in nodes:
             self._data[node] = []
 
     def __getitem__(self, node):
         return self._data[node]
 
-    def __add__(self, ext2):
+    def __add__(self, mv2):
         """
         Return the sum of this multivalue grid function with another.
 
-        ext2 --- the other Multivalue object
+        mv2 --- the other Multivalue object
 
-        The two multivalue objects are assumed to have the same number of
-        values at a given node, and the corresponding values of in two lists
-        must have the same setype.
+        The two multivalue objects are assumed to
+         - be defined at the same nodes,
+         - have the same number of values at a given node, and
+         - the corresponding values of in two lists must have the
+           same setype.
         """
-        result = Multivalue(self.union_gamma)
+        result = Multivalue(self.nodes)
 
         for node in self._data:
             for i in range(len(self[node])):
                 dict1 = self[node][i]
-                dict2 = ext2[node][i]
+                dict2 = mv2[node][i]
 
                 assert dict1['setype'] == dict2['setype']
 
@@ -64,11 +66,10 @@ class Multivalue:
         based on extension length (elen) is used.
         """
         # The single-valued grid function
-        ext = np.zeros(len(self.union_gamma), dtype=complex)
+        ext = np.zeros(len(self.nodes), dtype=complex)
 
-        for l in range(len(self.union_gamma)):
-            assert type(self.union_gamma) is list
-            node = self.union_gamma[l]
+        for l in range(len(self.nodes)):
+            node = self.nodes[l]
             list_ = self._data[node]
 
             if len(list_) == 1:
@@ -104,7 +105,7 @@ class Multivalue:
         diff12 = []
         diff01 = []
 
-        for i, j in self.union_gamma:
+        for i, j in self.nodes:
             i1, j1 = i//2, j//2
             i2, j2 = i//4, j//4
 

@@ -1,5 +1,5 @@
 # potential - numerical solvers for the Helmholtz equation
-Author: Sam Magura (srmagura AT ncsu.edu)
+Author: Sam Magura (śȑmȧgũŗa@ncsu.edu)
 License: GPL
 
 This software package contains solvers for the Helmholtz equation in 2D, using finite differences and the method of difference potentials. Currently, there are solvers for circular domains and the "pizza domain", i.e. a disk with a wedge removed.
@@ -9,11 +9,29 @@ $ pip install -r requirements.txt
 
 If you don't understand the mathematical algorithm that this code implements, you won't understand the code! If you want to run this code or modify it for use in a project of your own, you'll need to do some reading first.
 
+## How to run
+Command-line interface help:
+$ python3 run.py -h
+
+Example: run the convergence test on the problem sine-pizza on the grids N = 16, 32, 64, 128, 256.
+$ python3 run.py sine-pizza -c 256
+
 ## References
 [R1] M. Medvinsky, S. Tsynkov, E. Turkel. "The Method of Difference Potentials for the Helmholtz Equation Using Compact High Order Schemes." Journal of Scientific Computation 53 (2012).
 [R2] S. Magura. ["Solving the Helmholtz equation via difference potentials on a domain with a reentrant corner."](http://www4.ncsu.edu/~srmagura/media/ma491_paper.pdf)
 [R3] D. S. Britt, S. V. Tsynkov, E. Turkel. "A high-order numerical method for the Helmholtz equation with nonstandard boundary conditions." SIAM Journal of Scientific Computation 35:5 (2013).
 [R4] S. Britt, S. Petropavlovsky, S. Tsynkov, E. Turkel. "Computation of singular solutions to the Helmholtz equation with high order accuracy." Applied Numerical Mathematics 93 (July 2015).
+
+Comments in the code may reference these papers.
+
+## Testing
+The primary way to test this software is to ensure that all problems are solved with the expected convergence rate. (The help for the command-line interface lists all defined problems.)
+
+There is also some unit testing. Unit tests are in the test directory.
+
+To run them:
+$ python3 -m unittest
+from the project's base directory. Python's automatic test discovery is used.
 
 ## Naming conventions
 There will undoubtedly be differences in variable names when comparing this software package to our research papers. At the very least, we attempt to be internally consistent. The variable names match up most closely with [R2], since I wrote that paper by myself.
