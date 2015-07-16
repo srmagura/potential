@@ -42,7 +42,12 @@ class CsFourier(CircleSolver, CsDebug):
         return np.column_stack(columns)
 
     def choose_n_basis(self, J_range, c0_raw):
-        """Choose which Fourier coefficients to keep"""
+        """
+        Choose which Fourier coefficients to keep.
+
+        Return abs(J) for the first J in J_range such that the normalized
+        Fourier coefficient is above the current fourier_lower_bound.
+        """
         for J in J_range:
             normalized = c0_raw[J] / fourier_N
 
@@ -69,30 +74,32 @@ class CsFourier(CircleSolver, CsDebug):
             Jmax = max(Jminus, Jplus)
 
             # Need to keep the variational formulation overdetermined
+            # Increase fourier_lower_bound until the following condition
+            # is satisfied
             Q_ratio = 2
             if Jmax*2+1 < len(self.gamma) / Q_ratio:
                 break
+
             self.fourier_lower_bound *= 10
 
         # Make sure we don't take unreasonably few basis functions
         if Jmax < 5:
             Jmax = 5
 
-        self.J_dict = collections.OrderedDict(((J, None) for J in
-            range(-Jmax, Jmax+1)))
+        self.J_range = range(-Jmax, Jmax+1)
 
         i = 0
-        self.c0 = np.zeros(len(self.J_dict), dtype=complex)
+        self.c0 = np.zeros(len(self.J_range), dtype=complex)
 
-        for J in self.J_dict:
-            self.J_dict[J] = i
-            self.c0[i] = c0_raw[J] / fourier_N
-            i += 1
+        for J in self.J_range:
+            self.c0[J] = c0_raw[J] / fourier_N
 
     def extend_basis(self, J, index):
         """
-        Construct the equation-based extension for the basis function
-        $ \psi_{index}^{(J)} $.
+        Construct the equation-based extension for a basis function.
+
+        J -- which basis function are we extending?
+        index -- 0 for Dirichlet, 1 for Neumann
         """
         ext = np.zeros(len(self.gamma), dtype=complex)
         for l in range(len(self.gamma)):
@@ -138,6 +145,11 @@ class CsFourier(CircleSolver, CsDebug):
         return boundary
 
     def run(self):
+        """
+        Main routine. calc_c1() solves the boundary equation with
+        projection (BEP). Then compute one more difference potential to
+        get the solution.
+        """
         self.calc_c0()
         self.calc_c1()
 

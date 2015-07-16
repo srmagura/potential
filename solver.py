@@ -9,6 +9,9 @@ from debug import SolverDebug
 from extend import SolverExtend
 
 def cart_to_polar(x, y):
+    """
+    Convert Cartesian coordinates (x, y) to a polar coordinates (r, th).
+    """
     r, th = math.hypot(x, y), math.atan2(y, x)
 
     if th <= 0:
@@ -21,6 +24,15 @@ class Result:
     b_error = None
 
 class Solver(SolverExtend, SolverDebug):
+    """
+    A generic class representing a difference potentials problem.
+
+    This class doesn't make any assumptions about the shape of the domain
+    (except that it is 2D). It only contains functionality that is
+    expected to be relevant for all solvers.
+
+    Solvers for specific domains and cases should extend this class.
+    """
 
     # Set to True when debugging with test_extend_boundary() for
     # significant performance benefit.
@@ -58,8 +70,10 @@ class Solver(SolverExtend, SolverDebug):
         y = self.AD_len * (j / self.N - 1/2)
         return x, y
 
-    # For testing
     def get_coord_inv(self, x, y):
+        """
+        Inverse of get_coord(). For testing purposes.
+        """
         i = self.N * (x / self.AD_len + 1/2)
         j = self.N * (y / self.AD_len + 1/2)
         return i, j
@@ -95,6 +109,13 @@ class Solver(SolverExtend, SolverDebug):
             self.Kplus |= Nm
 
     def setup_src_f(self):
+        """
+        Create a grid function src_f that equals the problem's RHS inside
+        the domain and is 0 elsewhere.
+
+        The subclass of Solver should define extend_src_f() to extend
+        src_f to slightly outside the boundary, if necessary.
+        """
         self.src_f = np.zeros((self.N-1)**2, dtype=complex)
 
         for i,j in self.global_Mplus:

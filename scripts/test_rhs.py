@@ -1,3 +1,9 @@
+"""
+Test that the algebraic expression for a problem's RHS equals the RHS
+calculated by Sympy.
+
+This test is useful if you have typed in a RHS from a paper, for example.
+"""
 # To allow __main__ in subdirectory
 import sys
 sys.path.append(sys.path[0] + '/..')
@@ -27,16 +33,16 @@ def do_test(u, manual_f_expr):
         k = random.uniform(.5, 3)
         R = random.uniform(1, 3)
         r = random.uniform(.01, 1)
-        
+
         th = random.uniform(*th_interval)
-    
+
         sympy_f = sympy_f_lambda(k, R, r, th)
         manual_f = manual_f_lambda(k, R, r, th)
-    
+
         error[i] = abs(sympy_f - manual_f)
-    
+
     return max(error)
-           
+
 
 all_tests = (
     (
