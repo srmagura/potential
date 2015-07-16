@@ -1,3 +1,10 @@
+"""
+Print values of k for which a resonance will occur.
+
+Accepts the side length of the square auxiliary domain as a
+command-line argument. This argument can be a Python expression and
+may include the variable pi. The default is 2*pi. 
+"""
 import numpy as np
 import itertools as it
 import sys
