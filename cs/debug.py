@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class CsDebug:
+    # Haven't used any of this stuff in a while, most functions probably
+    # do not work as-is
 
     def c0_test(self):
         n = 200
@@ -45,8 +47,8 @@ class CsDebug:
 
     def calc_c1_exact(self):
         th_data = np.arange(0, 2*np.pi, 2*np.pi / fourier_N)
-        boundary_data = [self.problem.eval_d_u_r(th) 
-            for th in th_data] 
+        boundary_data = [self.problem.eval_d_u_r(th)
+            for th in th_data]
         c1_raw = np.fft.fft(boundary_data)
 
         self.c1 = np.zeros(len(self.c0), dtype=complex)
@@ -64,7 +66,7 @@ class CsDebug:
             error[l] = self.problem.eval_expected(x, y) - ext[l]
 
         return np.max(np.abs(error))
-        
+
     def plot_Gamma(self):
         n = 256
         Gamma_x_data = np.zeros(n)
@@ -77,7 +79,7 @@ class CsDebug:
             l += 1
 
         plt.plot(Gamma_x_data, Gamma_y_data, color='black')
-        
+
     def nodes_to_plottable(self, nodes):
         x_data = np.zeros(len(nodes))
         y_data = np.zeros(len(nodes))
@@ -93,9 +95,9 @@ class CsDebug:
 
     def plot_gamma(self):
         self.plot_Gamma()
-                
-        x_data, y_data = self.nodes_to_plottable(self.gamma)         
+
+        x_data, y_data = self.nodes_to_plottable(self.gamma)
         plt.plot(x_data, y_data, 'o')
-        
+
         plt.axes().set_aspect('equal', 'datalim')
         plt.show()

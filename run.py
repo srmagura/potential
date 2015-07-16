@@ -12,6 +12,69 @@ class Interface:
 
     prec_str = '{:.5}'
 
+    def __init__(self):
+        """
+        Create an ArgumentParser for handling command-line arguments.
+        """
+        parser = argparse.ArgumentParser()
+        self.parser = parser
+
+        problem_choices = problems.problem_dict.keys()
+        parser.add_argument('problem', metavar='problem',
+            choices=problem_choices,
+            help='name of the problem to run: ' + ', '.join(problem_choices))
+
+        parser.add_argument('-N', type=int, default=16,
+            help='initial grid size')
+        parser.add_argument('-c', type=int, nargs='?', const=128,
+            help='run convergence test, up to the C x C grid. '
+            'Default is 128.')
+        parser.add_argument('-o', type=int, default=4,
+            choices=(2, 4),
+            help='order of scheme')
+
+        parser.add_argument('-p', action='store_true',
+            help=' PizzaSolver: run optimize_n_basis')
+
+        parser.add_argument('-r', action='store_true',
+            help='show relative convergence, even if the problem\'s '
+            'true solution is known')
+        #parser.add_argument('--tex', action='store_true',
+        #    help='print convergence test results in TeX-friendly format')
+
+    def run(self):
+        """
+        Build the list of N values for which the algorithm should be run,
+        print basic info about the problem, then call run_solver().
+        """
+        self.args = self.parser.parse_args()
+        self.problem = problems.problem_dict[self.args.problem]\
+            (scheme_order=self.args.o)
+
+        if self.args.c is None or self.args.p:
+            N_list = [self.args.N]
+        else:
+            N_list = []
+
+            N = self.args.N
+            while N <= self.args.c:
+                N_list.append(N)
+                N *= 2
+
+        print('[{}]'.format(self.args.problem))
+        print('k = ' + self.prec_str.format(float(self.problem.k)))
+        print('R = ' + self.prec_str.format(self.problem.R))
+        print('AD_len = ' + self.prec_str.format(self.problem.AD_len))
+        print()
+
+        if hasattr(self.problem, 'get_n_basis'):
+            print('[Basis sets]')
+            for N in N_list:
+                print('{}: {}'.format(N, self.problem.get_n_basis(N)))
+
+        print()
+        self.run_solver(N_list)
+
     def run_solver(self, N_list):
         """
         Perform the convergence test.
@@ -61,70 +124,13 @@ class Interface:
                 print('Convergence: ' + self.prec_str.format(convergence))
 
             if do_rel_conv and u2 is not None:
-                convergence = my_solver.calc_convergence3(u0, u1, u2)
+                convergence = my_solver.calc_rel_convergence(u0, u1, u2)
                 print('Rel convergence: ' + self.prec_str.format(convergence))
 
             print()
 
             prev_error = result.error
             prev_b_error = result.b_error
-
-    def run(self):
-        """
-        Main routine. Parse command-line arguments and run a solver
-        or start the convergence test.
-        """
-        parser = argparse.ArgumentParser()
-
-        problem_choices = problems.problem_dict.keys()
-        parser.add_argument('problem', metavar='problem',
-            choices=problem_choices,
-            help='name of the problem to run: ' + ', '.join(problem_choices))
-
-        parser.add_argument('-N', type=int, default=16,
-            help='initial grid size')
-        parser.add_argument('-c', type=int, nargs='?', const=128,
-            help='run convergence test, up to the C x C grid. '
-            'Default is 128.')
-        parser.add_argument('-o', type=int, default=4,
-            choices=(2, 4),
-            help='order of scheme')
-
-        parser.add_argument('-p', action='store_true',
-            help=' PizzaSolver: run optimize_n_basis')
-
-        parser.add_argument('-r', action='store_true',
-            help='show relative convergence, even if the problem\'s '
-            'true solution is known')
-        #parser.add_argument('--tex', action='store_true',
-        #    help='print convergence test results in TeX-friendly format')
-
-        self.args = parser.parse_args()
-        self.problem = problems.problem_dict[self.args.problem](scheme_order=self.args.o)
-
-        if self.args.c is None or self.args.p:
-            N_list = [self.args.N]
-        else:
-            N_list = []
-
-            N = self.args.N
-            while N <= self.args.c:
-                N_list.append(N)
-                N *= 2
-
-        print('[{}]'.format(self.args.problem))
-        print('k = ' + self.prec_str.format(float(self.problem.k)))
-        print('R = ' + self.prec_str.format(self.problem.R))
-        print('AD_len = ' + self.prec_str.format(self.problem.AD_len))
-        print()
-
-        if hasattr(self.problem, 'get_n_basis'):
-            print('[Basis sets]')
-            for N in N_list:
-                print('{}: {}'.format(N, self.problem.get_n_basis(N)))
-
-        print()
-        self.run_solver(N_list)
 
 
 if __name__ == '__main__':

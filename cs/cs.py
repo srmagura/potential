@@ -5,6 +5,10 @@ from solver import Solver
 import matrices
 
 class CircleSolver(Solver):
+    """
+    Abstract class representing a solver for a circular domain. Does not
+    specify the type of basis to be used on the boundary.
+    """
 
     def __init__(self, problem, N, scheme_order, **kwargs):
         super().__init__(problem, N, scheme_order, **kwargs)
@@ -12,9 +16,12 @@ class CircleSolver(Solver):
         self.construct_gamma()
 
     def construct_gamma(self):
+        """
+        Build the discrete boundary gamma.
+        """
         Nplus = set()
         Nminus = set()
-               
+
         for i, j in self.M0:
             Nm = set([(i, j), (i-1, j), (i+1, j), (i, j-1), (i, j+1)])
 
@@ -31,9 +38,11 @@ class CircleSolver(Solver):
         self.gamma = list(gamma_set)
 
 
-    # Calculate the difference potential of a function xi 
-    # that is defined on gamma.
     def get_potential(self, xi):
+        """
+        Calculate the difference potential of a function xi
+        that is defined on gamma.
+        """
         w = np.zeros([(self.N-1)**2], dtype=complex)
 
         for l in range(len(self.gamma)):
@@ -55,16 +64,15 @@ class CircleSolver(Solver):
 
         return projection
 
-
     def calc_c1(self):
         Q0 = self.get_Q(0)
         Q1 = self.get_Q(1)
 
         self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
-        ext_f = self.extend_inhomo_f()    
+        ext_f = self.extend_inhomo_f()
         proj_f = self.get_trace(self.get_potential(ext_f))
 
-        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f        
+        rhs = -Q0.dot(self.c0) - self.get_trace(self.ap_sol_f) - proj_f + ext_f
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
     def is_interior(self, i, j):
