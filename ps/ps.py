@@ -95,6 +95,26 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         return np.column_stack(columns)
 
+    def build_d_matrix(self):
+        """
+        Create matrix whose columns contain the Chebyshev coefficients
+        for the functions sin(m*nu*(th-a)) for m=1...M.
+        """
+        a = self.a
+        nu = self.nu
+
+        d_columns = []
+
+        for m in range(1, self.problem.M+1):
+            def func(th):
+                return np.sin(m*nu*(th-a))
+
+            d = self.get_chebyshev_coef(0, func)
+            d = np.matrix(d.reshape((len(d), 1)))
+            d_columns.append(d)
+
+        self.d_matrix = np.column_stack(d_columns)
+
     def get_V(self):
         """
         Get the matrices V0 and V1.
@@ -119,20 +139,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             submatrices.append(row)
 
         if self.problem.var_compute_b:
-            a = self.a
-            nu = self.nu
-
-            d_columns = []
-
-            for m in range(1, self.problem.M+1):
-                def func(th):
-                    return np.sin(m*nu*(th-a))
-
-                d = self.get_chebyshev_coef(0, func)
-                d = np.matrix(d.reshape((len(d), 1)))
-                d_columns.append(d)
-
-            self.d_matrix = np.column_stack(d_columns)
+            self.build_d_matrix()
             submatrices[1].append(-submatrices[0][0].dot(self.d_matrix))
 
         V0 = np.concatenate(submatrices[0], axis=1)
@@ -164,6 +171,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             self.problem.b_coef = b_coef
             #print(list(b_coef))
 
+            # Update c0 to reflect the sines that we are subtracting
+            # for regularization
             for m in range(1, self.problem.M+1):
                 n_circle = self.segment_desc[0]['n_basis']
                 d = np.ravel(self.d_matrix[:,m-1])
