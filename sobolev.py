@@ -33,17 +33,22 @@ def solve_var(A, b, h, nodes, sa):
     Find the optimal solution to the overdetermined linear system
     Ax = b.
 
-    TODO optimal in the sense of a new norm we define
+    This function returns the x that minimizes the Sobolev norm
+    of the residual.
+
+    A -- 2D numpy array, left-hand side
+    b -- 1D numpy array, right-hand side
+    h -- cell width for Cartesian grid with square cells
+    nodes -- set of nodes on which Ax and b are defined
+    sa -- scaling coefficient used in calculating the Sobolev norm
     """
-    evals, U = np.linalg.eig(get_ip_array(h, nodes, sa))
-    sqrt_lambda = np.matrix(np.diag(np.sqrt(evals)))
-    #sqrt_lambda1 = np.matrix(np.diag(1/np.sqrt(evals)))
-    U = np.matrix(U)
-    B = U * sqrt_lambda * U.getH()
-    #B_inv = U.getH() * sqrt_lambda1 * U
     A = np.matrix(A)
     b = np.matrix(b).T
 
+    evals, U = np.linalg.eig(get_ip_array(h, nodes, sa))
+    sqrt_lambda = np.matrix(np.diag(np.sqrt(evals)))
+    U = np.matrix(U)
+    B = U * sqrt_lambda * U.getH()
+
     x = np.linalg.lstsq(B*A, B*b)[0]
-    x = np.ravel(x)
-    return x
+    return np.ravel(x)
