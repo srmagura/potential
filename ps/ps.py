@@ -4,6 +4,7 @@ from numpy import cos, sin
 
 from solver import Solver, Result, cart_to_polar
 import matrices
+import sobolev
 
 from ps.basis import PsBasis
 from ps.grid import PsGrid
@@ -11,6 +12,7 @@ from ps.extend import PsExtend
 from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
 
+norms = ('l2', 'sobolev')
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
@@ -21,6 +23,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.R = problem.R
         self.AD_len = problem.AD_len
 
+        self.norm = options['norm']
         self.do_optimize = options['do_optimize']
         super().__init__(problem, N, options, **kwargs)
 
@@ -163,8 +166,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         V0, V1 = self.get_V()
         rhs = self.get_var_rhs(V0)
 
-        var_result = np.linalg.lstsq(V1, rhs)[0]
-        self.c1 = var_result[:len(self.c0)]
+        if self.norm == 'l2':
+            sol = np.linalg.lstsq(V1, rhs)[0]
+        elif self.norm == 'sobolev':
+            h = self.AD_len / self.N
+            sa = 0.5
+            sol = sobolev.solve_var(V1, rhs, h, self.union_gamma, sa)
+
+        self.c1 = sol[:len(self.c0)]
 
         if self.problem.var_compute_b:
             b_coef = var_result[len(self.c0):]

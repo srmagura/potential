@@ -7,24 +7,25 @@ from solver import cart_to_polar
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
 
-import problems.bdata
+import problems.functions as functions
+import problems.bdata as bdata
 
 def get_v_asympt_expr():
     '''
     Returns SymPy expression for the inhomogeneous part of the
     asymptotic expansion.
     '''
-    k, R, r, th = symbols('k R r th')    
+    k, R, r, th = symbols('k R r th')
     kr2 = k*r/2
-    
+
     v_asympt = 1/gamma(sympify('14/11'))
     v_asympt += -1/gamma(sympify('25/11'))*kr2**2
     v_asympt += 1/(2*gamma(sympify('36/11')))*kr2**4
-    
+
     v_asympt *= sin(3/11*(th-pi/6)) * kr2**(3/11)
-    
+
     return v_asympt
-    
+
 def get_reg_f_expr():
     '''
     Returns SymPy expression that represents the RHS of the regularized
@@ -33,11 +34,11 @@ def get_reg_f_expr():
     get_u_asympt_expr().
     '''
     k, R, r, th = symbols('k R r th')
-    
+
     f = 1331/(67200 * gamma(sympify('3/11')))
     f *= 2**(8/11) * k**(69/11) * r**(47/11)
     f *= sin(-3*th/11 + pi/22)
-    
+
     return f
 
 def eval_v(k, r, th):
@@ -47,7 +48,7 @@ def eval_v(k, r, th):
     return jv(nu/2, k*r) * np.sin(nu*(th - a)/2)
 
 
-class SingIH_BData(problems.bdata.BData):
+class SingIH_BData(bdata.BData):
 
     def __init__(self, problem):
         self.problem = problem
@@ -63,10 +64,10 @@ class SingIHAbstract(SympyProblem, PizzaProblem):
 
     M = 7
 
-    def __init__(self, **kwargs): 
+    def __init__(self, **kwargs):
         kwargs['f_expr'] = get_reg_f_expr()
         super().__init__(**kwargs)
-        
+
         self.v_asympt_lambda = lambdify(symbols('k R r th'), get_v_asympt_expr())
         self.bdata = SingIH_BData(self)
 
@@ -78,18 +79,18 @@ class SingIHAbstract(SympyProblem, PizzaProblem):
         R = self.R
         a = self.a
         nu = self.nu
-        
+
         r, th = self.arg_to_polar(arg, sid)
-        
+
         if sid == 0:
             bc = self.eval_phi0(th)
             bc -= self.v_asympt_lambda(k, R, r, th)
-            
+
             for m in range(1, self.M+1):
                 bc -= b_coef[m-1] * np.sin(m*nu*(th - a))
-            
+
             return bc
-            
+
         elif sid == 1:
             if th < 1.5*np.pi:
                 return 0
@@ -145,7 +146,7 @@ class SingIH_FFT(SingIHAbstract):
             u += b * ratio * np.sin(m*nu*(th-a))
 
         return u
-    
+
     def eval_bc_extended(self, arg, sid):
         return self._eval_bc_extended(arg, sid, self.b_coef[:self.M])
 
@@ -155,12 +156,12 @@ class SingIH_FFT_Sine(SingIH_FFT):
     k = 1.75
 
     n_basis_dict = {
-        16: (20, 5), 
-        32: (24, 11), 
-        64: (41, 18), 
-        128: (53, 28), 
-        256: (65, 34), 
-        None: (80, 34), 
+        16: (20, 5),
+        32: (24, 11),
+        64: (41, 18),
+        128: (53, 28),
+        256: (65, 34),
+        None: (80, 34),
     }
 
     def eval_phi0(self, th):
@@ -179,13 +180,13 @@ class SingIH_FFT_Hat(SingIH_FFT):
     k = 5.5
 
     n_basis_dict = {
-        16: (24, 6), 
-        32: (33, 8), 
-        64: (42, 12), 
-        128: (65, 18), 
-        256: (80, 24), 
-        512: (100, 30), 
-        1024: (120, 35), 
+        16: (24, 6),
+        32: (33, 8),
+        64: (42, 12),
+        128: (65, 18),
+        256: (80, 24),
+        512: (100, 30),
+        1024: (120, 35),
     }
 
     def eval_phi0(self, th):
@@ -195,22 +196,22 @@ class SingIH_FFT_Hat(SingIH_FFT):
         a = self.a
 
         phi0 = self.eval_v(R, th)
-        phi0 += problems.bdata.eval_hat_th(th)
+        phi0 += functions.eval_hat_th(th)
         return phi0
-        
+
 
 class SingIH_FFT_Parabola(SingIH_FFT):
 
     k = 5.5
 
     n_basis_dict = {
-        16: (17, 3), 
-        32: (33, 7), 
-        64: (36, 15), 
-        128: (39, 21), 
-        256: (42, 23), 
-        512: (65, 43), 
-        1024: (80, 45), 
+        16: (17, 3),
+        32: (33, 7),
+        64: (36, 15),
+        128: (39, 21),
+        256: (42, 23),
+        512: (65, 43),
+        1024: (80, 45),
     }
 
     def eval_phi0(self, th):
@@ -218,22 +219,22 @@ class SingIH_FFT_Parabola(SingIH_FFT):
         a = self.a
 
         phi0 = self.eval_v(R, th)
-        phi0 += -(th - a) * (th - 2*np.pi) 
+        phi0 += -(th - a) * (th - 2*np.pi)
         return phi0
 
 
 class SingIH_FFT_Line(SingIH_FFT):
 
     k = 5.5
-    
+
     n_basis_dict = {
-        16: (19, 6), 
-        32: (25, 8), 
-        64: (28, 12), 
-        128: (28, 16), 
+        16: (19, 6),
+        32: (25, 8),
+        64: (28, 12),
+        128: (28, 16),
         256: (32, 20),
         None: (40, 26),
-    } 
+    }
 
     #expected_known = True
     m_max = 149
@@ -244,7 +245,5 @@ class SingIH_FFT_Line(SingIH_FFT):
         nu = self.nu
         a = self.a
 
-        phi0 = jv(nu/2, k*R) / (2*np.pi - a) * (th - a) 
+        phi0 = jv(nu/2, k*R) / (2*np.pi - a) * (th - a)
         return phi0
-
-

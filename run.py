@@ -7,6 +7,7 @@ import argparse
 
 import problems
 import solver
+import ps.ps
 
 class Interface:
 
@@ -35,6 +36,7 @@ class Interface:
 
         parser.add_argument('-p', action='store_true',
             help=' PizzaSolver: run optimize_n_basis')
+        parser.add_argument('-n', choices=ps.ps.norms, default='l2')
 
         parser.add_argument('-r', action='store_true',
             help='show relative convergence, even if the problem\'s '
@@ -62,6 +64,7 @@ class Interface:
                 N *= 2
 
         print('[{}]'.format(self.args.problem))
+        print('Norm:', self.args.n)
         print('k = ' + self.prec_str.format(float(self.problem.k)))
         print('R = ' + self.prec_str.format(self.problem.R))
         print('AD_len = ' + self.prec_str.format(self.problem.AD_len))
@@ -94,6 +97,7 @@ class Interface:
             'verbose': (len(N_list) == 1),
             'scheme_order': self.args.o,
             'do_optimize': self.args.p,
+            'norm': self.args.n
         }
 
         for N in N_list:
