@@ -176,9 +176,9 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.c1 = sol[:len(self.c0)]
 
         if self.problem.var_compute_b:
-            b_coef = var_result[len(self.c0):]
+            b_coef = sol[len(self.c0):]
             self.problem.b_coef = b_coef
-            #print(list(b_coef))
+            print(list(b_coef))
 
             # Update c0 to reflect the sines that we are subtracting
             # for regularization
@@ -235,7 +235,9 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #self.c0_test(plot=False)
 
-        self.solve_var()
+        return self.singular_residual_test()
+
+        #self.solve_var()
         #self.calc_c1_exact()
         #self.c1_test()
 

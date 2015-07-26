@@ -79,22 +79,16 @@ class PsDebug:
 
     def calc_c1_exact(self):
         """
-        Do Chebyshev fits on the analytically-known Neumann data of
-        each segment to get the "exact" values of the coefficients c1.
+        Do Chebyshev fits on the Neumann data of each segment to get
+        the coefficients c1.
         """
-        t_data = get_chebyshev_roots(1000)
         self.c1 = []
 
         for sid in range(self.N_SEGMENT):
-            boundary_data = np.zeros(len(t_data))
+            def func(arg):
+                return self.problem.eval_d_u_outwards(arg, sid)
 
-            for i in range(len(t_data)):
-                arg = self.eval_g(sid, t_data[i])
-                boundary_data[i] = self.problem.eval_d_u_outwards(arg, sid)
-
-            n_basis = self.segment_desc[sid]['n_basis']
-            self.c1.extend(np.polynomial.chebyshev.chebfit(
-                t_data, boundary_data, n_basis-1))
+            self.c1.extend(self.get_chebyshev_coef(sid, func))
 
     def etype_filter(self, sid, nodes, etypes):
         result = []
@@ -399,3 +393,17 @@ class PsDebug:
 
         self.plot_Gamma()
         plt.show()
+
+    def singular_residual_test(self):
+        self.calc_c1_exact()
+
+        ext = self.extend_boundary()
+        potential = self.get_potential(ext)
+        projection = self.get_trace(potential)
+
+        bep = projection - ext
+        l2_norm = np.sqrt(np.vdot(bep, bep))
+
+        result = Result()
+        result.error = l2_norm
+        return result

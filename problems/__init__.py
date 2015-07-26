@@ -13,6 +13,7 @@ from .sing_h import SingH_FFT_Hat, SingH_FFT_Parabola, SingH_FFT_Sine,\
     SingH_Var_Sine, SingH_FFT_Sine8, SingH_Var_Sine8
 from .sing_ih import SingIH_FFT_Sine, SingIH_FFT_Hat, SingIH_FFT_Parabola,\
     SingIH_FFT_Line
+from .sing_test import SingTest
 
 problem_dict = OrderedDict((
     ('sine', Sine),
@@ -32,4 +33,5 @@ problem_dict = OrderedDict((
     ('sing-ih-fft-hat', SingIH_FFT_Hat),
     ('sing-ih-fft-parabola', SingIH_FFT_Parabola),
     ('sing-ih-fft-line', SingIH_FFT_Line),
+    ('sing-test', SingTest),
 ))
