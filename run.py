@@ -105,6 +105,8 @@ class Interface:
 
             print('---- {0} x {0} ----'.format(N))
             result = my_solver.run()
+            if result is None:
+                continue
 
             if result.b_error is not None:
                 print('b error: ' + self.prec_str.format(result.b_error))

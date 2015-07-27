@@ -30,7 +30,7 @@ def eval_norm(h, nodes, sa, v):
             deriv_sum += abs((v[l] - v[k])/h)**2
 
     norm += sa * deriv_sum
-    return h*norm
+    return norm
 
 
 class TestSobolev(unittest.TestCase):
@@ -46,8 +46,8 @@ class TestSobolev(unittest.TestCase):
         Return a randomly-generated complex-valued function defined on
         self.nodes.
         """
-        v_real = np.random.rand(len(nodes))
-        v_imag = np.random.rand(len(nodes))
+        v_real = np.random.uniform(-1, 1, len(nodes))
+        v_imag = np.random.uniform(-1, 1, len(nodes))
         return v_real + 1j*v_imag
 
     def test_spd(self):

@@ -16,15 +16,15 @@ norms = ('l2', 'sobolev')
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
-    def __init__(self, problem, N, options, **kwargs):
+    def __init__(self, problem, N, options={}, **kwargs):
         self.a = problem.a
         self.nu = problem.nu
 
         self.R = problem.R
         self.AD_len = problem.AD_len
 
-        self.norm = options['norm']
-        self.do_optimize = options['do_optimize']
+        self.norm = options.get('norm', 'l2')
+        self.do_optimize = options.get('do_optimize', False)
         super().__init__(problem, N, options, **kwargs)
 
         self.ps_construct_grids()
@@ -235,9 +235,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #self.c0_test(plot=False)
 
-        return self.singular_residual_test()
-
-        #self.solve_var()
+        self.solve_var()
         #self.calc_c1_exact()
         #self.c1_test()
 

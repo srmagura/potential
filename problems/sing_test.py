@@ -7,7 +7,7 @@ from .problem import PizzaProblem
 class SingTest(PizzaProblem):
 
     k = 1
-    m = 3
+    m = 1
 
     homogeneous = True
     expected_known = True

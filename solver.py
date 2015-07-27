@@ -38,13 +38,14 @@ class Solver(SolverExtend, SolverDebug):
     # significant performance benefit.
     skip_matrix_build = False
 
-    def __init__(self, problem, N, options):
+    def __init__(self, problem, N, options={}):
         super().__init__()
         self.problem = problem
         self.k = self.problem.k
         self.N = N
-        self.scheme_order = options['scheme_order']
-        self.verbose = options['verbose']
+
+        self.scheme_order = options.get('scheme_order', 4)
+        self.verbose = options.get('verbose', False)
 
         self.construct_grids()
 

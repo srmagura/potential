@@ -26,7 +26,11 @@ def get_ip_array(h, nodes, sa):
 
         ip_array[k, k] += 1 + n_adjacent*sa/h**2
 
-    return h*ip_array
+    return ip_array
+
+def eval_norm(h, nodes, sa, v):
+    ip_array = get_ip_array(h, nodes, sa)
+    return np.sqrt(np.vdot(v, ip_array.dot(v)))
 
 def solve_var(A, b, h, nodes, sa):
     """

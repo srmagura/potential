@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from solver import cart_to_polar, Result
 from chebyshev import get_chebyshev_roots
 import matrices
+import sobolev
 
 class PsDebug:
     """
@@ -393,17 +394,3 @@ class PsDebug:
 
         self.plot_Gamma()
         plt.show()
-
-    def singular_residual_test(self):
-        self.calc_c1_exact()
-
-        ext = self.extend_boundary()
-        potential = self.get_potential(ext)
-        projection = self.get_trace(potential)
-
-        bep = projection - ext
-        l2_norm = np.sqrt(np.vdot(bep, bep))
-
-        result = Result()
-        result.error = l2_norm
-        return result
