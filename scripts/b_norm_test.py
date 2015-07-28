@@ -33,7 +33,7 @@ def do_test_N(N):
         b_l2, b_sobolev = do_test_m(m)
         assert b_l2.imag == 0
         assert b_sobolev.imag == 0
-        table.append([m, b_l2.real, b_sobolev.real, (b_sobolev / b_l2).real])
+        table.append([m, b_l2.real, b_sobolev.real, abs(b_sobolev / b_l2)])
 
     print('N={}'.format(N))
     headers = ('m', 'b_m (l2)', 'b_m (Sobolev)', 'Sobolev / l2')
