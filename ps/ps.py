@@ -25,6 +25,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.norm = options.get('norm', 'l2')
         self.do_optimize = options.get('do_optimize', False)
+        self.m_list = options.get('m_list', range(1, problem.M+1))
+
         super().__init__(problem, N, options, **kwargs)
 
         self.ps_construct_grids()
@@ -108,7 +110,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         d_columns = []
 
-        for m in range(1, self.problem.M+1):
+        for m in self.m_list:
             def func(th):
                 return np.sin(m*nu*(th-a))
 
@@ -176,17 +178,23 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.c1 = sol[:len(self.c0)]
 
         if self.problem.var_compute_b:
-            b_coef = sol[len(self.c0):]
+            var_b = sol[len(self.c0):]
+
+            b_coef = np.zeros(self.problem.M, dtype=complex)
             self.problem.b_coef = b_coef
-            print(list(b_coef))
 
             # Update c0 to reflect the sines that we are subtracting
             # for regularization
-            for m in range(1, self.problem.M+1):
+            for i in range(len(self.m_list)):
+                m = self.m_list[i]
+                b_coef[m-1] = var_b[i]
+
                 n_circle = self.segment_desc[0]['n_basis']
-                d = np.ravel(self.d_matrix[:,m-1])
+                d = np.ravel(self.d_matrix[:,i])
+
                 self.c0[:n_circle] -= b_coef[m-1] * d
 
+            #print('b coefficients:', var_b)
 
     # Set to True when debugging with test_extend_boundary() for
     # significant performance benefit.

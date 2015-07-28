@@ -34,15 +34,19 @@ class Interface:
             choices=(2, 4),
             help='order of scheme')
 
-        parser.add_argument('-p', action='store_true',
-            help=' PizzaSolver: run optimize_n_basis')
-        parser.add_argument('-n', choices=ps.ps.norms, default='l2')
-
         parser.add_argument('-r', action='store_true',
             help='show relative convergence, even if the problem\'s '
             'true solution is known')
         #parser.add_argument('--tex', action='store_true',
         #    help='print convergence test results in TeX-friendly format')
+
+        # Stuff specific to PizzaSolver
+        parser.add_argument('-p', action='store_true',
+            help=' PizzaSolver: run optimize_n_basis')
+        parser.add_argument('-n', choices=ps.ps.norms, default='l2')
+
+        parser.add_argument('-m', type=int)
+        parser.add_argument('-mmax', type=int)
 
     def run(self):
         """
@@ -99,6 +103,15 @@ class Interface:
             'do_optimize': self.args.p,
             'norm': self.args.n
         }
+
+        if self.args.m is not None:
+            if self.args.mmax is not None:
+                options['m_list'] = range(self.args.m, self.args.mmax+1)
+            else:
+                options['m_list'] = (self.args.m,)
+
+            print('m included in variational formulation:', list(options['m_list']))
+            print()
 
         for N in N_list:
             my_solver = self.problem.get_solver(N, options)

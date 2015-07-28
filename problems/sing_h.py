@@ -28,6 +28,7 @@ class SingH(PizzaProblem):
 
     homogeneous = True
     expected_known = False
+    silent = False
 
     M = 7
 
@@ -47,7 +48,9 @@ class SingH(PizzaProblem):
             for m in range(1, len(self.fft_b_coef)+1):
                 self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
 
-            print('[sing-h] fft_b_coef[m_max] =', self.fft_b_coef[self.m_max-1])
+            if not self.silent:
+                print('[sing-h] fft_b_coef[m_max] =',
+                    self.fft_b_coef[self.m_max-1])
 
     def calc_bessel_ratio(self, m, r):
         k = self.k
@@ -152,6 +155,7 @@ class Sine8:
     k = 1.75
 
     expected_known = True
+    silent = True
     m_max = 8
 
     def eval_phi0(self, th):
