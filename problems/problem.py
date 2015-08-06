@@ -13,6 +13,8 @@ class Problem:
     R = 2.3
     AD_len = 2*np.pi
 
+    M = 0
+
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -65,12 +67,12 @@ class PizzaProblem(Problem):
         super().__init__(**kwargs)
 
     def wrap_func(self, arg, sid):
-        '''
+        """
         Can be used to create the smooth extensions of the Dirichlet data
         needed for the Chebyshev fit, for certain problems. In particular,
         the Dirichlet data needs to be sufficiently smooth at the reentrant
         corner.
-        '''
+        """
         if sid == 0 and arg < self.a/2:
                 arg += 2*np.pi
 
@@ -99,10 +101,10 @@ class PizzaProblem(Problem):
                 return (-arg, np.pi + self.a)
 
     def get_sid(self, th):
-        '''
+        """
         Mapping of polar angles in the interval (0, 2*pi] to the set of
         segment ID's, {0, 1, 2}.
-        '''
+        """
         tol = 1e-12
         a = self.a
 

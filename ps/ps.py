@@ -1,6 +1,5 @@
 import math
 import numpy as np
-from numpy import cos, sin
 
 from solver import Solver, Result, cart_to_polar
 import matrices
