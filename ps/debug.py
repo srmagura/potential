@@ -99,32 +99,6 @@ class PsDebug:
 
         return result
 
-    def test_extend_boundary(self, setypes=None):
-        self.calc_c0()
-        self.calc_c1_exact()
-
-        self.c0_test(plot=False)
-        self.c1_test(plot=False)
-
-        error = []
-        mv_ext = self.mv_extend_boundary()
-
-        for node in mv_ext:
-            x, y = self.get_coord(*node)
-
-            for data in mv_ext[node]:
-                if setypes is None or data['setype'] in setypes:
-                    exp = self.problem.eval_expected(x, y, setype=data['setype'])
-                    diff = abs(exp - data['value'])
-                    if abs(x-5)<1e-5 and y > 1e-5:
-                        print(data['value'], exp)
-                    error.append(diff)
-
-        result = Result()
-        result.error = max(error)
-        result.u_act = mv_ext
-        return result
-
     def test_extend_basis(self):
         error = []
         for index in (0, 1):

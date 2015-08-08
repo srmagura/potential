@@ -29,6 +29,12 @@ class Problem:
 
         return self.eval_expected_polar(r, th, **kwargs)
 
+    def eval_expected_polar(self, r, th, **kwargs):
+        x = r*np.cos(th)
+        y = r*np.sin(th)
+
+        return self.eval_expected(x, y, **kwargs)
+
     def eval_f(self, x, y):
         if self.homogeneous:
             return 0
