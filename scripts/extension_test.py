@@ -55,10 +55,12 @@ def run_test(N):
 
         for data in mv_ext[node]:
             if setypes is None or data['setype'] in setypes:
-                #exp = problem.eval_expected_polar(r, th, setype=data['setype'])
                 exp = problem.eval_expected_polar(r, th)
                 diff = abs(exp - data['value'])
                 error.append(diff)
+
+                if diff > 1e-1:
+                    print(r, th, diff)
 
     return np.max(np.abs(error))
 
@@ -78,7 +80,7 @@ if __name__ == '__main__':
     for s, e in it.product('012', 'lsr'):
         setype_choices.append(s + e)
 
-    parser.add_argument('-s', nargs='*',
+    parser.add_argument('-s', nargs='+',
         choices=setype_choices,
         help='setypes to check when computing the error'
     )

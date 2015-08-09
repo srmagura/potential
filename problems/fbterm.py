@@ -7,10 +7,14 @@ from .problem import PizzaProblem
 class FbTerm(PizzaProblem):
 
     k = 1
-    m = 15
+    m = 8
 
     homogeneous = True
     expected_known = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        print('[fbterm] m = {}'.format(self.m))
 
     def eval_expected_polar(self, r, th):
         a = self.a
@@ -28,6 +32,7 @@ class FbTerm(PizzaProblem):
         else:
             return 0
 
+    # To remove?
     def eval_d_u_outwards(self, arg, sid):
         a = self.a
         nu = self.nu

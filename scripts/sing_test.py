@@ -9,7 +9,7 @@ from tabulate import tabulate
 import sobolev
 from problems.problem import PizzaProblem
 from problems.sine import SinePizza
-from problems.sing_test import SingTest
+from problems.fbterm import FbTerm
 
 # Used only to construct a PizzaSolver object
 fake_problem = SinePizza()
@@ -25,13 +25,12 @@ def eval_expected(m, r, th):
     nu = PizzaProblem.nu
 
     return jv(m*nu, k*r) * np.sin(m*nu*(th-a))
-    #return np.sin(m*nu*(th-a))
 
 def do_test_N(N, first_time):
     ps = fake_problem.get_solver(N)
 
     def do_test_m(m):
-        problem2 = SingTest()
+        problem2 = FbTerm()
         problem2.m = m
 
         ps2 = problem2.get_solver(N)
