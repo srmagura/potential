@@ -4,7 +4,7 @@ from scipy.special import jv, jvp
 from .problem import PizzaProblem
 
 
-class SingTest(PizzaProblem):
+class FbTerm(PizzaProblem):
 
     k = 1
     m = 15
