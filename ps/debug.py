@@ -291,6 +291,7 @@ class PsDebug:
         plt.legend(loc=3)
         plt.show()
 
+    # Old?
     def plot_union_gamma(self):
         self.plot_Gamma()
 

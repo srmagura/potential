@@ -15,7 +15,7 @@ from problems.fbterm import FbTerm
 fake_problem = SinePizza()
 
 k = 1
-m_list = [10]
+m_list = range(1, 11)
 
 l2_prev_norm = np.zeros(len(m_list))
 sobolev_prev_norm = np.zeros(len(m_list))
@@ -30,20 +30,8 @@ def do_test_N(N, first_time):
     ps = fake_problem.get_solver(N)
 
     def do_test_m(m):
-        problem2 = FbTerm()
-        problem2.m = m
-
-        ps2 = problem2.get_solver(N)
-        n_basis_tuple = problem2.get_n_basis(N)
-        ps2.setup_basis(*n_basis_tuple)
-
-        ps2.calc_c0()
-        ps2.calc_c1_exact()
-
-        ext2 = ps2.extend_boundary()
-
         ext = np.zeros(len(ps.union_gamma), dtype=complex)
-        print(np.max(np.abs(ext-ext2)))
+
         for l in range(len(ps.union_gamma)):
             node = ps.union_gamma[l]
             r, th = ps.get_polar(*node)
@@ -82,7 +70,7 @@ def do_test_N(N, first_time):
 
     print('N={}'.format(N))
     headers = ('m', 'l2', 'l2 conv', 'Sobolev', 'Sobolev conv')
-    #print(tabulate(table, headers=headers))
+    print(tabulate(table, headers=headers))
     print()
 
 
