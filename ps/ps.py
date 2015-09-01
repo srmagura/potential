@@ -121,7 +121,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         def eval_fbterm(m, r, th):
             if th < a/2:
                 th += 2*np.pi
-                
+
             return jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
         for i in range(len(self.m_list)):
