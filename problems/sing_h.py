@@ -106,10 +106,17 @@ class VarProblem:
     """
     var_compute_b = True
 
-    def get_b_error(self):
-        expected = self.fft_b_coef[:self.M]
-        actual = self.b_coef
+    def get_a_error(self):
+        k = self.k
+        R = self.R
+        nu = self.nu
 
+        expected = np.zeros(self.M)
+
+        for m in range(1, self.M+1):
+            expected[m-1] = self.fft_b_coef[m-1] / jv(m*nu, k*R)
+
+        actual = self.a_coef
         return np.max(np.abs(expected-actual))
 
 

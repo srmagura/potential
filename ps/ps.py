@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from scipy.special import jv
 
 from solver import Solver, Result, cart_to_polar
 import matrices
@@ -99,25 +100,42 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         return np.column_stack(columns)
 
-    def build_d_matrix(self):
+    def get_fbterm_matrix(self):
+        r"""
+        Create matrix with M columns, where each column is
+
+            (P_\gamma - I) Tr(\bar{w}_m),
+
+        m=1,...,M, where
+
+            \bar{w}_m = J_{m\nu}(kr) \sin(m\nu(\theta-\alpha))
+
+        and Tr means the trace on the discrete boundary union_gamma.
         """
-        Create matrix whose columns contain the Chebyshev coefficients
-        for the functions sin(m*nu*(th-a)) for m=1...M.
-        """
+        k = self.k
         a = self.a
         nu = self.nu
 
-        d_columns = []
+        columns = []
 
-        for m in self.m_list:
-            def func(th):
-                return np.sin(m*nu*(th-a))
+        def eval_fbterm(m, r, th):
+            return jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
-            d = self.get_chebyshev_coef(0, func)
-            d = np.matrix(d.reshape((len(d), 1)))
-            d_columns.append(d)
+        for i in range(len(self.m_list)):
+            m = self.m_list[i]
+            trace = np.zeros(len(self.union_gamma), dtype=complex)
 
-        self.d_matrix = np.column_stack(d_columns)
+            for l in range(len(self.union_gamma)):
+                node = self.union_gamma[l]
+                r, th = self.get_polar(*node)
+                trace[l] = eval_fbterm(m, r, th)
+
+            potential = self.get_potential(trace)
+            projection = self.get_trace(potential)
+
+            columns.append(projection - trace)
+
+        return np.column_stack(columns)
 
     def get_V(self):
         """
@@ -143,8 +161,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             submatrices.append(row)
 
         if self.problem.var_compute_b:
-            self.build_d_matrix()
-            submatrices[1].append(-submatrices[0][0].dot(self.d_matrix))
+            submatrices[1].append(self.get_fbterm_matrix())
 
         V0 = np.concatenate(submatrices[0], axis=1)
         V1 = np.concatenate(submatrices[1], axis=1)
@@ -177,23 +194,37 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.c1 = sol[:len(self.c0)]
 
         if self.problem.var_compute_b:
-            var_b = sol[len(self.c0):]
+            var_a = sol[len(self.c0):]
 
-            b_coef = np.zeros(self.problem.M, dtype=complex)
-            self.problem.b_coef = b_coef
+            a_coef = np.zeros(self.problem.M, dtype=complex)
+            self.problem.a_coef = a_coef
 
             # Update c0 to reflect the sines that we are subtracting
             # for regularization
+
+            # TODO: move this code to a better place?
+
             for i in range(len(self.m_list)):
                 m = self.m_list[i]
-                b_coef[m-1] = var_b[i]
+                a_coef[m-1] = var_a[i]
 
-                n_circle = self.segment_desc[0]['n_basis']
-                d = np.ravel(self.d_matrix[:,i])
+            print('a coefficients:', a_coef)
 
-                self.c0[:n_circle] -= b_coef[m-1] * d
+            def eval_reg_bc(th):
+                k = self.problem.k
+                R = self.problem.R
+                a = self.problem.a
+                nu = self.problem.nu
 
-            #print('b coefficients:', var_b)
+                bc = self.problem.eval_bc_extended(th, 0)
+                for i in range(len(self.m_list)):
+                    m = self.m_list[i]
+                    bc -= a_coef[m-1] * jv(m*nu, k*R) * np.sin(m*nu*(th-a))
+
+                return bc
+
+            self.c0[:self.segment_desc[0]['n_basis']] =\
+                self.get_chebyshev_coef(0, eval_reg_bc)
 
     # Set to True when debugging with test_extend_boundary() for
     # significant performance benefit.
@@ -245,8 +276,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             r, th = self.get_polar(i, j)
             u_act[index] += self.problem.get_restore_polar(r, th)
 
-        #self.plot_contour(u_act)
-
         error = self.eval_error(u_act)
 
         result = Result()
@@ -254,6 +283,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         result.u_act = u_act
 
         if self.problem.var_compute_b:
-            result.b_error = self.problem.get_b_error()
+            result.a_error = self.problem.get_a_error()
 
         return result

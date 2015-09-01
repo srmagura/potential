@@ -102,7 +102,7 @@ class Interface:
             not self.problem.expected_known or
             self.problem.force_relative)
         prev_error = None
-        prev_b_error = None
+        prev_a_error = None
 
         u2 = None
         u1 = None
@@ -133,12 +133,12 @@ class Interface:
             if result is None:
                 continue
 
-            if result.b_error is not None:
-                print('b error: ' + self.prec_str.format(result.b_error))
+            if result.a_error is not None:
+                print('a error: ' + self.prec_str.format(result.a_error))
 
-                if prev_b_error is not None:
-                    b_convergence = np.log2(prev_b_error / result.b_error)
-                    print('b convergence: ' + self.prec_str.format(b_convergence))
+                if prev_a_error is not None:
+                    a_convergence = np.log2(prev_a_error / result.a_error)
+                    print('a convergence: ' + self.prec_str.format(a_convergence))
 
                 print()
 
@@ -161,4 +161,4 @@ class Interface:
             print()
 
             prev_error = result.error
-            prev_b_error = result.b_error
+            prev_a_error = result.a_error

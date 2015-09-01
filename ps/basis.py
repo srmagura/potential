@@ -103,7 +103,7 @@ class PsBasis:
         func -- the function to be approximated
         """
         t_data = self.chebyshev_roots
-        boundary_data = np.zeros(len(t_data))
+        boundary_data = np.zeros(len(t_data), dtype=complex)
 
         for i in range(len(t_data)):
             arg = self.eval_g(sid, t_data[i])
