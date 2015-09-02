@@ -21,7 +21,8 @@ def cart_to_polar(x, y):
 
 class Result:
     u_act = None
-    b_error = None
+    a_error = None
+    
 
 class Solver(SolverExtend, SolverDebug):
     """

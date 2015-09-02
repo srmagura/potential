@@ -59,6 +59,7 @@ class SingIH_BData(bdata.BData):
         phi0 -= self.problem.eval_v(R, th)
         return phi0
 
+# TODO: some of the classes here can be combined with SingH class
 
 class SingIHAbstract(SympyProblem, PizzaProblem):
 

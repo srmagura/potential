@@ -5,15 +5,13 @@ from solver import cart_to_polar
 from ps.ps import PizzaSolver
 
 class Problem:
+
     homogeneous = False
-    var_compute_b = False
     expected_known = False
     force_relative = False
 
     R = 2.3
     AD_len = 2*np.pi
-
-    M = 0
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -57,6 +55,8 @@ class PizzaProblem(Problem):
 
     a = _a
     nu = _nu
+    M = PizzaSolver.M
+
     solver_class = PizzaSolver
 
     # These values probably need to be adjusted for your specific problem
@@ -122,10 +122,23 @@ class PizzaProblem(Problem):
             return 2
 
     def get_n_basis(self, N):
-        if N in self.n_basis_dict:
-            return self.n_basis_dict[N]
+        if hasattr(self, 'n_basis_dict'):
+            n_basis_dict = self.n_basis_dict
         else:
-            return self.n_basis_dict[None]
+            #TODO: call a get_n_basis function
+            pass
+
+        if N in n_basis_dict:
+            return n_basis_dict[N]
+        else:
+            return n_basis_dict[None]
 
     def get_restore_polar(self, r, th):
         return 0
+
+    def get_a_error(self):
+        """
+        Override this function if the expected a coefficients are not
+        all 0.
+        """
+        return np.max(np.abs(self.a_coef))

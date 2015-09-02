@@ -36,29 +36,24 @@ class SingH(PizzaProblem):
         self.bdata = SingH_BData(self)
 
         if self.expected_known:
-            m = self.m_max
+            m_max = self.m_max
         else:
-            m = self.M
+            m_max = self.M
 
-        self.fft_b_coef = self.bdata.calc_coef(m)
+        self.fft_b_coef = self.bdata.calc_coef(m_max)
 
-        if self.expected_known:
-            self.bessel_R = np.zeros(len(self.fft_b_coef))
-
-            for m in range(1, len(self.fft_b_coef)+1):
-                self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
-
-            if not self.silent:
-                print('[sing-h] fft_b_coef[m_max] =',
-                    self.fft_b_coef[self.m_max-1])
-
-    def calc_bessel_ratio(self, m, r):
+        self.fft_a_coef = np.zeros(m_max)
         k = self.k
         R = self.R
+        a = self.a
         nu = self.nu
 
-        ratio = jv(m*nu, k*r) / self.bessel_R[m-1]
-        return float(ratio)
+        for m in range(1, m_max+1):
+            self.fft_a_coef[m-1] = self.fft_b_coef[m-1] / jv(m*nu, k*R)
+
+        if self.expected_known and not self.silent:
+            print('[sing-h] fft_b_coef[m_max] =',
+                self.fft_b_coef[self.m_max-1])
 
     def eval_expected_polar(self, r, th):
         a = self.a
@@ -67,9 +62,8 @@ class SingH(PizzaProblem):
         u = 0
 
         for m in range(self.M+1, self.m_max+1):
-            b = self.fft_b_coef[m-1]
-            ratio = self.calc_bessel_ratio(m, r)
-            u += b * ratio * np.sin(m*nu*(th-a))
+            a = self.fft_a_coef[m-1]
+            u += b * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
         return u
 
@@ -77,7 +71,7 @@ class SingH(PizzaProblem):
         """
         Evaluate extended boundary condition.
 
-        If self.var_compute_b is false, subtract the sines.
+        If self.var_compute_a is false, subtract the sines.
         """
         a = self.a
         nu = self.nu
@@ -87,7 +81,7 @@ class SingH(PizzaProblem):
         if sid == 0:
             bc = self.eval_phi0(th)
 
-            if not self.var_compute_b:
+            if not self.var_compute_a:
                 for m in range(1, self.M+1):
                     bc -= self.fft_b_coef[m-1] * np.sin(m*nu*(th - a))
 
@@ -98,66 +92,11 @@ class SingH(PizzaProblem):
         elif sid == 2:
             return 0
 
-
-class VarProblem:
-    """
-    A problem where the b coefficients are calculated during the solution
-    of the variational formulation.
-    """
-    var_compute_b = True
-
     def get_a_error(self):
-        k = self.k
-        R = self.R
-        nu = self.nu
-
-        expected = np.zeros(self.M)
-
-        for m in range(1, self.M+1):
-            expected[m-1] = self.fft_b_coef[m-1] / jv(m*nu, k*R)
-
-        actual = self.a_coef
-        return np.max(np.abs(expected-actual))
+        return np.max(np.abs(self.a_coef - self.fft_a_coef))
 
 
-class Sine:
-
-    k = 1.75
-
-    expected_known = True
-    m_max = 8
-
-    def eval_phi0(self, th):
-        a = self.a
-        nu = self.nu
-        return np.sin(2*nu*(th-a)) + np.sin(8*nu*(th-a))
-
-
-class SingH_FFT_Sine(Sine, SingH):
-
-    n_basis_dict = {
-        16: (20, 5),
-        32: (24, 11),
-        64: (41, 18),
-        128: (53, 28),
-        256: (65, 34),
-        None: (80, 34),
-    }
-
-
-class SingH_Var_Sine(VarProblem, Sine, SingH):
-
-    n_basis_dict = {
-        16: (21, 9),
-        32: (24, 15),
-        64: (42, 27),
-        128: (55, 31),
-        256: (65, 34),
-        None: (80, 34),
-    }
-
-
-class Sine8:
+class SingH_Sine8(SingH):
 
     k = 1.75
 
@@ -165,14 +104,6 @@ class Sine8:
     silent = True
     m_max = 8
 
-    def eval_phi0(self, th):
-        a = self.a
-        nu = self.nu
-        return np.sin(8*nu*(th-a))
-
-
-class SingH_FFT_Sine8(Sine8, SingH):
-
     n_basis_dict = {
         16: (20, 5),
         32: (24, 11),
@@ -182,20 +113,13 @@ class SingH_FFT_Sine8(Sine8, SingH):
         None: (80, 34),
     }
 
-
-class SingH_Var_Sine8(VarProblem, Sine8, SingH):
-
-    n_basis_dict = {
-        16: (21, 9),
-        32: (24, 15),
-        64: (42, 27),
-        128: (55, 31),
-        256: (65, 34),
-        None: (80, 34),
-    }
+    def eval_phi0(self, th):
+        a = self.a
+        nu = self.nu
+        return np.sin(8*nu*(th-a))
 
 
-class SingH_FFT_Hat(SingH):
+class SingH_Hat(SingH):
 
     k = 5.5
 
@@ -216,7 +140,7 @@ class SingH_FFT_Hat(SingH):
         return functions.eval_hat_th(th)
 
 
-class SingH_FFT_Parabola(SingH):
+class SingH_Parabola(SingH):
 
     k = 5.5
 

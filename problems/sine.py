@@ -62,11 +62,3 @@ class SinePizza(PizzaProblem):
             return 0
         elif sid == 2:
             return k*cos(k*x)*cos(a - np.pi/2)
-
-
-class SinePizza_Var(SinePizza):
-    var_compute_b = True
-    M = 7
-
-    def get_b_error(self):
-        return np.max(np.abs(self.b_coef))

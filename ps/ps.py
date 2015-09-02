@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import scipy
 from scipy.special import jv
 
 from solver import Solver, Result, cart_to_polar
@@ -13,8 +14,11 @@ from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
 
 norms = ('l2', 'sobolev')
+var_methods = ('fbterm', 'chebsine')
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
+
+    M = 7
 
     def __init__(self, problem, N, options={}, **kwargs):
         self.a = problem.a
@@ -23,9 +27,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.R = problem.R
         self.AD_len = problem.AD_len
 
-        self.norm = options.get('norm', 'l2')
-        self.do_optimize = options.get('do_optimize', False)
+        self.norm = options['norm']
+        self.var_method = options['var_method']
+
+        self.var_compute_a = options['var_compute_a']
+        problem.var_compute_a = self.var_compute_a
+
         self.m_list = options.get('m_list', range(1, problem.M+1))
+        self.do_optimize = options.get('do_optimize', False)
 
         super().__init__(problem, N, options, **kwargs)
 
@@ -100,6 +109,28 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         return np.column_stack(columns)
 
+    def get_d_matrix(self):
+        """
+        Create matrix whose columns contain the Chebyshev coefficients
+        for the functions sin(m*nu*(th-a)) for m=1...M.
+        """
+        k = self.k
+        R = self.R
+        a = self.a
+        nu = self.nu
+
+        d_columns = []
+
+        for m in self.m_list:
+            def func(th):
+                return np.sin(m*nu*(th-a))
+
+            d = self.get_chebyshev_coef(0, func)
+            d = np.matrix(d.reshape((len(d), 1)))
+            d_columns.append(jv(m*nu, k*R) * d)
+
+        return np.column_stack(d_columns)
+
     def get_fbterm_matrix(self):
         r"""
         Create matrix with M columns, where each column is
@@ -163,8 +194,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
             submatrices.append(row)
 
-        if self.problem.var_compute_b:
-            submatrices[1].append(self.get_fbterm_matrix())
+        if self.problem.var_compute_a:
+            if self.var_method == 'fbterm':
+                submatrices[1].append(self.get_fbterm_matrix())
+            elif self.var_method == 'chebsine':
+                submatrices[1].append(-submatrices[0][0].dot(
+                    self.get_d_matrix()))
 
         V0 = np.concatenate(submatrices[0], axis=1)
         V1 = np.concatenate(submatrices[1], axis=1)
@@ -196,38 +231,25 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.c1 = sol[:len(self.c0)]
 
-        if self.problem.var_compute_b:
+        if self.problem.var_compute_a:
             var_a = sol[len(self.c0):]
 
-            a_coef = np.zeros(self.problem.M, dtype=complex)
+            a_coef = np.zeros(self.M, dtype=complex)
             self.problem.a_coef = a_coef
-
-            # Update c0 to reflect the sines that we are subtracting
-            # for regularization
-
-            # TODO: move this code to a better place?
 
             for i in range(len(self.m_list)):
                 m = self.m_list[i]
                 a_coef[m-1] = var_a[i]
 
-            print('a coefficients:', a_coef)
+            if np.max(np.abs(scipy.imag(a_coef))) == 0:
+                a_coef_to_print = scipy.real(a_coef)
+            else:
+                a_coef_to_print = a_coef
 
-            def eval_reg_bc(th):
-                k = self.problem.k
-                R = self.problem.R
-                a = self.problem.a
-                nu = self.problem.nu
+            print('a coefficients:')
+            print(a_coef_to_print)
 
-                bc = self.problem.eval_bc_extended(th, 0)
-                for i in range(len(self.m_list)):
-                    m = self.m_list[i]
-                    bc -= a_coef[m-1] * jv(m*nu, k*R) * np.sin(m*nu*(th-a))
-
-                return bc
-
-            self.c0[:self.segment_desc[0]['n_basis']] =\
-                self.get_chebyshev_coef(0, eval_reg_bc)
+            self.update_c0()
 
     # Set to True when debugging with test_extend_boundary() for
     # significant performance benefit.
@@ -285,7 +307,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         result.error = error
         result.u_act = u_act
 
-        if self.problem.var_compute_b:
+        if self.problem.var_compute_a:
             result.a_error = self.problem.get_a_error()
 
         return result

@@ -55,10 +55,17 @@ class Interface:
         # Stuff specific to PizzaSolver
         parser.add_argument('-p', action='store_true',
             help=' PizzaSolver: run optimize_n_basis')
+
         parser.add_argument('-n', choices=ps.ps.norms, default='l2')
+        parser.add_argument('-a', action='store_true', default=False,
+            help='calculate the a and b coefficients using the variational'
+                'formulation')
+        parser.add_argument('--vm', choices=ps.ps.var_methods,
+            default='fbterm')
 
         parser.add_argument('-m', type=int)
-        parser.add_argument('-mmax', type=int)
+        parser.add_argument('--mmax', type=int)
+
 
     def run(self):
         """
@@ -67,7 +74,7 @@ class Interface:
         """
         self.args = self.parser.parse_args()
         self.problem = problems.problem_dict[self.args.problem]\
-            (scheme_order=self.args.o)
+            (scheme_order=self.args.o, var_compute_a=self.args.a)
 
         if self.args.c is None or self.args.p:
             N_list = [self.args.N]
@@ -80,6 +87,11 @@ class Interface:
                 N *= 2
 
         print('[{}]'.format(self.args.problem))
+
+        print('var_compute_a = {}'.format(self.args.a))
+        if self.args.a:
+            print('Variational method:', self.args.vm)
+
         print('Norm:', self.args.n)
         print('k = ' + self.prec_str.format(float(self.problem.k)))
         print('R = ' + self.prec_str.format(self.problem.R))
@@ -113,7 +125,9 @@ class Interface:
             'verbose': (len(N_list) == 1),
             'scheme_order': self.args.o,
             'do_optimize': self.args.p,
-            'norm': self.args.n
+            'norm': self.args.n,
+            'var_compute_a': self.args.a,
+            'var_method': self.args.vm
         }
 
         if self.args.m is not None:
