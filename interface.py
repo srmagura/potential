@@ -40,14 +40,22 @@ class Interface:
 
     prec_str = '{:.5}'
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         """
         Create an ArgumentParser for handling command-line arguments.
         """
+        self.problem = kwargs.get('problem', None)
+        self.problem_name = kwargs.get('problem_name', '')
+        self.arg_string = kwargs.get('arg_string', None)
+
         parser = argparse.ArgumentParser()
         self.parser = parser
 
-        add_arguments(parser, ('problem', 'N', 'c', 'o', 'r'))
+        arg_list = ['N', 'c', 'o', 'r']
+        if self.problem is None:
+            arg_list.append('problem')
+
+        add_arguments(parser, arg_list)
 
         #parser.add_argument('--tex', action='store_true',
         #    help='print convergence test results in TeX-friendly format')
@@ -72,9 +80,15 @@ class Interface:
         Build the list of N values for which the algorithm should be run,
         print basic info about the problem, then call run_solver().
         """
-        self.args = self.parser.parse_args()
-        self.problem = problems.problem_dict[self.args.problem]\
-            (scheme_order=self.args.o, var_compute_a=self.args.a)
+        if self.arg_string:
+            self.args = self.parser.parse_args(self.arg_string.split())
+        else:
+            self.args = self.parser.parse_args()
+            self.problem_name = self.args.problem
+
+        if self.problem is None:
+            self.problem = problems.problem_dict[self.problem_name]\
+                (scheme_order=self.args.o, var_compute_a=self.args.a)
 
         if self.args.c is None or self.args.p:
             N_list = [self.args.N]
@@ -86,7 +100,7 @@ class Interface:
                 N_list.append(N)
                 N *= 2
 
-        print('[{}]'.format(self.args.problem))
+        print('[{}]'.format(self.problem_name))
 
         print('var_compute_a = {}'.format(self.args.a))
         if self.args.a:
