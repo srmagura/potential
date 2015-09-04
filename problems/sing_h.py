@@ -56,14 +56,16 @@ class SingH(PizzaProblem):
                 self.fft_b_coef[self.m_max-1])
 
     def eval_expected_polar(self, r, th):
+        k = self.k
         a = self.a
         nu = self.nu
+        R = self.R
 
         u = 0
 
         for m in range(self.M+1, self.m_max+1):
-            a = self.fft_a_coef[m-1]
-            u += b * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
+            ac = self.fft_a_coef[m-1]
+            u += ac * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
         return u
 
@@ -93,16 +95,15 @@ class SingH(PizzaProblem):
             return 0
 
     def get_a_error(self):
-        return np.max(np.abs(self.a_coef - self.fft_a_coef))
+        return np.max(np.abs(self.a_coef - self.fft_a_coef[:self.M]))
 
 
-class SingH_Sine8(SingH):
+class SingH_Sine(SingH):
 
     k = 1.75
 
     expected_known = True
     silent = True
-    m_max = 8
 
     n_basis_dict = {
         16: (20, 5),
@@ -113,10 +114,23 @@ class SingH_Sine8(SingH):
         None: (80, 34),
     }
 
+    def __init__(self, **kwargs):
+        if 'm' in kwargs:
+            self.m = kwargs.pop('m')
+        else:
+            self.m = 8
+
+        print('m = {}'.format(self.m))
+
+        self.m_max = self.m
+
+        super().__init__(**kwargs)
+
     def eval_phi0(self, th):
         a = self.a
         nu = self.nu
-        return np.sin(8*nu*(th-a))
+        m = self.m
+        return np.sin(m*nu*(th-a))
 
 
 class SingH_Hat(SingH):
