@@ -111,7 +111,8 @@ class SingH_Sine(SingH):
         64: (41, 18),
         128: (53, 28),
         256: (65, 34),
-        None: (80, 34),
+        512: (80, 34),
+        None: (90, 45),
     }
 
     def __init__(self, **kwargs):
