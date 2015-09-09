@@ -27,10 +27,10 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.R = problem.R
         self.AD_len = problem.AD_len
 
-        self.norm = options['norm']
-        self.var_method = options['var_method']
+        self.norm = options.get('norm', 'l2')
+        self.var_method = options.get('var_method', 'chebsine')
 
-        self.var_compute_a = options['var_compute_a']
+        self.var_compute_a = options.get('var_compute_a', False)
         problem.var_compute_a = self.var_compute_a
 
         self.m_list = options.get('m_list', range(1, problem.M+1))

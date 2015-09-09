@@ -40,17 +40,11 @@ def do_test(N):
 
     bep = projection - ext
 
+    ps.plot_Gamma()
+
     x_data, y_data = ps.nodes_to_plottable(ps.union_gamma)
-    r_data = [np.sqrt(x**2 + y**2) for x, y in zip(x_data, y_data)]
-
-    plt.stem(r_data, abs(bep), markerfmt=' ', basefmt='k')
-
-    h = ps.AD_len / (ps.N+1)
-    plt.xlim(xmin=-1.5*h)
-
-    fs = 14
-    plt.xlabel('Polar radius', fontsize=fs)
-    plt.ylabel('Absolute value of BEP residual', fontsize=fs)
+    plt.scatter(x_data, y_data, c=np.abs(bep), cmap=plt.get_cmap('Greys'))
+    plt.colorbar()
     plt.show()
 
 
