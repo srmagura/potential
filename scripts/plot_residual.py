@@ -2,19 +2,19 @@
 import sys
 sys.path.append(sys.path[0] + '/..')
 
+import os
+import argparse
+
 import numpy as np
 from scipy.special import jv
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 
+import interface
+
 from problems.problem import PizzaProblem
 from problems.sine import SinePizza
 
-# Used only to construct a PizzaSolver object
-fake_problem = SinePizza()
-
-k = 1
-m = 1
 
 def eval_expected(m, r, th):
     a = PizzaProblem.a
@@ -45,20 +45,47 @@ def do_test(N):
 
     plt.stem(r_data, abs(bep), markerfmt=' ', basefmt='k')
 
-    h = ps.AD_len / (ps.N+1)
-    plt.xlim(xmin=-1.5*h)
+    plt.xlim(xmin=-ps.R/15)
 
     fs = 14
     plt.xlabel('Polar radius', fontsize=fs)
     plt.ylabel('Absolute value of BEP residual', fontsize=fs)
-    plt.show()
 
+    if args.s:
+        plt.savefig('{}/{}.pdf'.format(dir_name, N))
+
+    if not args.s or args.f:
+        plt.show()
+
+    plt.clf()
+
+# Used only to construct a PizzaSolver object
+fake_problem = SinePizza()
+
+k = 1
+m = 1
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-s', action='store_true', help='save plots to file')
+parser.add_argument('-f', action='store_true', help='show plots even if '
+    'saving to file.')
+
+interface.add_arguments(parser, ('N', 'c'))
+args = parser.parse_args()
+
+N_list = interface.get_N_list(args.N, args.c)
 
 print('k={}'.format(k))
 print('m={}'.format(m))
 print()
 
-do_test(64)
-#N_list = (16, 32, 64, 128,)# 256, 512, 1024)
-#for N in N_list:
-#    do_test_N(N, N == N_list[0])
+if args.s:
+    dir_name = 'plot_residual_m={}_k={}'.format(m, k)
+    if os.path.exists(dir_name):
+        print('Error: `{}` already exists'.format(dir_name))
+        sys.exit(1)
+
+    os.mkdir(dir_name)
+
+for N in N_list:
+    do_test(N)

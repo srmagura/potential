@@ -35,6 +35,19 @@ def add_arguments(parser, args):
             help='show relative convergence, even if the problem\'s '
             'true solution is known')
 
+def get_N_list(N0, c, ignore_c=False):
+    if c is None or ignore_c:
+        N_list = [N0]
+    else:
+        N_list = []
+
+        N = N0
+        while N <= c:
+            N_list.append(N)
+            N *= 2
+
+    return N_list
+
 
 class Interface:
 
@@ -90,15 +103,7 @@ class Interface:
             self.problem = problems.problem_dict[self.problem_name]\
                 (scheme_order=self.args.o, var_compute_a=self.args.a)
 
-        if self.args.c is None or self.args.p:
-            N_list = [self.args.N]
-        else:
-            N_list = []
-
-            N = self.args.N
-            while N <= self.args.c:
-                N_list.append(N)
-                N *= 2
+        N_list = get_N_list(self.args.N, self.args.c, self.args.p)
 
         print('[{}]'.format(self.problem_name))
 

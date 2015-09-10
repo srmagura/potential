@@ -70,11 +70,7 @@ prec_str = '{:.5}'
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    problem_choices = problems.problem_dict.keys()
-    interface.add_arguments(parser, ('problem', 'N'))
-    parser.add_argument('-c', type=int, default=128,
-        help='run convergence test, up to the C x C grid. '
-                'Default is 128.')
+    interface.add_arguments(parser, ('problem', 'N', 'c'))
 
     setype_choices = []
     for s, e in it.product('012', 'lsr'):
