@@ -63,7 +63,7 @@ def do_test(N):
 fake_problem = SinePizza()
 
 k = 1
-m = 1
+m = 8
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', action='store_true', help='save plots to file')
