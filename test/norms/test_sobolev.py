@@ -5,7 +5,8 @@ import unittest
 import numpy as np
 import scipy.optimize
 
-import sobolev
+import norms.sobolev
+import test.norms.shared as shared
 
 def eval_norm(h, nodes, sa, v):
     """
@@ -33,7 +34,25 @@ def eval_norm(h, nodes, sa, v):
     return norm
 
 
-class TestSobolev(unittest.TestCase):
+class TestSobolev(unittest.TestCase, shared.Shared):
 
     h = 0.1
     sa = 0.5
+
+    def test_spd(self):
+        nodes = ((-1, 0), (0, 0), (1, 0), (0, 1))
+        ip_array = norms.sobolev.get_ip_array(self.h, nodes, self.sa)
+        self._test_spd(ip_array)
+
+    def test_norm(self):
+        """
+        Test that the two methods of evaluating the Sobolev norm,
+        eval_norm() and sobolev.get_ip_array(), return the same results.
+        """
+        nodes = ((-1, 0), (0, 0), (1, 0), (0, 1))
+
+        def _eval_norm(v):
+            return eval_norm(self.h, nodes, self.sa, v)
+
+        ip_array = norms.sobolev.get_ip_array(self.h, nodes, self.sa)
+        self._test_norm(nodes, _eval_norm, ip_array)

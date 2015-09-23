@@ -1,4 +1,6 @@
-def get_random_v(self, nodes):
+import numpy as np
+
+def get_random_v(nodes):
     """
     Return a randomly-generated complex-valued function defined on
     `nodes`.
@@ -7,34 +9,37 @@ def get_random_v(self, nodes):
     v_imag = np.random.uniform(-1, 1, len(nodes))
     return v_real + 1j*v_imag
 
-def test_spd(self):
-    """
-    Verify that ip_array is Hermitian and positive definite.
-    """
-    nodes = ((-1, 0), (0, 0), (1, 0), (0, 1))
-    ip_array = sobolev.get_ip_array(self.h, nodes, self.sa)
-    ip_matrix = np.matrix(ip_array)
 
-    self.assertTrue(np.array_equal(ip_matrix.getH(), ip_matrix))
+class Shared:
 
-    for i in range(25):
-        v = self.get_random_v(nodes)
-        if np.array_equal(v, np.zeros(len(v))):
-            continue
+    def _test_spd(self, ip_array):
+        """
+        Verify that `ip_array` is Hermitian and positive definite.
+        """
+        nodes = ((-1, 0), (0, 0), (1, 0), (0, 1))
+        ip_matrix = np.matrix(ip_array)
 
-        norm = np.vdot(v, ip_array.dot(v))
-        self.assertTrue(norm > 0)
+        self.assertTrue(np.array_equal(ip_matrix.getH(), ip_matrix))
 
-def test_norm(self):
-    """
-    Test that the two methods of evaluating the Sobolev norm
-    eval_norm() and sobolev.get_ip_array() return the same results.
-    """
-    nodes = ((-1, 0), (0, 0), (1, 0), (0, 1))
-    ip_array = sobolev.get_ip_array(self.h, nodes, self.sa)
+        for i in range(25):
+            v = get_random_v(nodes)
+            if np.array_equal(v, np.zeros(len(v))):
+                continue
 
-    for i in range(10):
-        v = self.get_random_v(nodes)
-        norm1 = eval_norm(self.h, nodes, self.sa, v)
-        norm2 = np.vdot(v, ip_array.dot(v))
-        self.assertTrue(abs(norm1 - norm2) < 1e-13)
+            norm = np.vdot(v, ip_array.dot(v))
+            self.assertTrue(norm > 0)
+
+    def _test_norm(self, nodes, eval_norm, ip_array):
+        """
+        Verify that two methods of evaluating the norm yield the same result.
+
+        nodes -- set of nodes on which norm should be computed
+        eval_norm -- function that takes a grid function on `nodes` as input
+            and returns the norm
+        ip_array -- inner product array for the norm
+        """
+        for i in range(10):
+            v = get_random_v(nodes)
+            norm1 = eval_norm(v)
+            norm2 = np.vdot(v, ip_array.dot(v))
+            self.assertTrue(abs(norm1 - norm2) < 1e-12)
