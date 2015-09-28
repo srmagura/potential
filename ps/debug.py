@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from solver import cart_to_polar, Result
 from chebyshev import get_chebyshev_roots
 import matrices
-import sobolev
 
 class PsDebug:
     """

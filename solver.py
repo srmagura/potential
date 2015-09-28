@@ -22,7 +22,7 @@ def cart_to_polar(x, y):
 class Result:
     u_act = None
     a_error = None
-    
+
 
 class Solver(SolverExtend, SolverDebug):
     """
@@ -35,10 +35,6 @@ class Solver(SolverExtend, SolverDebug):
     Solvers for specific domains and cases should extend this class.
     """
 
-    # Set to True when debugging with test_extend_boundary() for
-    # significant performance benefit.
-    skip_matrix_build = False
-
     def __init__(self, problem, N, options={}):
         super().__init__()
         self.problem = problem
@@ -47,6 +43,10 @@ class Solver(SolverExtend, SolverDebug):
 
         self.scheme_order = options.get('scheme_order', 4)
         self.verbose = options.get('verbose', False)
+
+        # Set to True when debugging with test_extend_boundary() for
+        # significant performance benefit.
+        self.skip_matrix_build = options.get('skip_matrix_build', False)
 
         self.construct_grids()
 

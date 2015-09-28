@@ -5,7 +5,7 @@ from scipy.special import jv
 
 from solver import Solver, Result, cart_to_polar
 import matrices
-import sobolev
+import norms.sobolev
 
 from ps.basis import PsBasis
 from ps.grid import PsGrid
@@ -223,11 +223,21 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         rhs = self.get_var_rhs(V0)
 
         if self.norm == 'l2':
-            sol = np.linalg.lstsq(V1, rhs)[0]
+            varsol = np.linalg.lstsq(V1, rhs)[0]
         elif self.norm == 'sobolev':
             h = self.AD_len / self.N
             sa = 0.5
-            sol = sobolev.solve_var(V1, rhs, h, self.union_gamma, sa)
+            varsol = sobolev.solve_var(V1, rhs, h, self.union_gamma, sa)
+
+        self.handle_varsol(varsol)
+
+    def handle_varsol(self, varsol):
+        """
+        Break up the solution vector of the variational formulation into
+        its meaningful parts.
+
+        Set c1. Update the boundary data if necessary.
+        """
 
         self.c1 = sol[:len(self.c0)]
 
@@ -253,7 +263,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
     # Set to True when debugging with test_extend_boundary() for
     # significant performance benefit.
-    skip_matrix_build = False
+    # FIXME
+    # skip_matrix_build = False
 
     def run(self):
         """

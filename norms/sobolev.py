@@ -19,6 +19,7 @@ def get_ip_array(h, nodes, sa):
         n_adjacent = 0
 
         for i1, j1 in ((i-1, j), (i+1, j), (i, j-1), (i, j+1)):
+            # Could be problems here if (i1, j1) is float (?)
             if (i1, j1) in nodes:
                 n_adjacent += 1
                 l = nodes.index((i1, j1))
@@ -26,4 +27,4 @@ def get_ip_array(h, nodes, sa):
 
         ip_array[k, k] += 1 + n_adjacent*sa/h**2
 
-    return ip_array
+    return h*ip_array
