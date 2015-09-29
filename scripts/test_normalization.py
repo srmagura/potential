@@ -4,7 +4,7 @@ Test that a norm has proper normalization.
 This script samples a given function f(x,y) on the discrete boundary of
 the pizza domain and prints the norm. The grid is refined and the
 process is repeated. The value norm should be (mostly) constant, despite
-the changing grid size. 
+the changing grid size.
 """
 # To allow __main__ in subdirectory
 import sys
@@ -21,8 +21,7 @@ import norms.linalg
 
 from problems.sine import SinePizza
 
-# Used only to construct a PizzaSolver object
-fake_problem = SinePizza()
+norm_names = ('l2', 'sobolev')
 
 def eval_f(x, y):
     return np.sqrt(abs(x)) * np.sin(y)
@@ -41,17 +40,27 @@ def do_test(N):
         f[l] = eval_f(x, y)
 
     h = solver.AD_len / N
-    sa = 0.5
-    ip_array = norms.sobolev.get_ip_array(h, solver.union_gamma, sa)
+
+    if norm_name == 'l2':
+        ip_array = norms.l2.get_ip_array__unweighted(h, solver.union_gamma)
+    elif norm_name == 'sobolev':
+        sa = 0.5
+        ip_array = norms.sobolev.get_ip_array(h, solver.union_gamma, sa)
 
     norm_f = norms.linalg.eval_norm(ip_array, f)
     print('Norm: {:.5}'.format(norm_f))
     print()
 
+# Used only to construct a PizzaSolver object
+fake_problem = SinePizza()
+
 parser = argparse.ArgumentParser()
 
 interface.add_arguments(parser, ('N', 'c'))
+parser.add_argument('-n', choices=norm_names, required=True)
 args = parser.parse_args()
+
+norm_name = args.n
 
 N_list = interface.get_N_list(args.N, args.c)
 for N in N_list:

@@ -24,6 +24,10 @@ class TestLinalg(unittest.TestCase):
             of each other for the test to pass. Difference between
             solutions is computed in the infinty norm.
 
+        I suspect that scipy.optimize.minimize() does not always do a
+        great job for this type of problem, so a (hopefully small)
+        difference between the two solutions is to be expected. 
+
         Not sure if this function will still work if A, b, or the weak
         solution to Ax=b contain non-real numbers.
         """
@@ -34,7 +38,7 @@ class TestLinalg(unittest.TestCase):
         x1 = solve_var(A, b, ip_array)
 
         x1_res = A.dot(x1) - b
-        x1_res_norm = np.vdot(x1_res, ip_array.dot(x1_res))
+        x1_res_norm = np.sqrt(np.vdot(x1_res, ip_array.dot(x1_res)))
 
         def to_minimize(x):
             residual = A.dot(x) - b
@@ -75,4 +79,4 @@ class TestLinalg(unittest.TestCase):
             [0.51, 2.05, -1.04],
         ])
         b = np.array([1, -3, 5, 1])
-        self._test_minimize(A, b, nodes, 1e-6)
+        self._test_minimize(A, b, nodes, 1e-3)

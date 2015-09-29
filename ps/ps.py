@@ -5,7 +5,10 @@ from scipy.special import jv
 
 from solver import Solver, Result, cart_to_polar
 import matrices
+
+import norms.linalg
 import norms.sobolev
+import norms.l2
 
 from ps.basis import PsBasis
 from ps.grid import PsGrid
@@ -13,7 +16,7 @@ from ps.extend import PsExtend
 from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
 
-norms = ('l2', 'sobolev')
+norm_names = ('l2', 'sobolev')
 var_methods = ('fbterm', 'chebsine')
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
@@ -224,10 +227,15 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         if self.norm == 'l2':
             varsol = np.linalg.lstsq(V1, rhs)[0]
-        elif self.norm == 'sobolev':
+        else:
             h = self.AD_len / self.N
-            sa = 0.5
-            varsol = sobolev.solve_var(V1, rhs, h, self.union_gamma, sa)
+
+            if self.norm == 'sobolev':
+                sa = 0.5
+                ip_array = norms.sobolev.get_ip_array(h, self.union_gamma, sa)
+
+
+            varsol = norms.linalg.solve_var(V1, rhs, ip_array)
 
         self.handle_varsol(varsol)
 
@@ -238,11 +246,10 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         Set c1. Update the boundary data if necessary.
         """
-
-        self.c1 = sol[:len(self.c0)]
+        self.c1 = varsol[:len(self.c0)]
 
         if self.problem.var_compute_a:
-            var_a = sol[len(self.c0):]
+            var_a = varsol[len(self.c0):]
 
             a_coef = np.zeros(self.M, dtype=complex)
             self.problem.a_coef = a_coef

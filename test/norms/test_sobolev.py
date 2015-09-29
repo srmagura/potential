@@ -31,7 +31,7 @@ def eval_norm(h, nodes, sa, v):
             deriv_sum += abs((v[l] - v[k])/h)**2
 
     norm += sa * deriv_sum
-    return norm
+    return h*norm
 
 
 class TestSobolev(unittest.TestCase, shared.Shared):

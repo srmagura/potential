@@ -77,7 +77,7 @@ class Interface:
         parser.add_argument('-p', action='store_true',
             help=' PizzaSolver: run optimize_n_basis')
 
-        parser.add_argument('-n', choices=ps.ps.norms, default='l2')
+        parser.add_argument('-n', choices=ps.ps.norm_names, default='l2')
         parser.add_argument('-a', action='store_true', default=False,
             help='calculate the a and b coefficients using the variational'
                 'formulation')
