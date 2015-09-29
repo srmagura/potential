@@ -1,12 +1,11 @@
 """
 Testing for the sobolev module.
 """
-import unittest
 import numpy as np
 import scipy.optimize
 
 import norms.sobolev
-import test.norms.shared as shared
+from test.norms.shared import NormTest
 
 def eval_norm(h, nodes, sa, v):
     """
@@ -34,7 +33,7 @@ def eval_norm(h, nodes, sa, v):
     return h*norm
 
 
-class TestSobolev(unittest.TestCase, shared.Shared):
+class TestSobolev(NormTest):
 
     h = 0.1
     sa = 0.5

@@ -268,11 +268,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
             self.update_c0()
 
-    # Set to True when debugging with test_extend_boundary() for
-    # significant performance benefit.
-    # FIXME
-    # skip_matrix_build = False
-
     def run(self):
         """
         The main procedure for PizzaSolver.

@@ -1,21 +1,30 @@
 """
 Testing for the norms.l2 module.
 """
-import unittest
 import numpy as np
 
 import norms.linalg
 import norms.l2
+import norms.weight_func
 
-import test.norms.shared as shared
+from test.norms.shared import NormTest
+
+class l2TestMixin:
+
+    def test_spd(self):
+        self._test_spd(self.ip_array)
+
+    def test_average(self):
+        average = np.sum(self.ip_array) / self.ip_array.shape[0]
+        self.assertTrue(np.allclose(average, self.h))
 
 
-class Test_l2_Unweighted(unittest.TestCase, shared.Shared):
+class Test_l2_Unweighted(NormTest, l2TestMixin):
 
     def setUp(self):
-        h = 0.1
-        nodes = ((-1, 0), (0, 0), (1, 0), (0, 1))
-        self.ip_array = norms.l2.get_ip_array__unweighted(h, nodes)
+        self.h = 0.1
+        n_nodes = 4
+        self.ip_array = norms.l2.get_ip_array__unweighted(self.h, n_nodes)
 
     def test_spd(self):
         self._test_spd(self.ip_array)
@@ -41,3 +50,12 @@ class Test_l2_Unweighted(unittest.TestCase, shared.Shared):
 
         self.assertTrue(np.allclose(x_solve_var, x_numpy))
         self.assertTrue(abs(residual) > 1)
+
+
+class Test_l2_Radial(NormTest, l2TestMixin):
+
+    def setUp(self):
+        self.h = 0.15
+        radii = np.arange(0.1, 1.2, 0.1)
+        self.ip_array = norms.l2.get_ip_array__radial(self.h, radii,
+            norms.weight_func.wf1)
