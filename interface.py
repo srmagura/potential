@@ -77,12 +77,13 @@ class Interface:
         parser.add_argument('-p', action='store_true',
             help=' PizzaSolver: run optimize_n_basis')
 
-        parser.add_argument('-n', choices=ps.ps.norm_names, default='l2')
+        parser.add_argument('-n', choices=ps.ps.norm_names,
+            default=ps.ps.default_norm)
         parser.add_argument('-a', action='store_true', default=False,
             help='calculate the a and b coefficients using the variational'
                 'formulation')
         parser.add_argument('--vm', choices=ps.ps.var_methods,
-            default='fbterm')
+            default=ps.ps.default_var_method)
 
         parser.add_argument('-m', type=int)
         parser.add_argument('--mmax', type=int)

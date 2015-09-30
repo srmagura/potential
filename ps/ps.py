@@ -9,6 +9,7 @@ import matrices
 import norms.linalg
 import norms.sobolev
 import norms.l2
+import norms.weight_func
 
 from ps.basis import PsBasis
 from ps.grid import PsGrid
@@ -16,8 +17,11 @@ from ps.extend import PsExtend
 from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
 
-norm_names = ('l2', 'sobolev')
+norm_names = ('l2', 'l2-wf1', 'sobolev')
+default_norm = 'l2'
+
 var_methods = ('fbterm', 'chebsine')
+default_var_method = 'chebsine'
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
@@ -30,8 +34,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.R = problem.R
         self.AD_len = problem.AD_len
 
-        self.norm = options.get('norm', 'l2')
-        self.var_method = options.get('var_method', 'chebsine')
+        self.norm = options.get('norm', default_norm)
+        self.var_method = options.get('var_method', default_var_method)
 
         self.var_compute_a = options.get('var_compute_a', False)
         problem.var_compute_a = self.var_compute_a
@@ -233,6 +237,11 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             if self.norm == 'sobolev':
                 sa = 0.5
                 ip_array = norms.sobolev.get_ip_array(h, self.union_gamma, sa)
+                
+            elif self.norm == 'l2-wf1':
+                radii = [self.get_polar(*node)[0] for node in self.union_gamma]
+                ip_array = norms.l2.get_ip_array__radial(h, radii,
+                    norms.weight_func.wf1)
 
 
             varsol = norms.linalg.solve_var(V1, rhs, ip_array)
