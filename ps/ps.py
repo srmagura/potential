@@ -14,8 +14,8 @@ import norms.weight_func
 norm_names = ('l2', 'l2-wf1', 'sobolev')
 default_norm = 'l2'
 
-var_methods = ['fbterm', 'chebsine', 'test-chebsine-fft']
-fft_test_var_methods = ('test-chebsine-fft', 'test-fbterm-fft')
+var_methods = ['fbterm', 'chebsine', 'fft-test-chebsine']
+fft_test_var_methods = ('fft-test-chebsine', 'fft-test-fbterm')
 var_methods.extend(fft_test_var_methods)
 
 default_var_method = 'chebsine'
@@ -212,17 +212,17 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         if self.problem.var_compute_a:
             if self.var_method == 'fbterm':
-                submatrices[1].append(self.get_fbterm_matrix())
+                submatrices[1].append(-self.get_fbterm_matrix())
 
             elif self.var_method == 'chebsine':
                 submatrices[1].append(-submatrices[0][0].dot(
                     self.get_d_matrix()))
 
-        elif self.var_method == 'test-fbterm-fft':
-            rhs -= self.get_fbterm_matrix().dot(
+        elif self.var_method == 'fft-test-fbterm':
+            rhs = self.get_fbterm_matrix().dot(
                 self.problem.fft_a_coef[:self.M])
 
-        elif self.var_method == 'test-chebsine-fft':
+        elif self.var_method == 'fft-test-chebsine':
             Q0_d = submatrices[0][0].dot(self.get_d_matrix())
             Q0_d_a = Q0_d.dot(self.problem.fft_a_coef[:self.M])
             Q0_d_a = np.ravel(Q0_d_a)
