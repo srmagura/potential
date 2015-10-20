@@ -83,7 +83,7 @@ class SingH(PizzaProblem):
         if sid == 0:
             bc = self.eval_phi0(th)
 
-            if not self.var_compute_a:
+            if self.regularize_bc:
                 for m in range(1, self.M+1):
                     bc -= self.fft_b_coef[m-1] * np.sin(m*nu*(th - a))
 
@@ -146,7 +146,7 @@ class SingH_Hat(SingH):
         1024: (120, 35),
     }
 
-    expected_known = False
+    expected_known = True
     m_max = 199
 
     def eval_phi0(self, th):

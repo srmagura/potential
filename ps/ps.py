@@ -11,17 +11,21 @@ import norms.sobolev
 import norms.l2
 import norms.weight_func
 
+norm_names = ('l2', 'l2-wf1', 'sobolev')
+default_norm = 'l2'
+
+var_methods = ['fbterm', 'chebsine', 'test-chebsine-fft']
+fft_test_var_methods = ('test-chebsine-fft', 'test-fbterm-fft')
+var_methods.extend(fft_test_var_methods)
+
+default_var_method = 'chebsine'
+
 from ps.basis import PsBasis
 from ps.grid import PsGrid
 from ps.extend import PsExtend
 from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
 
-norm_names = ('l2', 'l2-wf1', 'sobolev')
-default_norm = 'l2'
-
-var_methods = ('fbterm', 'chebsine')
-default_var_method = 'chebsine'
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
@@ -39,6 +43,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.var_compute_a = options.get('var_compute_a', False)
         problem.var_compute_a = self.var_compute_a
+        problem.regularize_bc = (not self.var_compute_a and
+            not self.var_method in fft_test_var_methods)
 
         self.m_list = options.get('m_list', range(1, problem.M+1))
         self.do_optimize = options.get('do_optimize', False)
@@ -178,11 +184,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         return np.column_stack(columns)
 
-    def get_V(self):
+    def get_var(self):
         """
-        Get the matrices V0 and V1.
+        Get the matrices V0 and V1, and the RHS of the variational
+        formulation.
 
-        These matrices are the main components of the variational formulation,
+        V0, V1, and RHS are the main components of the variational formulation,
         an overdetermined linear system used to solve for the unknown Neumann
         coefficients. V0 operates on the (known) Dirichlet Chebyshev
         coefficients, while V1 operates on the vector of unknowns (Neumann
@@ -201,33 +208,43 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
             submatrices.append(row)
 
+        rhs = np.zeros(len(self.union_gamma), dtype=complex)
+
         if self.problem.var_compute_a:
             if self.var_method == 'fbterm':
                 submatrices[1].append(self.get_fbterm_matrix())
+
             elif self.var_method == 'chebsine':
                 submatrices[1].append(-submatrices[0][0].dot(
                     self.get_d_matrix()))
 
+        elif self.var_method == 'test-fbterm-fft':
+            rhs -= self.get_fbterm_matrix().dot(
+                self.problem.fft_a_coef[:self.M])
+
+        elif self.var_method == 'test-chebsine-fft':
+            Q0_d = submatrices[0][0].dot(self.get_d_matrix())
+            Q0_d_a = Q0_d.dot(self.problem.fft_a_coef[:self.M])
+            Q0_d_a = np.ravel(Q0_d_a)
+            rhs += Q0_d_a
+
         V0 = np.concatenate(submatrices[0], axis=1)
         V1 = np.concatenate(submatrices[1], axis=1)
-        return (V0, V1)
 
-    def get_var_rhs(self, V0):
-        """
-        Get the RHS of the variational formulation.
-        """
+        # Compute the RHS of the variational formulation.
         ext_f = self.extend_inhomo_f()
         proj_f = self.get_potential(ext_f)
 
         term = self.get_trace(proj_f + self.ap_sol_f)
-        return -V0.dot(self.c0) + ext_f - term
+        rhs += -V0.dot(self.c0) + ext_f - term
+
+        return (V0, V1, rhs)
 
     def solve_var(self):
         """
         Setup and solve the variational formulation.
         """
-        V0, V1 = self.get_V()
-        rhs = self.get_var_rhs(V0)
+        V0, V1, rhs = self.get_var()
 
         if self.norm == 'l2':
             varsol = np.linalg.lstsq(V1, rhs)[0]
@@ -237,7 +254,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             if self.norm == 'sobolev':
                 sa = 0.5
                 ip_array = norms.sobolev.get_ip_array(h, self.union_gamma, sa)
-                
+
             elif self.norm == 'l2-wf1':
                 radii = [self.get_polar(*node)[0] for node in self.union_gamma]
                 ip_array = norms.l2.get_ip_array__radial(h, radii,
@@ -257,7 +274,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         """
         self.c1 = varsol[:len(self.c0)]
 
-        if self.problem.var_compute_a:
+        if self.var_compute_a:
             var_a = varsol[len(self.c0):]
 
             a_coef = np.zeros(self.M, dtype=complex)
@@ -275,6 +292,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             print('a coefficients:')
             print(a_coef_to_print)
 
+        if not self.problem.regularize_bc:
             self.update_c0()
 
     def run(self):
