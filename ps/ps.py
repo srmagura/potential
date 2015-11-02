@@ -29,7 +29,6 @@ from ps.debug import PsDebug
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
-    M = 7
 
     def __init__(self, problem, N, options={}, **kwargs):
         self.a = problem.a
@@ -46,10 +45,17 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         problem.regularize_bc = (not self.var_compute_a and
             not self.var_method in fft_test_var_methods)
 
+        super().__init__(problem, N, options, **kwargs)
+
+        if self.scheme_order == 2:
+            self.M = 4
+        elif self.scheme_order == 4:
+            self.M = 7
+
+        self.problem.M = self.M
+
         self.m_list = options.get('m_list', range(1, problem.M+1))
         self.do_optimize = options.get('do_optimize', False)
-
-        super().__init__(problem, N, options, **kwargs)
 
         self.ps_construct_grids()
 

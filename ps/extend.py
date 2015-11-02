@@ -6,7 +6,6 @@ from solver import cart_to_polar
 from .multivalue import Multivalue
 
 ETYPE_NAMES = ('standard', 'left', 'right')
-TAYLOR_N_DERIVS = 6
 
 class PsExtend:
 
@@ -54,9 +53,9 @@ class PsExtend:
         derivs.append(xi1)
         derivs.append(-(d2_xi0_X + k**2 * xi0))
 
-        derivs.append(-(d2_xi1_X + k**2 * xi1))
-
-        derivs.append(d4_xi0_X + k**2 * (2*d2_xi0_X + k**2 * xi0))
+        if self.scheme_order > 2:
+            derivs.append(-(d2_xi1_X + k**2 * xi1))
+            derivs.append(d4_xi0_X + k**2 * (2*d2_xi0_X + k**2 * xi0))
 
         v = 0
         for l in range(len(derivs)):
@@ -87,36 +86,40 @@ class PsExtend:
         for JJ in JJ_list:
             B = self.eval_dn_B_arg(0, JJ, param_r, param_th, sid)
             d2_B_arg = self.eval_dn_B_arg(2, JJ, param_r, param_th, sid)
-            d4_B_arg = self.eval_dn_B_arg(4, JJ, param_r, param_th, sid)
+
+            if self.scheme_order > 2:
+                d4_B_arg = self.eval_dn_B_arg(4, JJ, param_r, param_th, sid)
 
             if index is None or index == 0:
                 xi0 += c0[JJ] * B
                 d2_xi0_arg += c0[JJ] * d2_B_arg
-                d4_xi0_arg += c0[JJ] * d4_B_arg
 
-            if index is None or index == 1:
+                if self.scheme_order > 2:
+                    d4_xi0_arg += c0[JJ] * d4_B_arg
+
+            if index is None or index == 1 and self.scheme_order > 2:
                 xi1 += c1[JJ] * B
                 d2_xi1_arg += c1[JJ] * d2_B_arg
 
         return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
 
     def ext_calc_B_derivs(self, JJ, sid, param_r, param_th):
-        derivs = np.zeros(TAYLOR_N_DERIVS, dtype=complex)
+        derivs = np.zeros(self.taylor_n_derivs, dtype=complex)
 
-        for n in range(TAYLOR_N_DERIVS):
+        for n in range(self.taylor_n_derivs):
             derivs[n] = self.eval_dn_B_arg(n, JJ, param_r, param_th, sid)
 
         return derivs
 
     def ext_calc_xi_derivs(self, param_r, param_th, sid, index):
-        derivs = np.zeros(TAYLOR_N_DERIVS, dtype=complex)
+        derivs = np.zeros(self.taylor_n_derivs, dtype=complex)
 
         if index == 0:
             c = self.c0
         elif index == 1:
             c = self.c1
 
-        for n in range(TAYLOR_N_DERIVS):
+        for n in range(self.taylor_n_derivs):
             for JJ in range(len(self.B_desc)):
                 dn_B_arg = self.eval_dn_B_arg(n, JJ, param_r, param_th, sid)
                 derivs[n] += c[JJ] * dn_B_arg
@@ -137,8 +140,8 @@ class PsExtend:
             JJ = None
             index = None
 
-        derivs0 = np.zeros(TAYLOR_N_DERIVS)
-        derivs1 = np.zeros(TAYLOR_N_DERIVS)
+        derivs0 = np.zeros(self.taylor_n_derivs)
+        derivs1 = np.zeros(self.taylor_n_derivs)
 
         if JJ is None:
             derivs0 = self.ext_calc_xi_derivs(param_r, param_th, taylor_sid, 0)
@@ -161,10 +164,12 @@ class PsExtend:
             if ll >= 0:
                 fac = delta_arg**ll / math.factorial(ll)
                 d2_xi0_arg += derivs0[l] * fac
-                d2_xi1_arg += derivs1[l] * fac
+
+                if self.scheme_order > 2:
+                    d2_xi1_arg += derivs1[l] * fac
 
             ll = l - 4
-            if ll >= 0:
+            if ll >= 0 and self.scheme_order > 2:
                 fac = delta_arg**ll / math.factorial(ll)
                 d4_xi0_arg += derivs0[l] * fac
 
@@ -305,6 +310,8 @@ class PsExtend:
         """
         R = self.R
         k = self.problem.k
+
+        self.taylor_n_derivs = self.scheme_order + 2
 
         mv_ext = Multivalue(self.union_gamma)
 

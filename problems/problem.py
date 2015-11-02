@@ -55,7 +55,6 @@ class PizzaProblem(Problem):
 
     a = _a
     nu = _nu
-    M = PizzaSolver.M
 
     # Default value
     var_compute_a = False
