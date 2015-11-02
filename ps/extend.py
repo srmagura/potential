@@ -97,9 +97,11 @@ class PsExtend:
                 if self.scheme_order > 2:
                     d4_xi0_arg += c0[JJ] * d4_B_arg
 
-            if index is None or index == 1 and self.scheme_order > 2:
+            if index is None or index == 1:
                 xi1 += c1[JJ] * B
-                d2_xi1_arg += c1[JJ] * d2_B_arg
+
+                if self.scheme_order > 2:
+                    d2_xi1_arg += c1[JJ] * d2_B_arg
 
         return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
 
