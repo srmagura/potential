@@ -77,7 +77,7 @@ class PsInhomo:
 
         derivs = [0, 0, f]
 
-        if self.scheme_order == 4:
+        if self.extension_order > 2:
             derivs.extend([d_f_Y, -d2_f_X - k**2 * f + d2_f_Y])
 
         v = 0
@@ -122,7 +122,7 @@ class PsInhomo:
 
         f0 = p.eval_f(x0, y0)
 
-        if self.scheme_order == 4:
+        if self.extension_order > 2:
             grad_f0 = p.eval_grad_f(x0, y0)
             hessian_f0 = p.eval_hessian_f(x0, y0)
         else:

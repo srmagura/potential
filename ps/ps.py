@@ -53,6 +53,10 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             self.M = 7
 
         self.problem.M = self.M
+        self.problem.setup()
+
+        #self.extension_order = 4
+        self.extension_order = self.scheme_order
 
         self.m_list = options.get('m_list', range(1, problem.M+1))
         self.do_optimize = options.get('do_optimize', False)
@@ -320,12 +324,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #self.plot_gamma()
         #return self.ps_test_extend_src_f()
 
-        '''
-        Uncomment to run the extend basis test. Just run the program on a
-        single grid --- don't run the convergence test.
-        '''
-        #return self.test_extend_basis()
-
         self.calc_c0()
         '''
         Uncomment the following line to see a plot of the boundary data and
@@ -338,6 +336,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #self.calc_c1_exact()
         #self.c1_test()
 
+        self.extension_order = self.scheme_order
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f
         u_act = potential

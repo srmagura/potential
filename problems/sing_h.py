@@ -33,8 +33,7 @@ class SingH(PizzaProblem):
     def __init__(self, **kwargs):
         self.bdata = SingH_BData(self)
 
-        self.M = kwargs.get('M', 7)
-
+    def setup(self):
         if self.expected_known:
             m_max = max(self.M, self.m_max)
         else:

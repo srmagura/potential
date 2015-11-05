@@ -53,7 +53,7 @@ class PsExtend:
         derivs.append(xi1)
         derivs.append(-(d2_xi0_X + k**2 * xi0))
 
-        if self.scheme_order > 2:
+        if self.extension_order > 2:
             derivs.append(-(d2_xi1_X + k**2 * xi1))
             derivs.append(d4_xi0_X + k**2 * (2*d2_xi0_X + k**2 * xi0))
 
@@ -87,20 +87,20 @@ class PsExtend:
             B = self.eval_dn_B_arg(0, JJ, param_r, param_th, sid)
             d2_B_arg = self.eval_dn_B_arg(2, JJ, param_r, param_th, sid)
 
-            if self.scheme_order > 2:
+            if self.extension_order > 2:
                 d4_B_arg = self.eval_dn_B_arg(4, JJ, param_r, param_th, sid)
 
             if index is None or index == 0:
                 xi0 += c0[JJ] * B
                 d2_xi0_arg += c0[JJ] * d2_B_arg
 
-                if self.scheme_order > 2:
+                if self.extension_order > 2:
                     d4_xi0_arg += c0[JJ] * d4_B_arg
 
             if index is None or index == 1:
                 xi1 += c1[JJ] * B
 
-                if self.scheme_order > 2:
+                if self.extension_order > 2:
                     d2_xi1_arg += c1[JJ] * d2_B_arg
 
         return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
@@ -167,11 +167,11 @@ class PsExtend:
                 fac = delta_arg**ll / math.factorial(ll)
                 d2_xi0_arg += derivs0[l] * fac
 
-                if self.scheme_order > 2:
+                if self.extension_order > 2:
                     d2_xi1_arg += derivs1[l] * fac
 
             ll = l - 4
-            if ll >= 0 and self.scheme_order > 2:
+            if ll >= 0 and self.extension_order > 2:
                 fac = delta_arg**ll / math.factorial(ll)
                 d4_xi0_arg += derivs0[l] * fac
 
@@ -232,8 +232,6 @@ class PsExtend:
         x, y = self.get_coord(i, j)
         options['sid'] = 1
         derivs = self.ext_calc_certain_xi_derivs(i, j, x, 2*np.pi, options)
-        if abs(x-5)<1e-5 and y > 1e-5:
-            print('xi1(5)=', derivs[1])
 
         return {'elen': abs(y), 'value': self.extend_from_radius(y, *derivs)}
 
@@ -313,7 +311,7 @@ class PsExtend:
         R = self.R
         k = self.problem.k
 
-        self.taylor_n_derivs = self.scheme_order + 2
+        self.taylor_n_derivs = self.extension_order + 2
 
         mv_ext = Multivalue(self.union_gamma)
 
