@@ -16,6 +16,9 @@ class Problem:
     def __init__(self, **kwargs):
         super().__init__()
 
+    def setup(self):
+        pass
+
     def get_solver(self, *args, **kwargs):
         return self.solver_class(self, *args, **kwargs)
 

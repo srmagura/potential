@@ -2,17 +2,53 @@ import numpy as np
 from numpy import cos, sin
 
 from solver import cart_to_polar
-from cs.csf import CsFourier
 
-from .problem import Problem, PizzaProblem
+from .problem import PizzaProblem
 
-class YCosineShared:
+
+class YCosine(PizzaProblem):
 
     # Note: this problem becomes homogeneous if k=1.
     k = 1.75
 
     expected_known = True
-    
+
+    n_basis_dict = {
+        16: (23, 7),
+        32: (25, 7),
+        64: (31, 15),
+        128: (37, 21),
+        None: (45, 25),
+    }
+
+    def eval_expected(self, x, y):
+        return y*cos(x)
+
+    def eval_bc_extended(self, arg, sid):
+        r, th = self.arg_to_polar(arg, sid)
+        x, y = r*cos(th), r*sin(th)
+
+        return self.eval_expected(x, y)
+
+    def eval_d_u_outwards(self, arg, sid):
+        a = self.a
+
+        r, th = self.arg_to_polar(arg, sid)
+        x, y = r*cos(th), r*sin(th)
+
+        if sid == 0:
+            return self.eval_d_u_r(th)
+
+        elif sid == 1:
+            return cos(x)
+
+        elif sid == 2:
+            d_u_x = -y*sin(x)
+            d_u_y = cos(x)
+
+            b = np.pi/2 - a
+            return d_u_x*cos(b)-d_u_y*sin(b)
+
     def eval_f(self, x, y):
         k = self.k
         return k**2*y*cos(x) - y*cos(x)
@@ -49,55 +85,7 @@ class YCosineShared:
         R = self.R
         x = R*cos(th)
         y = R*sin(th)
-        
+
         d_u_x = -y*sin(x)
         d_u_y = cos(x)
         return d_u_x*cos(th) + d_u_y*sin(th)
-
-
-class YCosine(YCosineShared, Problem):
-    solver_class = CsFourier
-
-    def eval_expected(self, x, y):
-        return y*cos(x)
-        
-    def eval_bc(self, th):
-        return self.eval_expected(self.R*cos(th), self.R*sin(th))
- 
-class YCosinePizza(YCosineShared, PizzaProblem):
-
-    n_basis_dict = {
-        16: (23, 7),
-        32: (25, 7),
-        64: (31, 15),
-        128: (37, 21),
-        None: (45, 25),
-    }
-    
-    def eval_expected(self, x, y):
-        return y*cos(x)
-        
-    def eval_bc_extended(self, arg, sid):
-        r, th = self.arg_to_polar(arg, sid) 
-        x, y = r*cos(th), r*sin(th)
-            
-        return self.eval_expected(x, y)
-
-    def eval_d_u_outwards(self, arg, sid):
-        a = self.a
-        
-        r, th = self.arg_to_polar(arg, sid)
-        x, y = r*cos(th), r*sin(th)
-                
-        if sid == 0:
-            return self.eval_d_u_r(th)
-            
-        elif sid == 1:
-            return cos(x)
-            
-        elif sid == 2:
-            d_u_x = -y*sin(x)
-            d_u_y = cos(x)
-            
-            b = np.pi/2 - a
-            return d_u_x*cos(b)-d_u_y*sin(b)

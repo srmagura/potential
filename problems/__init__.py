@@ -6,8 +6,8 @@ This module defines choices for the problem command-line argument.
 """
 from collections import OrderedDict
 
-from .sine import Sine, SinePizza
-from .ycosine import YCosine, YCosinePizza
+from .sine import Sine
+from .ycosine import YCosine
 from .sing_i import SingINoCorrection, SingI
 from .sing_h import SingH_Hat, SingH_Parabola, SingH_Sine
 #from .sing_ih import SingIH_FFT_Sine, SingIH_FFT_Hat, SingIH_FFT_Parabola,\
@@ -16,10 +16,7 @@ from .fbterm import FbTerm
 
 problem_dict = OrderedDict((
     ('sine', Sine),
-    ('sine-pizza', SinePizza),
-
     ('ycosine', YCosine),
-    ('ycosine-pizza', YCosinePizza),
 
     ('sing-i-nc', SingINoCorrection),
     ('sing-i', SingI),

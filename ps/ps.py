@@ -45,6 +45,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         problem.regularize_bc = (not self.var_compute_a and
             not self.var_method in fft_test_var_methods)
 
+        self.do_dual = options.get('do_dual', False)
+
         super().__init__(problem, N, options, **kwargs)
 
         if self.scheme_order == 2:
@@ -55,8 +57,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.problem.M = self.M
         self.problem.setup()
 
-        #self.extension_order = 4
-        self.extension_order = self.scheme_order
+        self.extension_order = self.scheme_order + 1
 
         self.m_list = options.get('m_list', range(1, problem.M+1))
         self.do_optimize = options.get('do_optimize', False)

@@ -25,7 +25,7 @@ class SolverExtend:
         derivs.append(xi1)
         derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
 
-        if self.extension_order > 2:
+        if self.extension_order > 3:
             derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
                 d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
 
@@ -56,7 +56,7 @@ class SolverExtend:
 
         f = p.eval_f(x, y)
 
-        if self.extension_order > 2:
+        if self.extension_order > 3:
             d_f_r = p.eval_d_f_r(R, th)
             d2_f_r = p.eval_d2_f_r(R, th)
             d2_f_th = p.eval_d2_f_th(R, th)
@@ -76,7 +76,7 @@ class SolverExtend:
         derivs = [0, 0, f]
 
         # Don't need any more derivatives if using second order scheme
-        if self.extension_order > 2:
+        if self.extension_order > 3:
             derivs.extend([
                 d_f_r - f / R,
                 d2_f_r - d2_f_th / R**2 - d_f_r / R + (3/R**2 - k**2) * f

@@ -82,6 +82,9 @@ class Interface:
         parser.add_argument('-a', action='store_true', default=False,
             help='calculate the a and b coefficients using the variational'
                 'formulation')
+        parser.add_argument('--no-dual', action='store_true', default=False,
+            help='do not use a higher-order scheme to compute the a '
+            'coefficients')
         parser.add_argument('--vm', choices=ps.ps.var_methods,
             default=ps.ps.default_var_method)
 
@@ -147,7 +150,8 @@ class Interface:
             'do_optimize': self.args.p,
             'norm': self.args.n,
             'var_compute_a': self.args.a,
-            'var_method': self.args.vm
+            'var_method': self.args.vm,
+            'do_dual': self.args.a and not args.no_dual,
         }
 
         if self.args.m is not None:
