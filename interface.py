@@ -26,7 +26,8 @@ def add_arguments(parser, args):
             'Default is 128.')
 
     if 'o' in args:
-        parser.add_argument('-o', type=int, default=4,
+        parser.add_argument('-o', type=int,
+            default=ps.ps.default_primary_scheme_order,
             choices=(2, 4),
             help='order of scheme')
 
@@ -70,10 +71,6 @@ class Interface:
 
         add_arguments(parser, arg_list)
 
-        #parser.add_argument('--tex', action='store_true',
-        #    help='print convergence test results in TeX-friendly format')
-
-        # Stuff specific to PizzaSolver
         parser.add_argument('-p', action='store_true',
             help=' PizzaSolver: run optimize_n_basis')
 
@@ -95,7 +92,7 @@ class Interface:
     def run(self):
         """
         Build the list of N values for which the algorithm should be run,
-        print basic info about the problem, then call run_solver().
+        then call run_solver().
         """
         if self.arg_string:
             self.args = self.parser.parse_args(self.arg_string.split())
@@ -109,24 +106,6 @@ class Interface:
 
         N_list = get_N_list(self.args.N, self.args.c, self.args.p)
 
-        print('[{}]'.format(self.problem_name))
-
-        print('var_compute_a = {}'.format(self.args.a))
-        if self.args.a:
-            print('Variational method:', self.args.vm)
-
-        print('Norm:', self.args.n)
-        print('k = ' + self.prec_str.format(float(self.problem.k)))
-        print('R = ' + self.prec_str.format(self.problem.R))
-        print('AD_len = ' + self.prec_str.format(self.problem.AD_len))
-        print()
-
-        if hasattr(self.problem, 'get_n_basis'):
-            print('[Basis sets]')
-            for N in N_list:
-                print('{}: {}'.format(N, self.problem.get_n_basis(N)))
-
-        print()
         self.run_solver(N_list)
 
     def run_solver(self, N_list):
@@ -151,8 +130,34 @@ class Interface:
             'norm': self.args.n,
             'var_compute_a': self.args.a,
             'var_method': self.args.vm,
-            'do_dual': self.args.a and not args.no_dual,
+            'do_dual': self.args.a and not self.args.no_dual,
         }
+
+        print('[{}]'.format(self.problem_name))
+
+        print('var_compute_a = {}'.format(self.args.a))
+        if self.args.a:
+            print('Variational method:', self.args.vm)
+
+        print('Norm:', self.args.n)
+
+        if options['do_dual']:
+            print('Primary scheme order:', options['scheme_order'])
+            print('Secondary scheme order:', options['scheme_order'] + 2)
+        else:
+            print('Scheme order:', options['scheme_order'])
+
+        print('k = ' + self.prec_str.format(float(self.problem.k)))
+        print('R = ' + self.prec_str.format(self.problem.R))
+        print('AD_len = ' + self.prec_str.format(self.problem.AD_len))
+        print()
+
+        if hasattr(self.problem, 'get_n_basis'):
+            print('[Basis sets]')
+            for N in N_list:
+                print('{}: {}'.format(N, self.problem.get_n_basis(N)))
+
+        print()
 
         if self.args.m is not None:
             if self.args.mmax is not None:

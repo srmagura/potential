@@ -39,30 +39,10 @@ class Solver(SolverExtend, SolverDebug):
         super().__init__()
         self.problem = problem
         self.k = self.problem.k
+        self.AD_len = problem.AD_len
         self.N = N
 
-        self.scheme_order = options.get('scheme_order', 4)
         self.verbose = options.get('verbose', False)
-
-        # Set to True when debugging with test_extend_boundary() for
-        # significant performance benefit.
-        self.skip_matrix_build = options.get('skip_matrix_build', False)
-
-        self.construct_grids()
-
-        if not self.skip_matrix_build:
-            self.L = matrices.get_L(self.scheme_order, self.N,
-                self.AD_len, self.problem.k)
-            self.LU_factorization = scipy.sparse.linalg.splu(self.L)
-
-            self.setup_src_f()
-
-            self.B = matrices.get_B(self.scheme_order, self.N,
-                self.AD_len, self.k)
-            self.B_src_f = self.B.dot(self.src_f)
-
-            for i,j in self.global_Mminus:
-                self.B_src_f[matrices.get_index(N,i,j)] = 0
 
     def get_coord(self, i, j):
         """
@@ -87,7 +67,7 @@ class Solver(SolverExtend, SolverDebug):
         x, y = self.get_coord(i, j)
         return cart_to_polar(x, y)
 
-    def construct_grids(self):
+    def construct_grids(self, scheme_order):
         """
         Construct the various grids used in the algorithm.
         """
@@ -105,7 +85,7 @@ class Solver(SolverExtend, SolverDebug):
         for i, j in self.global_Mplus:
             Nm = set([(i, j)])
 
-            if self.scheme_order > 2:
+            if scheme_order > 2:
               Nm |= set([(i-1, j), (i+1, j), (i, j-1), (i, j+1)])
 
             self.Kplus |= Nm

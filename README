@@ -1,8 +1,8 @@
-# potential - numerical solvers for the Helmholtz equation
+# potential - numerical solver for the Helmholtz equation over an irregular 2D domain
 Author: Sam Magura (śȑmȧgũŗa@ncsu.edu)
 License: GPL
 
-This software package contains solvers for the Helmholtz equation in 2D, using finite differences and the method of difference potentials. Currently, there are solvers for circular domains and the "pizza domain", i.e. a disk with a wedge removed.
+This software package contains a solver for the Helmholtz equation over the two-dimensional "pizza domain" i.e. a disk with a wedge removed. The solver uses finite differences and the method of difference potentials.
 
 `potential` requires Python 3.x as well as the Python packages listed in requirements.txt. To install the packages:
 $ pip install -r requirements.txt

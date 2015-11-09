@@ -202,7 +202,7 @@ class PsInhomo:
         f0 = p.eval_f_polar(R, th0)
         f_derivs = [f0]
 
-        if self.scheme_order == 4:
+        if self.extension_order > 3:
             d_f_th0 = p.eval_d_f_th(R, th0)
             d2_f_th0 = p.eval_d2_f_th(R, th0)
 
@@ -213,7 +213,7 @@ class PsInhomo:
             f += f_derivs[l] * delta**l / math.factorial(l)
 
         d_f_r = 0
-        if self.scheme_order == 4:
+        if self.extension_order > 3:
             d_f_r0 = p.eval_d_f_r(R, th0)
             d2_f_r_th0 = p.eval_d2_f_r_th(R, th0)
 
@@ -244,7 +244,7 @@ class PsInhomo:
         p = self.problem
         f = p.eval_f(x0, y0)
 
-        if self.scheme_order == 4 and Y != 0:
+        if self.extension_order > 3 and Y != 0:
             if x0 == 0 and y0 == 0:
                 '''
                 Use Taylor's theorem to construct a smooth extension of

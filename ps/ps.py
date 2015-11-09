@@ -11,6 +11,8 @@ import norms.sobolev
 import norms.l2
 import norms.weight_func
 
+default_primary_scheme_order = 4
+
 norm_names = ('l2', 'l2-wf1', 'sobolev')
 default_norm = 'l2'
 
@@ -33,9 +35,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
     def __init__(self, problem, N, options={}, **kwargs):
         self.a = problem.a
         self.nu = problem.nu
-
         self.R = problem.R
-        self.AD_len = problem.AD_len
+        super().__init__(problem, N, options, **kwargs)
 
         self.norm = options.get('norm', default_norm)
         self.var_method = options.get('var_method', default_var_method)
@@ -46,23 +47,56 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             not self.var_method in fft_test_var_methods)
 
         self.do_dual = options.get('do_dual', False)
+        self.primary_scheme_order = options.get('scheme_order',
+            default_primary_scheme_order)
 
-        super().__init__(problem, N, options, **kwargs)
+        if self.do_dual:
+            self.secondary_scheme_order = self.primary_scheme_order + 2
+        else:
+            self.secondary_scheme_order = self.primary_scheme_order
 
-        if self.scheme_order == 2:
+        if self.secondary_scheme_order == 2:
             self.M = 4
-        elif self.scheme_order == 4:
+        elif self.secondary_scheme_order == 4:
             self.M = 7
 
         self.problem.M = self.M
         self.problem.setup()
 
-        self.extension_order = self.scheme_order + 1
-
         self.m_list = options.get('m_list', range(1, problem.M+1))
         self.do_optimize = options.get('do_optimize', False)
 
-        self.ps_construct_grids()
+        self.ps_construct_grids(self.secondary_scheme_order)
+
+        skip_matrix_build = options.get('skip_matrix_build', False)
+        if not skip_matrix_build:
+            self.build_matrices()
+
+    def build_matrices(self):
+        N = self.N
+        AD_len = self.AD_len
+        k = self.k
+
+        self.L1 = matrices.get_L(self.primary_scheme_order,
+            N, AD_len, k)
+        self.L1_LU_factorization = scipy.sparse.linalg.splu(self.L1)
+
+        if self.do_dual:
+            self.L2 = matrices.get_L(self.secondary_scheme_order,
+                N, AD_len, k)
+            self.L2_LU_factorization = scipy.sparse.linalg.splu(self.L2)
+        else:
+            self.L2 = self.L1
+            self.L2_LU_factorization = self.L1_LU_factorization
+
+        self.setup_src_f()
+
+        self.B = matrices.get_B(self.secondary_scheme_order,
+            N, AD_len, k)
+        self.B_src_f = self.B.dot(self.src_f)
+
+        for i,j in self.global_Mminus:
+            self.B_src_f[matrices.get_index(N,i,j)] = 0
 
     def get_sid(self, th):
         return self.problem.get_sid(th)
@@ -310,6 +344,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         """
         The main procedure for PizzaSolver.
         """
+        self.L = self.L2
+        self.LU_factorization = self.L2_LU_factorization
         self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
 
         '''
@@ -333,11 +369,18 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #self.c0_test(plot=False)
 
+        self.extension_order = self.secondary_scheme_order + 1
         self.solve_var()
         #self.calc_c1_exact()
         #self.c1_test()
 
-        self.extension_order = self.scheme_order
+        if self.do_dual:
+            # Change settings to those for the primary scheme
+            self.ps_construct_grids(self.primary_scheme_order)
+            self.extension_order = self.primary_scheme_order + 1
+            self.L = self.L1
+            self.LU_factorization = self.L1_LU_factorization
+
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f
         u_act = potential
