@@ -1,3 +1,4 @@
+import sys
 import math
 import numpy as np
 import scipy
@@ -16,7 +17,7 @@ default_primary_scheme_order = 4
 norm_names = ('l2', 'l2-wf1', 'sobolev')
 default_norm = 'l2'
 
-var_methods = ['fbterm', 'chebsine', 'fft-test-chebsine']
+var_methods = ['fbterm', 'chebsine']
 fft_test_var_methods = ('fft-test-chebsine', 'fft-test-fbterm')
 var_methods.extend(fft_test_var_methods)
 
@@ -52,13 +53,24 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         if self.do_dual:
             self.secondary_scheme_order = self.primary_scheme_order + 2
+
+            if self.secondary_scheme_order == 6:
+                print('Error: 6th order scheme has not be implemented. Exiting.')
+                sys.exit(1)
         else:
             self.secondary_scheme_order = self.primary_scheme_order
 
+        if self.primary_scheme_order == 2:
+            self.M1 = 4
+        elif self.primary_scheme_order == 4:
+            self.M1 = 7
+
         if self.secondary_scheme_order == 2:
-            self.M = 4
+            self.M2 = 4
         elif self.secondary_scheme_order == 4:
-            self.M = 7
+            self.M2 = 7
+
+        self.M = self.M2
 
         self.problem.M = self.M
         self.problem.setup()
@@ -68,32 +80,30 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.ps_construct_grids(self.secondary_scheme_order)
 
-        skip_matrix_build = options.get('skip_matrix_build', False)
+        self.skip_matrix_build = options.get('skip_matrix_build', False)
         if not skip_matrix_build:
-            self.build_matrices()
+            self.build_L(self.secondary_scheme_order)
+            self.build_B()
 
-    def build_matrices(self):
+    def build_L(self, scheme_order):
         N = self.N
         AD_len = self.AD_len
         k = self.k
 
-        self.L1 = matrices.get_L(self.primary_scheme_order,
+        self.L = matrices.get_L(scheme_order,
             N, AD_len, k)
-        self.L1_LU_factorization = scipy.sparse.linalg.splu(self.L1)
+        self.LU_factorization = scipy.sparse.linalg.splu(self.L)
 
-        if self.do_dual:
-            self.L2 = matrices.get_L(self.secondary_scheme_order,
-                N, AD_len, k)
-            self.L2_LU_factorization = scipy.sparse.linalg.splu(self.L2)
-        else:
-            self.L2 = self.L1
-            self.L2_LU_factorization = self.L1_LU_factorization
+    def build_B(self):
+        N = self.N
+        AD_len = self.AD_len
+        k = self.k
 
         self.setup_src_f()
 
-        self.B = matrices.get_B(self.secondary_scheme_order,
+        B = matrices.get_B(self.secondary_scheme_order,
             N, AD_len, k)
-        self.B_src_f = self.B.dot(self.src_f)
+        self.B_src_f = B.dot(self.src_f)
 
         for i,j in self.global_Mminus:
             self.B_src_f[matrices.get_index(N,i,j)] = 0
@@ -322,12 +332,16 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         if self.var_compute_a:
             var_a = varsol[len(self.c0):]
 
-            a_coef = np.zeros(self.M, dtype=complex)
-            self.problem.a_coef = a_coef
+            if self.var_method in fft_test_var_methods:
+                a_coef = self.problem.fft_a_coef[:self.M]
+            else:
+                a_coef = np.zeros(self.M, dtype=complex)
 
-            for i in range(len(self.m_list)):
-                m = self.m_list[i]
-                a_coef[m-1] = var_a[i]
+                for i in range(len(self.m_list)):
+                    m = self.m_list[i]
+                    a_coef[m-1] = var_a[i]
+
+            self.problem.a_coef = a_coef
 
             if np.max(np.abs(scipy.imag(a_coef))) == 0:
                 a_coef_to_print = scipy.real(a_coef)
@@ -344,9 +358,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         """
         The main procedure for PizzaSolver.
         """
-        self.L = self.L2
-        self.LU_factorization = self.L2_LU_factorization
         self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
+        del self.B_src_f
 
         '''
         Debugging function for choosing an appropriate number of basis
@@ -378,8 +391,9 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             # Change settings to those for the primary scheme
             self.ps_construct_grids(self.primary_scheme_order)
             self.extension_order = self.primary_scheme_order + 1
-            self.L = self.L1
-            self.LU_factorization = self.L1_LU_factorization
+
+            if not skip_matrix_build:
+                self.build_L(self.secondary_scheme_order)
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f

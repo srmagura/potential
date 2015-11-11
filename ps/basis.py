@@ -142,14 +142,11 @@ class PsBasis:
             a = self.a
             nu = self.nu
 
-            if self.var_method in fft_test_var_methods:
-                a_coef = self.problem.fft_a_coef
-            else:
-                a_coef = self.problem.a_coef
+            a_coef = self.problem.a_coef
 
             bc = self.problem.eval_bc_extended(th, 0)
-            for i in range(len(self.m_list)):
-                m = self.m_list[i]
+            #for i in range(len(self.m_list)):
+            for m in range(1, self.M1+1):
                 bc -= a_coef[m-1] * jv(m*nu, k*R) * np.sin(m*nu*(th-a))
 
             return bc

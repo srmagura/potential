@@ -85,8 +85,9 @@ class Interface:
         parser.add_argument('--vm', choices=ps.ps.var_methods,
             default=ps.ps.default_var_method)
 
-        parser.add_argument('-m', type=int)
-        parser.add_argument('--mmax', type=int)
+        # Broken by dual scheme
+        #parser.add_argument('-m', type=int)
+        #parser.add_argument('--mmax', type=int)
 
 
     def run(self):
@@ -159,14 +160,14 @@ class Interface:
 
         print()
 
-        if self.args.m is not None:
-            if self.args.mmax is not None:
-                options['m_list'] = range(self.args.m, self.args.mmax+1)
-            else:
-                options['m_list'] = (self.args.m,)
+        #if self.args.m is not None:
+        #    if self.args.mmax is not None:
+        #        options['m_list'] = range(self.args.m, self.args.mmax+1)
+        #    else:
+        #        options['m_list'] = (self.args.m,)
 
-            print('m included in variational formulation:', list(options['m_list']))
-            print()
+        #    print('m included in variational formulation:', list(options['m_list']))
+        #    print()
 
         for N in N_list:
             my_solver = self.problem.get_solver(N, options)
