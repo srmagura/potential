@@ -81,7 +81,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.ps_construct_grids(self.secondary_scheme_order)
 
         self.skip_matrix_build = options.get('skip_matrix_build', False)
-        if not skip_matrix_build:
+        if not self.skip_matrix_build:
             self.build_L(self.secondary_scheme_order)
             self.build_B()
 
@@ -392,7 +392,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             self.ps_construct_grids(self.primary_scheme_order)
             self.extension_order = self.primary_scheme_order + 1
 
-            if not skip_matrix_build:
+            if not self.skip_matrix_build:
                 self.build_L(self.secondary_scheme_order)
 
         ext = self.extend_boundary()
