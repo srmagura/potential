@@ -83,7 +83,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.skip_matrix_build = options.get('skip_matrix_build', False)
         if not self.skip_matrix_build:
             self.build_L(self.secondary_scheme_order)
-            self.build_B()
+            self.calc_ap_sol_f()
 
     def build_L(self, scheme_order):
         N = self.N
@@ -94,7 +94,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             N, AD_len, k)
         self.LU_factorization = scipy.sparse.linalg.splu(self.L)
 
-    def build_B(self):
+    def calc_ap_sol_f(self):
         N = self.N
         AD_len = self.AD_len
         k = self.k
@@ -103,10 +103,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         B = matrices.get_B(self.secondary_scheme_order,
             N, AD_len, k)
-        self.B_src_f = B.dot(self.src_f)
+        B_src_f = B.dot(self.src_f)
 
         for i,j in self.global_Mminus:
-            self.B_src_f[matrices.get_index(N,i,j)] = 0
+            B_src_f[matrices.get_index(N,i,j)] = 0
+
+        self.ap_sol_f = self.LU_factorization.solve(B_src_f)
 
     def get_sid(self, th):
         return self.problem.get_sid(th)
@@ -358,8 +360,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         """
         The main procedure for PizzaSolver.
         """
-        self.ap_sol_f = self.LU_factorization.solve(self.B_src_f)
-        del self.B_src_f
 
         '''
         Debugging function for choosing an appropriate number of basis
@@ -375,6 +375,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #return self.ps_test_extend_src_f()
 
         self.calc_c0()
+
         '''
         Uncomment the following line to see a plot of the boundary data and
         its Chebyshev series, which has coefficients c0. There is also an
