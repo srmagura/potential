@@ -1,13 +1,14 @@
 import numpy as np
 from scipy.special import jv, jvp
 
+
 from solver import cart_to_polar
 
+from problems import RegularizeBc
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
 from .bdata import BData
 import problems.functions as functions
-
 
 class SingH_BData(BData):
 
@@ -29,12 +30,14 @@ class SingH(PizzaProblem):
     homogeneous = True
     expected_known = False
     silent = False
+    regularize_bc = RegularizeBc.fft
 
     def __init__(self, **kwargs):
         self.bdata = SingH_BData(self)
 
     def setup(self):
         if self.expected_known:
+            # Fourier coefficients may get calculated twice for dual
             m_max = max(self.M, self.m_max)
         else:
             m_max = self.M
@@ -44,7 +47,6 @@ class SingH(PizzaProblem):
         self.fft_a_coef = np.zeros(m_max)
         k = self.k
         R = self.R
-        a = self.a
         nu = self.nu
 
         for m in range(1, m_max+1):
@@ -53,6 +55,17 @@ class SingH(PizzaProblem):
         if self.expected_known and not self.silent:
             print('[sing-h] fft_b_coef[m_max] =',
                 self.fft_b_coef[self.m_max-1])
+
+    def set_a_coef(self, a_coef):
+        k = self.k
+        R = self.R
+        nu = self.nu
+
+        self.a_coef = a_coef
+        self.b_coef = np.zeros(self.M)
+
+        for m in range(1, self.M+1):
+            self.b_coef[m-1] = self.fft_a_coef[m-1] * jv(m*nu, k*R)
 
     def eval_expected_polar(self, r, th):
         k = self.k
@@ -82,9 +95,14 @@ class SingH(PizzaProblem):
         if sid == 0:
             bc = self.eval_phi0(th)
 
-            if self.regularize_bc:
+            if self.regularize_bc != RegularizeBc.none:
+                if self.regularize_bc == RegularizeBc.fft:
+                    b_coef = self.fft_b_coef
+                elif self.regularize_bc == RegularizeBc.known:
+                    b_coef = self.b_coef
+
                 for m in range(1, self.M+1):
-                    bc -= self.fft_b_coef[m-1] * np.sin(m*nu*(th - a))
+                    bc -= b_coef[m-1] * np.sin(m*nu*(th - a))
 
             return bc
 

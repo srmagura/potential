@@ -8,6 +8,7 @@ import argparse
 import problems
 import solver
 import ps.ps
+import ps.dual
 
 def add_arguments(parser, args):
     problem_choices = problems.problem_dict.keys()
@@ -27,7 +28,7 @@ def add_arguments(parser, args):
 
     if 'o' in args:
         parser.add_argument('-o', type=int,
-            default=ps.ps.default_primary_scheme_order,
+            default=ps.dual.default_primary_scheme_order,
             choices=(2, 4),
             help='order of scheme')
 

@@ -5,6 +5,9 @@ that the numerical algorithm can (hopefully) solve.
 This module defines choices for the problem command-line argument.
 """
 from collections import OrderedDict
+from enum import Enum
+
+RegularizeBc = Enum('RegularizeBc', 'none fft known')
 
 from .sine import Sine
 from .ycosine import YCosine

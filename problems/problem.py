@@ -2,7 +2,7 @@ import numpy as np
 from numpy import cos, sin
 
 from solver import cart_to_polar
-from ps.ps import PizzaSolver
+from ps.dual import DualCoordinator
 
 class Problem:
 
@@ -62,7 +62,7 @@ class PizzaProblem(Problem):
     # Default value
     var_compute_a = False
 
-    solver_class = PizzaSolver
+    solver_class = DualCoordinator
 
     # These values probably need to be adjusted for your specific problem
     n_basis_dict = {

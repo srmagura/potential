@@ -146,7 +146,7 @@ class PsBasis:
 
             bc = self.problem.eval_bc_extended(th, 0)
             #for i in range(len(self.m_list)):
-            for m in range(1, self.M2+1):
+            for m in range(1, self.M+1):
                 bc -= a_coef[m-1] * jv(m*nu, k*R) * np.sin(m*nu*(th-a))
 
             return bc

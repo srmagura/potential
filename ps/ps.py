@@ -12,8 +12,6 @@ import norms.sobolev
 import norms.l2
 import norms.weight_func
 
-default_primary_scheme_order = 4
-
 norm_names = ('l2', 'l2-wf1', 'sobolev')
 default_norm = 'l2'
 
@@ -28,6 +26,23 @@ from ps.grid import PsGrid
 from ps.extend import PsExtend
 from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
+
+from problems import RegularizeBc
+
+def get_M(scheme_order):
+    if scheme_order == 2:
+        return 4
+    elif scheme_order == 4:
+        return 7
+
+def print_a_coef(a_coef):
+    if np.max(np.abs(scipy.imag(a_coef))) == 0:
+        a_coef_to_print = scipy.real(a_coef)
+    else:
+        a_coef_to_print = a_coef
+
+    print('a coefficients:')
+    print(a_coef_to_print)
 
 
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
@@ -44,45 +59,29 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.var_compute_a = options.get('var_compute_a', False)
         problem.var_compute_a = self.var_compute_a
-        problem.regularize_bc = (not self.var_compute_a and
-            not self.var_method in fft_test_var_methods)
 
-        self.do_dual = options.get('do_dual', False)
-        self.primary_scheme_order = options.get('scheme_order',
-            default_primary_scheme_order)
+        if(options.get('do_dual', False),
+            self.var_compute_a or
+            self.var_method in fft_test_var_methods):
+            problem.regularize_bc = RegularizeBc.none
 
-        if self.do_dual:
-            self.secondary_scheme_order = self.primary_scheme_order + 2
+        self.var_compute_a_only = options.get('var_compute_a_only', False)
 
-            if self.secondary_scheme_order == 6:
-                print('Error: 6th order scheme has not be implemented. Exiting.')
-                sys.exit(1)
-        else:
-            self.secondary_scheme_order = self.primary_scheme_order
+        self.scheme_order = options['scheme_order']
+        self.extension_order = self.scheme_order + 1
 
-        if self.primary_scheme_order == 2:
-            self.M1 = 4
-        elif self.primary_scheme_order == 4:
-            self.M1 = 7
-
-        if self.secondary_scheme_order == 2:
-            self.M2 = 4
-        elif self.secondary_scheme_order == 4:
-            self.M2 = 7
-
-        self.M = self.M2
-
+        self.M = get_M(self.scheme_order)
         self.problem.M = self.M
         self.problem.setup()
 
         self.m_list = options.get('m_list', range(1, problem.M+1))
         self.do_optimize = options.get('do_optimize', False)
 
-        self.ps_construct_grids(self.secondary_scheme_order)
+        self.ps_construct_grids(self.scheme_order)
 
         self.skip_matrix_build = options.get('skip_matrix_build', False)
         if not self.skip_matrix_build:
-            self.build_L(self.secondary_scheme_order)
+            self.build_L(self.scheme_order)
             self.calc_ap_sol_f()
 
     def build_L(self, scheme_order):
@@ -101,8 +100,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.setup_src_f()
 
-        B = matrices.get_B(self.secondary_scheme_order,
-            N, AD_len, k)
+        B = matrices.get_B(self.scheme_order, N, AD_len, k)
         B_src_f = B.dot(self.src_f)
 
         for i,j in self.global_Mminus:
@@ -343,15 +341,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
                     m = self.m_list[i]
                     a_coef[m-1] = var_a[i]
 
+            if self.var_compute_a_only:
+                self.a_coef = a_coef
+                return
+
             self.problem.a_coef = a_coef
-
-            if np.max(np.abs(scipy.imag(a_coef))) == 0:
-                a_coef_to_print = scipy.real(a_coef)
-            else:
-                a_coef_to_print = a_coef
-
-            print('a coefficients:')
-            print(a_coef_to_print)
+            print_a_coef(a_coef)
 
         if not self.problem.regularize_bc:
             self.update_c0()
@@ -383,18 +378,13 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         '''
         #self.c0_test(plot=False)
 
-        self.extension_order = self.secondary_scheme_order + 1
         self.solve_var()
+
+        if self.var_compute_a_only:
+            return self.a_coef
+
         #self.calc_c1_exact()
         #self.c1_test()
-
-        if self.do_dual:
-            # Change settings to those for the primary scheme
-            self.ps_construct_grids(self.primary_scheme_order)
-            self.extension_order = self.primary_scheme_order + 1
-
-            if not self.skip_matrix_build:
-                self.build_L(self.secondary_scheme_order)
 
         ext = self.extend_boundary()
         potential = self.get_potential(ext) + self.ap_sol_f
