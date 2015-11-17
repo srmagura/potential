@@ -157,8 +157,7 @@ class Interface:
         if hasattr(self.problem, 'get_n_basis'):
             print('[Basis sets]')
             for N in N_list:
-                print('{}: {}'.format(N, self.problem.get_n_basis(N)))
-
+                print('{}: {}'.format(N, self.problem.get_n_basis(N=N)))
         print()
 
         #if self.args.m is not None:

@@ -60,10 +60,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.var_compute_a = options.get('var_compute_a', False)
         problem.var_compute_a = self.var_compute_a
 
-        if(options.get('do_dual', False),
-            self.var_compute_a or
-            self.var_method in fft_test_var_methods):
+        self.do_dual = options['do_dual']
+
+        if(self.var_compute_a or self.var_method in fft_test_var_methods):
             problem.regularize_bc = RegularizeBc.none
+        elif self.do_dual:
+            problem.regularize_bc = RegularizeBc.known
 
         self.var_compute_a_only = options.get('var_compute_a_only', False)
 
@@ -348,8 +350,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             self.problem.a_coef = a_coef
             print_a_coef(a_coef)
 
-        if not self.problem.regularize_bc:
-            self.update_c0()
+            if self.problem.regularize_bc:
+                self.update_c0()
 
     def run(self):
         """
@@ -363,7 +365,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         if self.do_optimize:
             self.optimize_n_basis()
 
-        n_basis_tuple = self.problem.get_n_basis(self.N)
+        n_basis_tuple = self.problem.get_n_basis(N=self.N,
+            scheme_order=self.scheme_order)
         self.setup_basis(*n_basis_tuple)
 
         #self.plot_gamma()
@@ -401,7 +404,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         result.error = error
         result.u_act = u_act
 
-        if self.problem.var_compute_a:
+        if self.problem.var_compute_a or self.do_dual:
             result.a_error = self.problem.get_a_error()
 
         return result

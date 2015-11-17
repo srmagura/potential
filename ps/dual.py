@@ -16,6 +16,7 @@ class DualCoordinator:
 
     def run_no_dual(self):
         solver = PizzaSolver(self.problem, self.N, self.options)
+        self.solver = solver
         return solver.run()
 
     def run_dual(self):
@@ -35,7 +36,6 @@ class DualCoordinator:
 
         a_coef = a_coef[:get_M(scheme_order1)]
         print_a_coef(a_coef)
-        print()
 
         self.problem.set_a_coef(a_coef)
         self.problem.regularize_bc = RegularizeBc.known
@@ -44,6 +44,7 @@ class DualCoordinator:
         options1['var_compute_a'] = False
 
         solver1 = PizzaSolver(self.problem, self.N, options1)
+        self.solver = solver1
         return solver1.run()
 
     def run(self):
@@ -51,3 +52,6 @@ class DualCoordinator:
             return self.run_dual()
         else:
             return self.run_no_dual()
+
+    def calc_rel_convergence(self, *args, **kwargs):
+        return self.solver.calc_rel_convergence(*args, **kwargs)

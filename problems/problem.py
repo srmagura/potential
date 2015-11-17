@@ -64,16 +64,6 @@ class PizzaProblem(Problem):
 
     solver_class = DualCoordinator
 
-    # These values probably need to be adjusted for your specific problem
-    n_basis_dict = {
-        16: (21, 9),
-        32: (28, 9),
-        64: (34, 17),
-        128: (40, 24),
-        256: (45, 29),
-        None: (53, 34)
-    }
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -126,17 +116,32 @@ class PizzaProblem(Problem):
         elif abs(th - a) < tol:
             return 2
 
-    def get_n_basis(self, N):
+    def get_n_basis(self, **kwargs):
         if hasattr(self, 'n_basis_dict'):
             n_basis_dict = self.n_basis_dict
         else:
-            #TODO: call a get_n_basis function
-            pass
+            n_basis_dict = self.get_n_basis_dict(**kwargs)
 
-        if N in n_basis_dict:
-            return n_basis_dict[N]
-        else:
-            return n_basis_dict[None]
+        N1 = kwargs['N']
+
+        # If N is not in n_basis_dict, choose go with the largest N that
+        # is in n_basis_dict
+        while True:
+            if N1 in n_basis_dict:
+                return n_basis_dict[N1]
+            else:
+                N1 //= 2
+
+    def get_n_basis_dict(self):
+        # These values probably need to be adjusted for your specific problem
+        return {
+            16: (21, 9),
+            32: (28, 9),
+            64: (34, 17),
+            128: (40, 24),
+            256: (45, 29),
+            None: (53, 34)
+        }
 
     def get_restore_polar(self, r, th):
         return 0

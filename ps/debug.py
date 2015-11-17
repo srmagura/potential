@@ -319,8 +319,8 @@ class PsDebug:
         min_error = float('inf')
 
         # Tweak the following ranges as needed
-        for n_circle in range(25, 60, 3):
-            for n_radius in range(15, int(.7*n_circle), 2):
+        for n_circle in range(43, 70, 3):
+            for n_radius in range(27, int(.7*n_circle), 2):
                 self.setup_basis(n_circle, n_radius)
 
                 self.calc_c0()
@@ -330,7 +330,8 @@ class PsDebug:
                 u_act = self.get_potential(ext) + self.ap_sol_f
 
                 error = self.eval_error(u_act)
-                s ='n_circle={}    n_radius={}    error={}'.format(n_circle, n_radius, error)
+                s =('n_circle={}    n_radius={}    error={}'
+                    .format(n_circle, n_radius, error))
 
                 if error < min_error:
                     min_error = error
