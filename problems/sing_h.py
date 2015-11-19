@@ -62,10 +62,10 @@ class SingH(PizzaProblem):
         nu = self.nu
 
         self.a_coef = a_coef
-        self.b_coef = np.zeros(self.M)
+        self.b_coef = np.zeros(len(a_coef), dtype=complex)
 
-        for m in range(1, self.M+1):
-            self.b_coef[m-1] = self.fft_a_coef[m-1] * jv(m*nu, k*R)
+        for m in range(1, len(a_coef)+1):
+            self.b_coef[m-1] = self.a_coef[m-1] * jv(m*nu, k*R)
 
     def eval_expected_polar(self, r, th):
         k = self.k
@@ -101,7 +101,7 @@ class SingH(PizzaProblem):
                 elif self.regularize_bc == RegularizeBc.known:
                     b_coef = self.b_coef
 
-                for m in range(1, self.M+1):
+                for m in range(1, len(b_coef)):
                     bc -= b_coef[m-1] * np.sin(m*nu*(th - a))
 
             return bc
@@ -112,7 +112,9 @@ class SingH(PizzaProblem):
             return 0
 
     def get_a_error(self):
-        return np.max(np.abs(self.a_coef - self.fft_a_coef[:self.M]))
+        return np.max(np.abs(
+            self.a_coef - self.fft_a_coef[:len(self.a_coef)]
+        ))
 
 
 class SingH_Sine(SingH):

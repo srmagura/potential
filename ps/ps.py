@@ -77,6 +77,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.problem.setup()
 
         self.m_list = options.get('m_list', range(1, problem.M+1))
+
         self.do_optimize = options.get('do_optimize', False)
 
         self.ps_construct_grids(self.scheme_order)
