@@ -39,6 +39,7 @@ class DualCoordinator:
         #x=get_M(scheme_order1)
         a_coef = a_coef[:x]
         print_a_coef(a_coef)
+        print()
 
         self.problem.set_a_coef(a_coef)
         self.problem.regularize_bc = RegularizeBc.known

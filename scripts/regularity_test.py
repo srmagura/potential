@@ -12,7 +12,7 @@ from multiprocessing import Pool
 from interface import Interface
 from problems.sing_h import SingH_Sine
 
-dir_name = 'regularity_test_7'
+dir_name = 'regularity_test_7_2048'
 
 def run_test(m):
     print('m={} started.'.format(m))
@@ -28,7 +28,7 @@ def run_test(m):
         problem=problem,
         problem_name='sing-h-sine',
         #arg_string='-N 32 -c 1024',
-        arg_string='-N 128'
+        arg_string='-N 2048'
     )
     interface.run()
 
