@@ -7,7 +7,7 @@ from .multivalue import Multivalue
 
 class PsInhomo:
 
-    def _extend_src_f_get_sid(self, i, j):
+    def _extend_f_get_sid(self, i, j):
         R = self.R
         a = self.a
 
@@ -23,7 +23,7 @@ class PsInhomo:
         else:
             return 0
 
-    def extend_src_f(self):
+    def extend_f(self):
         R = self.R
         a = self.a
 
@@ -35,7 +35,7 @@ class PsInhomo:
             x, y = self.get_coord(i, j)
             r, th = self.get_polar(i, j)
 
-            sid = self._extend_src_f_get_sid(i, j)
+            sid = self._extend_f_get_sid(i, j)
             etype = self.get_etype(sid, i, j)
 
             if sid == 1:
@@ -70,7 +70,7 @@ class PsInhomo:
             for l in range(1, len(derivs)+1):
                 v += derivs[l-1] / math.factorial(l) * delta**l
 
-            self.src_f[matrices.get_index(self.N,i,j)] = v
+            self.f[matrices.get_index(self.N,i,j)] = v
 
     def inhomo_extend_from_radius(self, Y, f, d_f_Y, d2_f_X, d2_f_Y):
         k = self.problem.k

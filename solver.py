@@ -90,22 +90,23 @@ class Solver(SolverExtend, SolverDebug):
 
             self.Kplus |= Nm
 
-    def setup_src_f(self):
+    def setup_f(self):
         """
-        Create a grid function src_f that equals the problem's RHS inside
+        Create a grid function f that equals the problem's RHS inside
         the domain and is 0 elsewhere.
 
-        The subclass of Solver should define extend_src_f() to extend
-        src_f to slightly outside the boundary, if necessary.
+        The subclass of Solver should define extend_f() to extend
+        f to slightly outside the boundary, if necessary.
         """
-        self.src_f = np.zeros((self.N-1)**2, dtype=complex)
+        N = self.N
+        self.f = np.zeros((N+1, N+1), dtype=complex)
 
         for i,j in self.global_Mplus:
-            self.src_f[matrices.get_index(self.N, i, j)] =\
+            self.f[i, j] =\
                 self.problem.eval_f(*self.get_coord(i, j))
 
-        if hasattr(self, 'extend_src_f'):
-            self.extend_src_f()
+        if hasattr(self, 'extend_f'):
+            self.extend_f()
 
     def eval_error(self, u_act):
         """

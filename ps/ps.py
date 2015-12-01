@@ -6,7 +6,7 @@ from scipy.special import jv
 
 from solver import Solver, Result, cart_to_polar
 import matrices
-from linop import apply_L
+from linop import apply_L, apply_B
 
 import norms.linalg
 import norms.sobolev
@@ -102,15 +102,15 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         AD_len = self.AD_len
         k = self.k
 
-        self.setup_src_f()
-
-        B = matrices.get_B(self.scheme_order, N, AD_len, k)
-        B_src_f = B.dot(self.src_f)
+        self.setup_f()
+        Bf = apply_B(self.f)
 
         for i,j in self.global_Mminus:
-            B_src_f[matrices.get_index(N,i,j)] = 0
+            Bf[i-1,j-1] = 0
 
-        self.ap_sol_f = self.LU_factorization.solve(B_src_f)
+        #FIXME
+        Bf = np.ravel(Bf)
+        self.ap_sol_f = self.LU_factorization.solve(Bf)
 
     def get_sid(self, th):
         return self.problem.get_sid(th)
@@ -376,7 +376,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.setup_basis(*n_basis_tuple)
 
         #self.plot_gamma()
-        #return self.ps_test_extend_src_f()
 
         self.calc_c0()
 
