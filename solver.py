@@ -116,22 +116,22 @@ class Solver(SolverExtend, SolverDebug):
         if not self.problem.expected_known:
             return None
 
-        u_exp = np.zeros((self.N-1)**2, dtype=complex)
-        for i,j in self.M0:
-            x, y = self.get_coord(i,j)
-            u_exp[matrices.get_index(self.N, i,j)] =\
-                self.problem.eval_expected(x, y)
+        N = self.N
+        u_exp = np.zeros((N-1, N-1), dtype=complex)
+        for i, j in self.M0:
+            x, y = self.get_coord(i, j)
+            u_exp[i-1, j-1] = self.problem.eval_expected(x, y)
 
         error = []
         max_error = 0
 
-        for i,j in self.global_Mplus:
-            l = matrices.get_index(self.N, i,j)
-            diff = abs(u_exp[l] - u_act[l])
+        for i, j in self.global_Mplus:
+            diff = abs(u_exp[i-1, j-1] - u_act[i-1, j-1])
             error.append(diff)
 
         return max(error)
 
+    # FIXME
     def calc_rel_convergence(self, u0, u1, u2):
         """
         Calculate the relative convergence of the sequence (u0, u1, u2).

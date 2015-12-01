@@ -6,7 +6,9 @@ from scipy.special import jv
 
 from solver import Solver, Result, cart_to_polar
 import matrices
-from linop import apply_L, apply_B
+import linop
+from linop import apply_B
+import apsolve
 
 import norms.linalg
 import norms.sobolev
@@ -83,19 +85,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.ps_construct_grids(self.scheme_order)
 
-        self.skip_matrix_build = options.get('skip_matrix_build', False)
-        if not self.skip_matrix_build:
-            self.build_L(self.scheme_order)
-            self.calc_ap_sol_f()
+        self.apply_L = lambda v: linop.apply_L(v, self.scheme_order,
+            self.AD_len, self.k)
+        self.apsolve = lambda Bf: apsolve.apsolve(Bf, self.scheme_order,
+            self.AD_len, self.k)
 
-    def build_L(self, scheme_order):
-        N = self.N
-        AD_len = self.AD_len
-        k = self.k
-
-        self.L = matrices.get_L(scheme_order,
-            N, AD_len, k)
-        self.LU_factorization = scipy.sparse.linalg.splu(self.L)
+        self.calc_ap_sol_f()
 
     def calc_ap_sol_f(self):
         N = self.N
@@ -108,9 +103,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         for i,j in self.global_Mminus:
             Bf[i-1,j-1] = 0
 
-        #FIXME
-        Bf = np.ravel(Bf)
-        self.ap_sol_f = self.LU_factorization.solve(Bf)
+        self.ap_sol_f = self.apsolve(Bf)
+
+        # TEST
+        self.L = matrices.get_L(self.scheme_order,
+            N, AD_len, k)
+        self.LU_factorization = scipy.sparse.linalg.splu(self.L)
+        ap_sol_f2 = self.LU_factorization.solve(np.ravel(Bf))
+        assert np.allclose(np.ravel(self.ap_sol_f), ap_sol_f2)
 
     def get_sid(self, th):
         return self.problem.get_sid(th)
@@ -143,29 +143,32 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             return unsigned
 
     def get_potential(self, ext):
+        """
+        Compute the difference potential of `ext`.
+
+        Output:
+        potential -- shape (N-1, N-1)
+        """
         N = self.N
+        args = (self.scheme_order, self.problem.AD_len, self.k)
         w = np.zeros((N+1, N+1), dtype=complex)
 
         for l in range(len(self.union_gamma)):
             w[self.union_gamma[l]] = ext[l]
 
-        Lw = np.ravel(apply_L(self.scheme_order, self.problem.AD_len, self.k, w))
+        Lw = self.apply_L(w)
 
         for i,j in self.global_Mminus:
-            Lw[matrices.get_index(self.N, i, j)] = 0
+            Lw[i-1, j-1] = 0
 
-        #FIXME
-        w = np.ravel(w[1:N, 1:N])
-
-        return w - self.LU_factorization.solve(Lw)
+        return w[1:N, 1:N] - self.apsolve(Lw)
 
     def get_trace(self, w):
         trace = np.zeros(len(self.union_gamma), dtype=complex)
 
         for l in range(len(self.union_gamma)):
             i, j = self.union_gamma[l]
-            index = matrices.get_index(self.N, i, j)
-            trace[l] = w[index]
+            trace[l] = w[i-1, j-1]
 
         return trace
 
@@ -399,9 +402,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         u_act = potential
 
         for i, j in self.M0:
-            index = matrices.get_index(self.N, i, j)
             r, th = self.get_polar(i, j)
-            u_act[index] += self.problem.get_restore_polar(r, th)
+            u_act[i-1, j-1] += self.problem.get_restore_polar(r, th)
 
         error = self.eval_error(u_act)
 

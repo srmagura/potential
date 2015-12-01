@@ -70,7 +70,7 @@ class PsInhomo:
             for l in range(1, len(derivs)+1):
                 v += derivs[l-1] / math.factorial(l) * delta**l
 
-            self.f[matrices.get_index(self.N,i,j)] = v
+            self.f[i,j] = v
 
     def inhomo_extend_from_radius(self, Y, f, d_f_Y, d2_f_X, d2_f_Y):
         k = self.problem.k

@@ -1,7 +1,7 @@
 import numpy as np
 import itertools as it
 
-def apply_L(order, AD_len, k, v):
+def apply_L(v, order, AD_len, k):
     """
     Input:
     v -- shape (N+1, N+1)
