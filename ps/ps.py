@@ -6,6 +6,7 @@ from scipy.special import jv
 
 from solver import Solver, Result, cart_to_polar
 import matrices
+from linop import apply_L
 
 import norms.linalg
 import norms.sobolev
@@ -142,15 +143,19 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             return unsigned
 
     def get_potential(self, ext):
-        w = np.zeros([(self.N-1)**2], dtype=complex)
+        N = self.N
+        w = np.zeros((N+1, N+1), dtype=complex)
 
         for l in range(len(self.union_gamma)):
-            w[matrices.get_index(self.N, *self.union_gamma[l])] = ext[l]
+            w[self.union_gamma[l]] = ext[l]
 
-        Lw = np.ravel(self.L.dot(w))
+        Lw = np.ravel(apply_L(self.scheme_order, self.problem.AD_len, self.k, w))
 
         for i,j in self.global_Mminus:
             Lw[matrices.get_index(self.N, i, j)] = 0
+
+        #FIXME
+        w = np.ravel(w[1:N, 1:N])
 
         return w - self.LU_factorization.solve(Lw)
 
