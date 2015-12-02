@@ -85,7 +85,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.ps_construct_grids(self.scheme_order)
 
-        self.apply_L = lambda v: linop.apply_L(v, self.scheme_order,
+        self.apply_L = lambda v: ap.apply_L(v, self.scheme_order,
             self.AD_len, self.k)
         self.solve_ap = lambda Bf: ap.solve(Bf, self.scheme_order,
             self.AD_len, self.k)
@@ -144,17 +144,18 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         """
         N = self.N
         args = (self.scheme_order, self.problem.AD_len, self.k)
-        w = np.zeros((N+1, N+1), dtype=complex)
+        w = np.zeros((N-1, N-1), dtype=complex)
 
         for l in range(len(self.union_gamma)):
-            w[self.union_gamma[l]] = ext[l]
+            i, j = self.union_gamma[l]
+            w[i-1, j-1] = ext[l]
 
         Lw = self.apply_L(w)
 
         for i,j in self.global_Mminus:
             Lw[i-1, j-1] = 0
 
-        return w[1:N, 1:N] - self.solve_ap(Lw)
+        return w - self.solve_ap(Lw)
 
     def get_trace(self, w):
         trace = np.zeros(len(self.union_gamma), dtype=complex)

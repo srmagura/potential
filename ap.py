@@ -32,6 +32,7 @@ def _ap(Bf, solve, order, AD_len, k):
     if eigenval_params is None:
         calc_eigenvals(N, order, AD_len, k)
     elif (N, order, AD_len, k) != eigenval_params:
+        print(N, order, AD_len, k)
         print('Eigenvalue cache problem. Exiting...')
         sys.exit(1)
 
