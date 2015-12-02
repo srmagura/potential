@@ -8,7 +8,7 @@ from solver import Solver, Result, cart_to_polar
 import matrices
 import linop
 from linop import apply_B
-import apsolve
+import ap
 
 import norms.linalg
 import norms.sobolev
@@ -87,7 +87,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.apply_L = lambda v: linop.apply_L(v, self.scheme_order,
             self.AD_len, self.k)
-        self.apsolve = lambda Bf: apsolve.apsolve(Bf, self.scheme_order,
+        self.solve_ap = lambda Bf: ap.solve(Bf, self.scheme_order,
             self.AD_len, self.k)
 
         self.calc_ap_sol_f()
@@ -103,7 +103,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         for i,j in self.global_Mminus:
             Bf[i-1,j-1] = 0
 
-        self.ap_sol_f = self.apsolve(Bf)
+        self.ap_sol_f = self.solve_ap(Bf)
 
     def get_sid(self, th):
         return self.problem.get_sid(th)
@@ -154,7 +154,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         for i,j in self.global_Mminus:
             Lw[i-1, j-1] = 0
 
-        return w[1:N, 1:N] - self.apsolve(Lw)
+        return w[1:N, 1:N] - self.solve_ap(Lw)
 
     def get_trace(self, w):
         trace = np.zeros(len(self.union_gamma), dtype=complex)

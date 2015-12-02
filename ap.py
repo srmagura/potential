@@ -25,7 +25,7 @@ def calc_eigenvals(N, order, AD_len, k):
                 8*np.cos(np.pi*l/N) - 20)/(6*h**2)
 
 
-def apsolve(Bf, order, AD_len, k):
+def _ap(Bf, solve, order, AD_len, k):
     N = Bf.shape[0] + 1
     h = AD_len / N
 
@@ -43,7 +43,11 @@ def apsolve(Bf, order, AD_len, k):
         scoef[:, j-1] = dst(scoef[:, j-1], type=1)
 
     scoef *= h**2 / 2
-    fourier_coef_sol = scoef / eigenvals
+
+    if solve:
+        fourier_coef_sol = scoef / eigenvals
+    else:
+        fourier_coef_sol = scoef * eigenvals
 
     u_f = np.zeros((N-1, N-1), dtype=complex)
     for i in range(1, N):
@@ -53,3 +57,9 @@ def apsolve(Bf, order, AD_len, k):
 
     u_f /= (2*AD_len**2)
     return u_f
+
+def solve(Bf, order, AD_len, k):
+    return _ap(Bf, True, order, AD_len, k)
+
+def apply_L(v, order, AD_len, k):
+    return _ap(v, False, order, AD_len, k)
