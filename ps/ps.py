@@ -105,13 +105,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.ap_sol_f = self.apsolve(Bf)
 
-        # TEST
-        self.L = matrices.get_L(self.scheme_order,
-            N, AD_len, k)
-        self.LU_factorization = scipy.sparse.linalg.splu(self.L)
-        ap_sol_f2 = self.LU_factorization.solve(np.ravel(Bf))
-        assert np.allclose(np.ravel(self.ap_sol_f), ap_sol_f2)
-
     def get_sid(self, th):
         return self.problem.get_sid(th)
 
