@@ -1,7 +1,6 @@
 import numpy as np
 import math
 
-import matrices
 from solver import cart_to_polar
 from .multivalue import Multivalue
 

@@ -4,7 +4,6 @@ import math
 import numpy as np
 import scipy.sparse.linalg
 
-import matrices
 from debug import SolverDebug
 from extend import SolverExtend
 
@@ -154,6 +153,7 @@ class Solver(SolverExtend, SolverDebug):
             # implement their own calc_rel_convergence function
             return u0.calc_rel_convergence(u1, u2)
 
+    # FIXME
     def _array_calc_rel_convergence(self, u0, u1, u2):
         """
         Calculate the relative convergence of the sequence (u0, u1, u2)

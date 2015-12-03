@@ -5,10 +5,8 @@ import scipy
 from scipy.special import jv
 
 from solver import Solver, Result, cart_to_polar
-import matrices
-import linop
 from linop import apply_B
-import ap
+from apsolver import APSolver
 
 import norms.linalg
 import norms.sobolev
@@ -85,10 +83,9 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.ps_construct_grids(self.scheme_order)
 
-        self.apply_L = lambda v: ap.apply_L(v, self.scheme_order,
-            self.AD_len, self.k)
-        self.solve_ap = lambda Bf: ap.solve(Bf, self.scheme_order,
-            self.AD_len, self.k)
+        apsolver = APSolver(self.N, self.scheme_order, self.AD_len, self.k)
+        self.apply_L = lambda v: apsolver.apply_L(v)
+        self.solve_ap = lambda Bf: apsolver.solve(Bf)
 
         self.calc_ap_sol_f()
 

@@ -3,7 +3,6 @@ Debugging functions for the Solver class.
 """
 import numpy as np
 
-import matrices
 import solver
 
 class SolverDebug:
