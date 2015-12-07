@@ -21,7 +21,8 @@ class DualCoordinator:
 
     def run_dual(self):
         scheme_order1 = self.options['scheme_order']
-        scheme_order2 = scheme_order1 + 2 #FIXME
+        scheme_order2 = scheme_order1 #+ 2 #FIXME
+        print('Using primary scheme order = 4')
 
         if scheme_order2 == 6:
             print('Error: 6th order scheme has not be implemented. Exiting.')

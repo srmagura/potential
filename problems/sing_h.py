@@ -97,11 +97,11 @@ class SingH(PizzaProblem):
 
             if self.regularize_bc != RegularizeBc.none:
                 if self.regularize_bc == RegularizeBc.fft:
-                    b_coef = self.fft_b_coef
+                    b_coef = self.fft_b_coef[:self.M]
                 elif self.regularize_bc == RegularizeBc.known:
                     b_coef = self.b_coef
 
-                for m in range(1, len(b_coef)):
+                for m in range(1, len(b_coef)+1):
                     bc -= b_coef[m-1] * np.sin(m*nu*(th - a))
 
             return bc
@@ -153,7 +153,7 @@ class SingH_Sine(SingH):
 
 class SingH_Hat(SingH):
 
-    # k = 5.5  # 4th order
+    #k = 5.5  # 4th order
     k = 1  # 2nd order
 
     n_basis_dict = {

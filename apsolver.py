@@ -29,16 +29,22 @@ class APSolver:
         h2 = h**2
         k2 = k**2
 
-        for j, l in it.product(range(1, N), repeat=2):
-            if order == 2:
-                self.eigenvals[j-1, l-1] = k2 + (2*np.cos(np.pi*j/N) +
-                    2*np.cos(np.pi*l/N) - 4)/h2
-            if order == 4:
-                self.eigenvals[j-1, l-1] = (h2*k2*(np.cos(np.pi*j/N) +
-                    np.cos(np.pi*l/N) + 4) +
-                    4*np.cos(np.pi*j/N)*np.cos(np.pi*l/N) + 8*np.cos(np.pi*j/N) +
-                    8*np.cos(np.pi*l/N) - 20)/(6*h2)
+        # Exploit symmetry to speed up the computation:
+        # The (j, l) eigenvalue is the same as the (l, j) eigenvalue
+        for j in range(1, N):
+            for l in range(1, j+1):
+                if order == 2:
+                    eigenval = k2 + (2*np.cos(np.pi*j/N) +
+                        2*np.cos(np.pi*l/N) - 4)/h2
+                if order == 4:
+                    eigenval = (h2*k2*(np.cos(np.pi*j/N) +
+                        np.cos(np.pi*l/N) + 4) +
+                        4*np.cos(np.pi*j/N)*np.cos(np.pi*l/N) +
+                        8*np.cos(np.pi*j/N) +
+                        8*np.cos(np.pi*l/N) - 20)/(6*h2)
 
+                self.eigenvals[j-1, l-1] = eigenval
+                self.eigenvals[l-1, j-1] = eigenval
 
     def _fourier(self, Bf, solve):
         N = self.N
