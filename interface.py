@@ -145,8 +145,7 @@ class Interface:
 
         def print_scheme(name, order):
             msg = '{}: {}'.format(name, order)
-            if options['var_compute_a']:
-                msg += '  (M={})'.format(ps.ps.get_M(order))
+            msg += '  (M={})'.format(ps.ps.get_M(order))
 
             print(msg)
 
