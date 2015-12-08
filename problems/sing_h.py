@@ -52,6 +52,8 @@ class SingH(PizzaProblem):
         for m in range(1, m_max+1):
             self.fft_a_coef[m-1] = self.fft_b_coef[m-1] / jv(m*nu, k*R)
 
+        print('fft_b_coef:')
+        print(self.fft_b_coef[0:4])
         #if self.expected_known and not self.silent:
         #    print('[sing-h] fft_b_coef[m_max] =',
         #        self.fft_b_coef[self.m_max-1])
@@ -150,6 +152,11 @@ class SingH_Sine(SingH):
         m = self.m
         return np.sin(m*nu*(th-a))
 
+class SingH_Sine4(SingH_Sine):
+
+    def __init__(self, **kwargs):
+        super().__init__(m=4)
+
 
 class SingH_Hat(SingH):
 
@@ -175,7 +182,8 @@ class SingH_Hat(SingH):
 
 class SingH_Parabola(SingH):
 
-    k = 5.5
+    #k = 5.5
+    k = 1
 
     n_basis_dict = {
         16: (17, 3),
@@ -187,7 +195,7 @@ class SingH_Parabola(SingH):
         1024: (80, 45),
     }
 
-    expected_known = False
+    expected_known = True
     m_max = 199
 
     def eval_phi0(self, th):
