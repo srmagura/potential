@@ -32,8 +32,7 @@ from problems import RegularizeBc
 
 def get_M(scheme_order):
     if scheme_order == 2:
-        print('M=3  !!!')
-        return 3 # FIXME
+        return 3
     elif scheme_order == 4:
         return 7
 

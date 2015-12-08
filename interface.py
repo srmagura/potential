@@ -137,17 +137,24 @@ class Interface:
 
         print('[{}]'.format(self.problem_name))
 
-        print('var_compute_a = {}'.format(self.args.a))
+        print('var_compute_a = {}'.format(options['var_compute_a']))
         if self.args.a:
-            print('Variational method:', self.args.vm)
+            print('Variational method:', options['var_method'])
 
         print('Norm:', self.args.n)
 
+        def print_scheme(name, order):
+            msg = '{}: {}'.format(name, order)
+            if options['var_compute_a']:
+                msg += '  (M={})'.format(ps.ps.get_M(order))
+
+            print(msg)
+
         if options['do_dual']:
-            print('Primary scheme order:', options['scheme_order'])
-            print('Secondary scheme order:', options['scheme_order'] + 2)
+            print_scheme('Secondary scheme order', options['scheme_order'] + 2)
+            print_scheme('Primary scheme order', options['scheme_order'])
         else:
-            print('Scheme order:', options['scheme_order'])
+            print_scheme('Scheme order', options['scheme_order'])
 
         print('k = ' + self.prec_str.format(float(self.problem.k)))
         print('R = ' + self.prec_str.format(self.problem.R))
