@@ -36,8 +36,7 @@ class DualCoordinator:
         a_coef = solver2.run()
 
         #FIXME
-        x = 4
-        #x=get_M(scheme_order1)
+        x=get_M(scheme_order1)
         a_coef = a_coef[:x]
         print_a_coef(a_coef)
         print()
