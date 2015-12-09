@@ -135,11 +135,7 @@ class SingH_Sine(SingH):
     }
 
     def __init__(self, **kwargs):
-        if 'm' in kwargs:
-            self.m = kwargs.pop('m')
-        else:
-            self.m = 8
-
+        self.m = kwargs.pop('m')
         self.m_max = self.m
 
         super().__init__(**kwargs)
@@ -150,10 +146,17 @@ class SingH_Sine(SingH):
         m = self.m
         return np.sin(m*nu*(th-a))
 
+
 class SingH_Sine4(SingH_Sine):
 
     def __init__(self, **kwargs):
         super().__init__(m=4)
+
+
+class SingH_Sine8(SingH_Sine):
+
+    def __init__(self, **kwargs):
+        super().__init__(m=8)
 
 
 class SingH_SineRange(SingH):
