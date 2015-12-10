@@ -213,8 +213,8 @@ class SingH_Hat(SingH):
 
 class SingH_Parabola(SingH):
 
-    #k = 5.5
-    k = 1
+    k = 5.5
+    #k = 1
 
     n_basis_dict = {
         16: (17, 3),
@@ -226,7 +226,7 @@ class SingH_Parabola(SingH):
         1024: (80, 45),
     }
 
-    expected_known = True
+    expected_known = False
     m_max = 199
 
     def eval_phi0(self, th):

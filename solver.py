@@ -130,7 +130,6 @@ class Solver(SolverExtend, SolverDebug):
 
         return max(error)
 
-    # FIXME
     def calc_rel_convergence(self, u0, u1, u2):
         """
         Calculate the relative convergence of the sequence (u0, u1, u2).
@@ -153,7 +152,6 @@ class Solver(SolverExtend, SolverDebug):
             # implement their own calc_rel_convergence function
             return u0.calc_rel_convergence(u1, u2)
 
-    # FIXME
     def _array_calc_rel_convergence(self, u0, u1, u2):
         """
         Calculate the relative convergence of the sequence (u0, u1, u2)
@@ -164,9 +162,9 @@ class Solver(SolverExtend, SolverDebug):
         diff01 = []
 
         for i, j in self.global_Mplus:
-            k0 = matrices.get_index(N, i, j)
-            k1 = matrices.get_index(N//2, i//2, j//2)
-            k2 = matrices.get_index(N//4, i//4, j//4)
+            k0 = (i-1, j-1)
+            k1 = (i//2-1, j//2-1)
+            k2 = (i//4-1, j//4-1)
 
             if i % 4 == 0 and j % 4 == 0:
                 diff12.append(abs(u1[k1] - u2[k2]))
