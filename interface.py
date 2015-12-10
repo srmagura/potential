@@ -3,6 +3,7 @@ Command-line interface to the solvers
 """
 import numpy as np
 import sys
+import datetime
 import argparse
 
 import problems
@@ -135,7 +136,7 @@ class Interface:
             'do_dual': self.args.a and not self.args.no_dual,
         }
 
-        print('[{}]'.format(self.problem_name))
+        print('[{} {}]'.format(self.problem_name, datetime.date.today()))
 
         print('var_compute_a = {}'.format(options['var_compute_a']))
         if self.args.a:
