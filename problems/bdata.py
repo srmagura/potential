@@ -1,10 +1,13 @@
 import numpy as np
-from scipy.integrate import quad
-import collections
+from scipy.fftpack import dst
+
 from .problem import PizzaProblem
 
+# DELETE
+import collections
+
 a = PizzaProblem.a
-nu = np.pi / (2*np.pi - a)
+nu = PizzaProblem.nu
 
 class BData:
     """
@@ -16,17 +19,10 @@ class BData:
     which gives the Dirichlet data at the angle th on the arc. The purpose of
     this class is to compute the sine Fourier coefficients of the given function
     phi0. The function calc_coef() exposes this functionality.
-
-    If you have an analytic expression for the sine Fourier coefficients,
-    you should write a function in your subclass:
-
-        calc_coef_analytic(self, M):
-
-    that returns the first M of these coefficients.
     """
 
     def calc_fft_exp(self, Jmax):
-        fourier_N = 2**10
+        fourier_N = 1024
         th_data = np.linspace(a, 2*np.pi, fourier_N+1)
 
         discrete_phi0 = np.array([self.eval_phi0(th) for th in th_data])
@@ -37,6 +33,9 @@ class BData:
         # Reverse array and remove last element
         reflected = -discrete_phi0[::-1][:-1]
         discrete_phi0 = np.concatenate((discrete_phi0[:-1], reflected))
+        #print(len(discrete_phi0))
+        #print('discrete_phi0')
+        #print(discrete_phi0)
         coef_raw = np.fft.fft(discrete_phi0)
 
         J_dict = collections.OrderedDict(((J, None) for J in
@@ -52,7 +51,7 @@ class BData:
 
         return J_dict, coef
 
-    def calc_coef(self, M):
+    def calc_coef2(self, M):
         """
         Return the first M sine Fourier series coefficients.
         """
@@ -69,3 +68,12 @@ class BData:
         assert np.max(np.abs(ccoef)) < 1e-13
 
         return scoef[1:]
+
+    def calc_coef(self, m_max):
+        fourier_N = 1024
+
+        # Slice at the end removes the endpoints
+        th_data = np.linspace(a, 2*np.pi, fourier_N+1)[1:-1]
+
+        discrete_phi0 = np.array([self.eval_phi0(th) for th in th_data])
+        return dst(discrete_phi0, type=1)[:m_max] / fourier_N
