@@ -28,10 +28,7 @@ class SympyProblem:
             self.lkw = {}
 
         self.f_polar_lambda = lambdify(args, f, **self.lkw)
-
-        # If using 2nd order scheme, don't need derivatives of f
-        if kwargs['scheme_order'] > 2:
-            self.do_diff(f)
+        self.do_diff(f)
 
         super().__init__(**kwargs)
 

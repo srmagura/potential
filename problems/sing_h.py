@@ -99,8 +99,8 @@ class SingH_SineRange(SingH):
 
 class SingH_Hat(SingH):
 
-    k = 5.5  # 4th order
-    #k = 1  # 2nd order
+    #k = 5.5  # 4th order
+    k = 1  # 2nd order
 
     n_basis_dict = {
         16: (24, 6),

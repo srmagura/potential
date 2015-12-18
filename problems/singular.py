@@ -66,7 +66,7 @@ class SingularProblem(PizzaProblem):
     def calc_fft_coef(self, m_max):
         fourier_N = 1024
 
-        if self.regularize_bc == RegularizeBc.fft:
+        if hasattr(self, 'to_dst'):
             # The slice at the end removes the endpoints
             th_data = np.linspace(self.a, 2*np.pi, fourier_N+1)[1:-1]
 
@@ -91,10 +91,8 @@ class SingularProblem(PizzaProblem):
         R = self.R
 
         u = self.eval_expected_polar__no_reg(r, th)
-        #print('------------------------------')
         for m in range(self.M+1, self.m_max+1):
             ac = self.fft_a_coef[m-1]
-            #print(ac*jv(m*nu, k*r))
             u += ac * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
         return u - self.eval_u_asympt(r, th)

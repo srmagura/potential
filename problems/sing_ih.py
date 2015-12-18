@@ -86,7 +86,7 @@ class SingIH(SympyProblem, SingularProblem):
 class SingIH_Sine8(SingIH):
 
     expected_known = True
-    k = 1.75
+    k = 2/3
 
     n_basis_dict = {
         16: (20, 5),
