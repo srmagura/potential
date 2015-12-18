@@ -4,15 +4,20 @@ from scipy.special import jv, jvp
 
 from solver import cart_to_polar
 
-from problems import RegularizeBc
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
-from .bdata import BData
 import problems.functions as functions
-from .singular import SingularProblem
+from .singular import SingularProblem, RegularizeBc
 
 class SingH(SingularProblem):
     homogeneous = True
+
+    def __init__(self, **kwargs):
+        kwargs['to_dst'] = self.eval_phi0
+        super().__init__(**kwargs)
+
+    def eval_expected_polar__no_reg(self, r, th):
+        return 0
 
     def eval_bc__no_reg(self, arg, sid):
         if sid == 0:

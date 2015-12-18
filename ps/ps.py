@@ -28,7 +28,7 @@ from ps.extend import PsExtend
 from ps.inhomo import PsInhomo
 from ps.debug import PsDebug
 
-from problems import RegularizeBc
+from problems.singular import RegularizeBc
 
 def get_M(scheme_order):
     if scheme_order == 2:

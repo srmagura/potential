@@ -6,10 +6,6 @@ from .problem import PizzaProblem
 from .singular import SingularProblem
 from .sympy_problem import SympyProblem
 
-# Use this value of k for both the no-correction and regularized versions
-# of the bessel problem
-shared_k = 1
-
 def get_u_asympt_expr():
     k, R, r, th = symbols('k R r th')
     nu = sympify('6/11')
@@ -37,29 +33,11 @@ def eval_expected_polar(k, R, r, th):
     return jv(nu_float, k*r) * np.sin(nu_float*(th-np.pi/6))
 
 
-class SingINoCorrection(PizzaProblem):
+class SingI_NoCorrection(SingularProblem):
 
-    k = shared_k
-
+    k = 1
+    expected_known = True
     homogeneous = True
-    expected_known = True
-
-    def eval_expected_polar(self, r, th):
-        return eval_expected_polar(self.k, self.R, r, th)
-
-    def eval_bc_extended(self, arg, sid):
-        k = self.k
-        R = self.R
-
-        arg, sid = self.wrap_func(arg, sid)
-        r, th = self.arg_to_polar(arg, sid)
-
-        return eval_expected_polar(k, R, r, th)
-
-class SingI(SympyProblem, SingularProblem):
-
-    k = shared_k
-    expected_known = True
 
     n_basis_dict = {
         16: (21, 9),
@@ -70,24 +48,20 @@ class SingI(SympyProblem, SingularProblem):
         None: (53, 34)
     }
 
+    def eval_expected_polar__no_reg(self, r, th):
+        return eval_expected_polar(self.k, self.R, r, th)
+
+    def eval_bc__no_reg(self, arg, sid):
+        r, th = self.arg_to_polar(arg, sid)
+        return eval_expected_polar(self.k, self.R, r, th)
+
+
+class SingI(SympyProblem, SingI_NoCorrection):
+
+    homogeneous = False
+
     def __init__(self, **kwargs):
         kwargs['f_expr'] = get_reg_f_expr()
+        kwargs['eval_u_asympt'] = lambdify(symbols('r th'),
+            get_u_asympt_expr().subs({'k': self.k, 'R': self.R}))
         super().__init__(**kwargs)
-
-        self.u_asympt_lambda = lambdify(symbols('k R r th'), get_u_asympt_expr())
-
-    def eval_expected_polar(self, r, th):
-        u_asympt = float(self.u_asympt_lambda(self.k, self.R, r, th))
-        return eval_expected_polar(self.k, self.R, r, th) - u_asympt
-
-    def eval_bc_extended(self, arg, sid):
-        k = self.k
-        R = self.R
-
-        arg, sid = self.wrap_func(arg, sid)
-        r, th = self.arg_to_polar(arg, sid)
-
-        bc_nc = eval_expected_polar(k, R, r, th)
-        u_asympt = self.u_asympt_lambda(k, R, r, th)
-
-        return bc_nc - float(u_asympt)

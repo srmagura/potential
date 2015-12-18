@@ -177,7 +177,7 @@ class Interface:
         #    print()
 
         for N in N_list:
-            my_solver = self.problem.get_solver(N, options)
+            my_solver = ps.dual.DualCoordinator(self.problem, N, options)
 
             print('---- {0} x {0} ----'.format(N))
             result = my_solver.run()

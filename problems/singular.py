@@ -1,53 +1,88 @@
 import numpy as np
-from scipy.special import jv, jvp
+from scipy.special import jv
+from scipy.fftpack import dst
 
-from problems import RegularizeBc
 from .problem import PizzaProblem
-from .bdata import BData
+
+from enum import Enum
+RegularizeBc = Enum('RegularizeBc', 'none fft known')
 
 class SingularProblem(PizzaProblem):
     """
     A problem that should be treated as if it has a singularity.
     """
 
-    regularize_bc = RegularizeBc.fft
+    m_max = 100
 
     def __init__(self, **kwargs):
-        self.bdata = SingularProblem_BData(self)
+        if 'eval_u_asympt' in kwargs:
+            self.eval_u_asympt = kwargs.pop('eval_u_asympt')
+        else:
+            self.eval_u_asympt = lambda r, th: 0
+
+        if 'to_dst' in kwargs:
+            self.regularize_bc = RegularizeBc.fft
+            self.to_dst = kwargs.pop('to_dst')
+        else:
+            self.regularize_bc = RegularizeBc.none
 
     def setup(self):
         if self.expected_known:
-            # Fourier coefficients may get calculated twice for dual
             m_max = max(self.M, self.m_max)
         else:
             m_max = self.M
 
-        # TODO get rid of the BData class
-        self.fft_b_coef = self.bdata.calc_coef(m_max)
-        print(self.fft_b_coef)
+        self.calc_fft_coef(m_max)
 
-        self.fft_a_coef = np.zeros(m_max)
+        # TODO
+        # To give an idea of how accurate the Fourier-Bessel sum is to the
+        # expected solution, print the largest absolute value of the
+        # last few b coefficients
+
+    def a_to_b(self, a_coef):
+        return self._convert_ab(a_coef, 'a')
+
+    def b_to_a(self, b_coef):
+        return self._convert_ab(b_coef, 'b')
+
+    def _convert_ab(self, coef, coef_type):
+        assert coef_type in ('a', 'b')
+
         k = self.k
         R = self.R
         nu = self.nu
 
-        for m in range(1, m_max+1):
-            self.fft_a_coef[m-1] = self.fft_b_coef[m-1] / jv(m*nu, k*R)
+        other_coef = np.zeros(len(coef), dtype=complex)
 
-        #if self.expected_known and not self.silent:
-        #    print('[sing-h] fft_b_coef[m_max] =',
-        #        self.fft_b_coef[self.m_max-1])
+        for m in range(1, len(coef)+1):
+            factor = jv(m*nu, k*R)
+            if coef_type == 'b':
+                factor = 1/factor
+
+            other_coef[m-1] = coef[m-1] * factor
+
+        return other_coef
+
+    def calc_fft_coef(self, m_max):
+        fourier_N = 1024
+
+        if self.regularize_bc == RegularizeBc.fft:
+            # The slice at the end removes the endpoints
+            th_data = np.linspace(self.a, 2*np.pi, fourier_N+1)[1:-1]
+
+            discrete_phi0 = np.array([self.to_dst(th) for th in th_data])
+            self.fft_b_coef = dst(discrete_phi0, type=1)[:m_max] / fourier_N
+        else:
+            self.fft_b_coef = np.zeros(m_max)
+
+        self.fft_a_coef = self.b_to_a(self.fft_b_coef)
 
     def set_a_coef(self, a_coef):
-        k = self.k
-        R = self.R
-        nu = self.nu
-
         self.a_coef = a_coef
-        self.b_coef = np.zeros(len(a_coef), dtype=complex)
+        self.b_coef = self.a_to_b(a_coef)
 
-        for m in range(1, len(a_coef)+1):
-            self.b_coef[m-1] = self.a_coef[m-1] * jv(m*nu, k*R)
+    def get_a_error(self):
+        return np.max(np.abs(self.fft_a_coef[:self.M] - self.a_coef))
 
     def eval_expected_polar(self, r, th):
         k = self.k
@@ -55,14 +90,14 @@ class SingularProblem(PizzaProblem):
         nu = self.nu
         R = self.R
 
-        # FIXME
-        u = 0
-
+        u = self.eval_expected_polar__no_reg(r, th)
+        #print('------------------------------')
         for m in range(self.M+1, self.m_max+1):
             ac = self.fft_a_coef[m-1]
+            #print(ac*jv(m*nu, k*r))
             u += ac * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
-        return u
+        return u - self.eval_u_asympt(r, th)
 
     def eval_bc_extended(self, arg, sid):
         """
@@ -72,6 +107,8 @@ class SingularProblem(PizzaProblem):
         """
         a = self.a
         nu = self.nu
+        k = self.k
+        R = self.R
 
         bc = self.eval_bc__no_reg(arg, sid)
         r, th = self.arg_to_polar(arg, sid)
@@ -86,18 +123,13 @@ class SingularProblem(PizzaProblem):
                 for m in range(1, len(b_coef)+1):
                     bc -= b_coef[m-1] * np.sin(m*nu*(th - a))
 
-            return bc
+            return bc - self.eval_u_asympt(r, th)
 
-        elif sid == 1:
-            return bc
+        if sid == 1:
+            if th < 1.5*np.pi:
+                return 0
+            else:
+                return bc - self.eval_u_asympt(r, th)
+
         elif sid == 2:
-            return bc
-
-
-class SingularProblem_BData(BData):
-
-    def __init__(self, problem):
-        self.problem = problem
-
-    def eval_phi0(self, th):
-        return self.problem.eval_phi0(th)
+            return 0

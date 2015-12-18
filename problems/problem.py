@@ -2,7 +2,6 @@ import numpy as np
 from numpy import cos, sin
 
 from solver import cart_to_polar
-from ps.dual import DualCoordinator
 
 class Problem:
 
@@ -18,9 +17,6 @@ class Problem:
 
     def setup(self):
         pass
-
-    def get_solver(self, *args, **kwargs):
-        return self.solver_class(self, *args, **kwargs)
 
     def eval_expected(self, x, y, **kwargs):
         r, th = cart_to_polar(x, y)
@@ -61,8 +57,6 @@ class PizzaProblem(Problem):
 
     # Default value
     var_compute_a = False
-
-    solver_class = DualCoordinator
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -145,10 +139,3 @@ class PizzaProblem(Problem):
 
     def get_restore_polar(self, r, th):
         return 0
-
-    def get_a_error(self):
-        """
-        Override this function if the expected a coefficients are not
-        all 0.
-        """
-        return np.max(np.abs(self.a_coef))

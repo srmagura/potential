@@ -8,7 +8,7 @@ from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
 
 import problems.functions as functions
-import problems.bdata as bdata
+from .singular import SingularProblem
 
 def get_v_asympt_expr():
     '''
@@ -48,112 +48,44 @@ def eval_v(k, r, th):
     return jv(nu/2, k*r) * np.sin(nu*(th - a)/2)
 
 
-class SingIH_BData(bdata.BData):
-
-    def __init__(self, problem):
-        self.problem = problem
-
-    def eval_phi0(self, th):
-        R = self.problem.R
-        phi0 = self.problem.eval_phi0(th)
-        phi0 -= self.problem.eval_v(R, th)
-        return phi0
-
-# TODO: some of the classes here can be combined with SingH class
-
-class SingIHAbstract(SympyProblem, PizzaProblem):
-
-    M = 7
+class SingIH(SympyProblem, SingularProblem):
 
     def __init__(self, **kwargs):
-        kwargs['f_expr'] = get_reg_f_expr()
-        super().__init__(**kwargs)
-
-        self.v_asympt_lambda = lambdify(symbols('k R r th'), get_v_asympt_expr())
-        self.bdata = SingIH_BData(self)
-
-    def eval_v(self, r, th):
-        return eval_v(self.k, r, th)
-
-    def _eval_bc_extended(self, arg, sid, b_coef):
         k = self.k
         R = self.R
-        a = self.a
-        nu = self.nu
 
-        r, th = self.arg_to_polar(arg, sid)
+        kwargs['f_expr'] = get_reg_f_expr()
+        kwargs['eval_u_asympt'] = lambdify(symbols('r th'),
+            get_v_asympt_expr().subs({'k': k, 'R': R}))
+        kwargs['to_dst'] = lambda th: (self.eval_bc__no_reg(th, 0) -
+            eval_v(k, R, th))
+        super().__init__(**kwargs)
+
+    def eval_expected_polar__no_reg(self, r, th):
+        return eval_v(self.k, r, th)
+
+    def eval_bc__no_reg(self, arg, sid):
+        k = self.k
+        R = self.R
+        nu = self.nu
+        a = self.a
 
         if sid == 0:
-            bc = self.eval_phi0(th)
-            bc -= self.v_asympt_lambda(k, R, r, th)
-
-            for m in range(1, self.M+1):
-                bc -= b_coef[m-1] * np.sin(m*nu*(th - a))
-
-            return bc
-
+            th = arg
+            return self.eval_phi0(th)
         elif sid == 1:
-            if th < 1.5*np.pi:
+            r = arg
+            if r >= 0:
+                return eval_v(k, r, 2*np.pi)
+            else:
                 return 0
-
-            bc = self.eval_v(r, th)
-            bc -= self.v_asympt_lambda(k, R, r, th)
-            return bc
-
         elif sid == 2:
             return 0
 
 
-class SingIH_FFT(SingIHAbstract):
+class SingIH_Sine8(SingIH):
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        if self.expected_known:
-            m = self.m_max
-        else:
-            m = self.M
-
-        self.b_coef = self.bdata.calc_coef(m)
-
-        if self.expected_known:
-            self.bessel_R = np.zeros(len(self.b_coef))
-
-            for m in range(1, len(self.b_coef)+1):
-                self.bessel_R[m-1] = jv(m*self.nu, self.k*self.R)
-
-            print('[sing-ih-fft] b_coef[m_max] =', self.b_coef[self.m_max-1])
-
-    def calc_bessel_ratio(self, m, r):
-        k = self.k
-        R = self.R
-        nu = self.nu
-
-        ratio = jv(m*nu, k*r) / self.bessel_R[m-1]
-        return float(ratio)
-
-    def eval_expected_polar(self, r, th):
-        a = self.a
-        k = self.k
-        R = self.R
-        nu = self.nu
-
-        v = self.eval_v(r, th)
-        u = v - self.v_asympt_lambda(k, R, r, th)
-
-        for m in range(self.M+1, self.m_max+1):
-            b = self.b_coef[m-1]
-            ratio = self.calc_bessel_ratio(m, r)
-            u += b * ratio * np.sin(m*nu*(th-a))
-
-        return u
-
-    def eval_bc_extended(self, arg, sid):
-        return self._eval_bc_extended(arg, sid, self.b_coef[:self.M])
-
-
-class SingIH_FFT_Sine(SingIH_FFT):
-
+    expected_known = True
     k = 1.75
 
     n_basis_dict = {
@@ -166,19 +98,23 @@ class SingIH_FFT_Sine(SingIH_FFT):
     }
 
     def eval_phi0(self, th):
+        a = self.a
+        nu = self.nu
         k = self.k
         R = self.R
-        nu = self.nu
-        a = self.a
 
-        phi0 = self.eval_v(R, th)
+        phi0 = eval_v(k, R, th)
         phi0 += np.sin(8*nu*(th-a))
         return phi0
 
 
-class SingIH_FFT_Hat(SingIH_FFT):
+
+class SingIH_Hat(SingIH):
 
     k = 5.5
+
+    expected_known = True
+    m_max = 199
 
     n_basis_dict = {
         16: (24, 6),
@@ -196,12 +132,12 @@ class SingIH_FFT_Hat(SingIH_FFT):
         nu = self.nu
         a = self.a
 
-        phi0 = self.eval_v(R, th)
+        phi0 = eval_v(k, R, th)
         phi0 += functions.eval_hat_th(th)
         return phi0
 
 
-class SingIH_FFT_Parabola(SingIH_FFT):
+class SingIH_Parabola(SingIH):
 
     k = 5.5
 
@@ -216,15 +152,16 @@ class SingIH_FFT_Parabola(SingIH_FFT):
     }
 
     def eval_phi0(self, th):
+        k = self.k
         R = self.R
         a = self.a
 
-        phi0 = self.eval_v(R, th)
+        phi0 = eval_v(k, R, th)
         phi0 += -(th - a) * (th - 2*np.pi)
         return phi0
 
 
-class SingIH_FFT_Line(SingIH_FFT):
+class SingIH_Line(SingIH):
 
     k = 5.5
 
@@ -234,7 +171,8 @@ class SingIH_FFT_Line(SingIH_FFT):
         64: (28, 12),
         128: (28, 16),
         256: (32, 20),
-        None: (40, 26),
+        512: (60, 30),
+        1024: (80, 35),
     }
 
     #expected_known = True

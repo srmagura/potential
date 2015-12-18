@@ -33,6 +33,8 @@ class SympyProblem:
         if kwargs['scheme_order'] > 2:
             self.do_diff(f)
 
+        super().__init__(**kwargs)
+
     def do_diff(self, f):
         """
         Find polar derivatives symbolically.

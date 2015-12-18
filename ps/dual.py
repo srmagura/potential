@@ -1,7 +1,7 @@
 import sys
 import copy
 
-from problems import RegularizeBc
+from problems.singular import RegularizeBc
 from ps.ps import PizzaSolver, get_M, print_a_coef
 
 
