@@ -122,7 +122,6 @@ class SingH_Hat(SingH):
 class SingH_Parabola(SingH):
 
     k = 5.5
-    #k = 1
 
     n_basis_dict = {
         16: (17, 3),
