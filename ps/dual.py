@@ -2,6 +2,7 @@ import sys
 import copy
 
 from problems.singular import RegularizeBc
+from problems.sing_h import SingH
 from ps.ps import PizzaSolver, get_M, print_a_coef
 
 
@@ -28,18 +29,23 @@ class DualCoordinator:
             print('Error: 6th order scheme has not be implemented. Exiting.')
             sys.exit(1)
 
-        #class SingH_Problem(SingH):
+        problem = self.problem
 
-        #    def eval_phi0(self):
+        class Dual_SingH(SingH):
 
+            k = problem.k
+            n_basis_dict = problem.n_basis_dict
 
-        #sing_h_problem = 
+            def eval_phi0(self, th):
+                return problem.to_dst(th)
+
+        dual_sing_h = Dual_SingH()
 
         options2 = copy.copy(self.options)
         options2['scheme_order'] = scheme_order2
         options2['var_compute_a_only'] = True
 
-        solver2 = PizzaSolver(self.problem, self.N, options2)
+        solver2 = PizzaSolver(dual_sing_h, self.N, options2)
         a_coef = solver2.run()
 
         #FIXME

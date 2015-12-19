@@ -25,6 +25,7 @@ class SingularProblem(PizzaProblem):
             self.to_dst = kwargs.pop('to_dst')
         else:
             self.regularize_bc = RegularizeBc.none
+            self.to_dst = lambda th: 0
 
     def setup(self):
         if self.expected_known:
@@ -72,14 +73,11 @@ class SingularProblem(PizzaProblem):
     def calc_fft_coef(self, m_max):
         fourier_N = 1024
 
-        if hasattr(self, 'to_dst'):
-            # The slice at the end removes the endpoints
-            th_data = np.linspace(self.a, 2*np.pi, fourier_N+1)[1:-1]
+        # The slice at the end removes the endpoints
+        th_data = np.linspace(self.a, 2*np.pi, fourier_N+1)[1:-1]
 
-            discrete_phi0 = np.array([self.to_dst(th) for th in th_data])
-            self.fft_b_coef = dst(discrete_phi0, type=1)[:m_max] / fourier_N
-        else:
-            self.fft_b_coef = np.zeros(m_max)
+        discrete_phi0 = np.array([self.to_dst(th) for th in th_data])
+        self.fft_b_coef = dst(discrete_phi0, type=1)[:m_max] / fourier_N
 
         self.fft_a_coef = self.b_to_a(self.fft_b_coef)
 
