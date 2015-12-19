@@ -74,7 +74,7 @@ class Interface:
         add_arguments(parser, arg_list)
 
         parser.add_argument('-p', action='store_true',
-            help=' PizzaSolver: run optimize_n_basis')
+            help='run optimize_n_basis')
 
         parser.add_argument('-n', choices=ps.ps.norm_names,
             default=ps.ps.default_norm)
@@ -86,6 +86,10 @@ class Interface:
             'coefficients')
         parser.add_argument('--vm', choices=ps.ps.var_methods,
             default=ps.ps.default_var_method)
+        parser.add_argument('--print-b', action='store_true', default=False,
+            help='print the last 5 b coefficients, to get a sense of how '
+                'close the (finite) Fourier-Bessel sum will be to its true '
+                'value')
 
         # Broken by dual scheme
         #parser.add_argument('-m', type=int)
@@ -175,6 +179,9 @@ class Interface:
 
         #    print('m included in variational formulation:', list(options['m_list']))
         #    print()
+
+        if self.args.print_b:
+            self.problem.print_b()
 
         for N in N_list:
             my_solver = ps.dual.DualCoordinator(self.problem, N, options)

@@ -140,8 +140,11 @@ class SingIH_Hat(SingIH):
 
 class SingIH_Parabola(SingIH):
 
-    # k = 5.5  # 4th order
+    #k = 5.5  # 4th order
     k = 1.5 # 2nd order
+
+    expected_known = True
+    m_max = 200
 
     n_basis_dict = {
         16: (17, 3),

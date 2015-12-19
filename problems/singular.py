@@ -34,10 +34,16 @@ class SingularProblem(PizzaProblem):
 
         self.calc_fft_coef(m_max)
 
-        # TODO
-        # To give an idea of how accurate the Fourier-Bessel sum is to the
-        # expected solution, print the largest absolute value of the
-        # last few b coefficients
+    def print_b(self):
+        self.calc_fft_coef(self.m_max)
+
+        n = 5
+        print('Last {} of {} b coefficients:'.
+            format(n, len(self.fft_b_coef)))
+
+        np.set_printoptions(precision=4)
+        print(self.fft_b_coef[-n:])
+        print()
 
     def a_to_b(self, a_coef):
         return self._convert_ab(a_coef, 'a')

@@ -28,6 +28,13 @@ class DualCoordinator:
             print('Error: 6th order scheme has not be implemented. Exiting.')
             sys.exit(1)
 
+        #class SingH_Problem(SingH):
+
+        #    def eval_phi0(self):
+
+
+        #sing_h_problem = 
+
         options2 = copy.copy(self.options)
         options2['scheme_order'] = scheme_order2
         options2['var_compute_a_only'] = True
