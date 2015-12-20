@@ -141,7 +141,7 @@ class SingIH_Hat(SingIH):
 class SingIH_Parabola(SingIH):
 
     k = 5.5
-    
+
     # expected_known = True
     m_max = 200
 
@@ -180,8 +180,8 @@ class SingIH_Line(SingIH):
         1024: (80, 35),
     }
 
-    #expected_known = True
-    m_max = 149
+    expected_known = True
+    m_max = 200
 
     def eval_phi0(self, th):
         k = self.k
