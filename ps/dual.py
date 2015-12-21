@@ -22,8 +22,8 @@ class DualCoordinator:
 
     def run_dual(self):
         scheme_order1 = self.options['scheme_order']
-        scheme_order2 = scheme_order1 + 2 #FIXME
-        #print('Using primary scheme order = 4')
+        scheme_order2 = scheme_order1 #+ 2 #FIXME
+        print('Using primary scheme order = 4')
 
         if scheme_order2 == 6:
             print('Error: 6th order scheme has not be implemented. Exiting.')
@@ -49,7 +49,7 @@ class DualCoordinator:
         a_coef = solver2.run()
 
         #FIXME
-        x=get_M(scheme_order1)
+        x=3#get_M(scheme_order1)
         a_coef = a_coef[:x]
         print_a_coef(a_coef)
         print()
@@ -59,6 +59,7 @@ class DualCoordinator:
 
         options1 = copy.copy(self.options)
         options1['var_compute_a'] = False
+        options1['M'] = x  # can be deleted after 4-4 test is done
 
         solver1 = PizzaSolver(self.problem, self.N, options1)
         self.solver = solver1
