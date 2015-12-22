@@ -12,6 +12,18 @@ from .singular import SingularProblem, RegularizeBc
 class SingH(SingularProblem):
     homogeneous = True
 
+    k = 1
+
+    n_basis_dict = {
+        16: (20, 5),
+        32: (24, 11),
+        64: (41, 18),
+        128: (53, 28),
+        256: (65, 34),
+        512: (80, 34),
+        None: (90, 40),
+    }
+
     def __init__(self, **kwargs):
         kwargs['to_dst'] = self.eval_phi0
         super().__init__(**kwargs)
@@ -25,22 +37,11 @@ class SingH(SingularProblem):
         else:
             return 0
 
-class SingH_Sine(SingH):
 
-    k = 1.75
+class SingH_Sine(SingH):
 
     expected_known = True
     silent = True
-
-    n_basis_dict = {
-        16: (20, 5),
-        32: (24, 11),
-        64: (41, 18),
-        128: (53, 28),
-        256: (65, 34),
-        512: (80, 34),
-        None: (90, 45),
-    }
 
     def __init__(self, **kwargs):
         self.m = kwargs.pop('m')
@@ -69,22 +70,10 @@ class SingH_Sine8(SingH_Sine):
 
 class SingH_SineRange(SingH):
 
-    k = 1.75
-
     expected_known = True
     silent = True
 
     m_max = 9
-
-    n_basis_dict = {
-        16: (20, 5),
-        32: (24, 11),
-        64: (41, 18),
-        128: (53, 28),
-        256: (65, 34),
-        512: (80, 34),
-        None: (90, 45),
-    }
 
     def eval_phi0(self, th):
         a = self.a
@@ -99,20 +88,7 @@ class SingH_SineRange(SingH):
 
 class SingH_Hat(SingH):
 
-    #k = 5.5  # 4th order
-    k = 1  # 2nd order
-
-    n_basis_dict = {
-        16: (24, 6),
-        32: (33, 8),
-        64: (42, 12),
-        128: (65, 18),
-        256: (80, 24),
-        512: (100, 30),
-        1024: (120, 35),
-    }
-
-    expected_known = True
+    expected_known = False
     m_max = 199
 
     def eval_phi0(self, th):
@@ -120,18 +96,6 @@ class SingH_Hat(SingH):
 
 
 class SingH_Parabola(SingH):
-
-    k = 5.5
-
-    n_basis_dict = {
-        16: (17, 3),
-        32: (33, 7),
-        64: (36, 15),
-        128: (39, 21),
-        256: (42, 23),
-        512: (65, 43),
-        1024: (80, 45),
-    }
 
     expected_known = False
     m_max = 199
