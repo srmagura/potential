@@ -21,7 +21,8 @@ class SingH(SingularProblem):
         128: (65, 28),
         256: (80, 34),
         512: (100, 34),
-        None: (120, 40),
+        1024: (100, 34),
+        2048: (120, 45),
     }
 
     def __init__(self, **kwargs):
