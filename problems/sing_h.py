@@ -12,7 +12,7 @@ from .singular import SingularProblem, RegularizeBc
 class SingH(SingularProblem):
     homogeneous = True
 
-    k = 5.5 # FIXME
+    k = 5.5
 
     n_basis_dict = {
         16: (20, 5),
