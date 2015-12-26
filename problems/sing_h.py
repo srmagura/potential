@@ -12,7 +12,7 @@ from .singular import SingularProblem, RegularizeBc
 class SingH(SingularProblem):
     homogeneous = True
 
-    k = 5.5
+    k = 1.75
 
     n_basis_dict = {
         16: (20, 5),
@@ -88,7 +88,7 @@ class SingH_SineRange(SingH):
 
 class SingH_Hat(SingH):
 
-    expected_known = True
+    expected_known = False
     m_max = 199
 
     def eval_phi0(self, th):
@@ -98,7 +98,7 @@ class SingH_Hat(SingH):
 class SingH_Parabola(SingH):
 
     expected_known = False
-    m_max = 199
+    m_max = 5
 
     def eval_phi0(self, th):
         return -(th - np.pi/6) * (th - 2*np.pi)
