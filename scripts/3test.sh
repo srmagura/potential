@@ -7,7 +7,7 @@ then
   exit 1
 fi
 
-c=1024
+c=4096
 
 python3 run.py sing-h-parabola -a -o 2 -c $c -r > ../sing-h-parabola_a_o2_k$1.txt &
 disown
