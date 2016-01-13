@@ -89,7 +89,7 @@ class SingH_SineRange(SingH):
 
 class SingH_Hat(SingH):
 
-    expected_known = True
+    expected_known = False
     m_max = 199
 
     def eval_phi0(self, th):
