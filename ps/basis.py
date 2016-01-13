@@ -4,8 +4,6 @@ from scipy.special import jv
 from solver import cart_to_polar
 from chebyshev import eval_dn_T_t, get_chebyshev_roots
 
-from ps.ps import fft_test_var_methods
-
 
 class PsBasis:
     """

@@ -34,3 +34,6 @@ problem_dict = OrderedDict((
 
     ('fbterm', FbTerm),
 ))
+
+for name, problem in problem_dict.items():
+    problem.name = name

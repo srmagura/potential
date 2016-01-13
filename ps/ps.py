@@ -13,15 +13,6 @@ import norms.sobolev
 import norms.l2
 import norms.weight_func
 
-norm_names = ('l2', 'l2-wf1', 'sobolev')
-default_norm = 'l2'
-
-var_methods = ['fbterm', 'chebsine']
-fft_test_var_methods = ('fft-test-chebsine', 'fft-test-fbterm')
-var_methods.extend(fft_test_var_methods)
-
-default_var_method = 'chebsine'
-
 from ps.basis import PsBasis
 from ps.grid import PsGrid
 from ps.extend import PsExtend
@@ -55,15 +46,15 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.R = problem.R
         super().__init__(problem, N, options, **kwargs)
 
-        self.norm = options.get('norm', default_norm)
-        self.var_method = options.get('var_method', default_var_method)
+        self.norm = options['norm']
+        self.var_method = options['var_method']
 
-        self.var_compute_a = options.get('var_compute_a', False)
+        self.var_compute_a = options['var_compute_a']
         problem.var_compute_a = self.var_compute_a
 
         self.do_dual = options['do_dual']
 
-        if(self.var_compute_a or self.var_method in fft_test_var_methods):
+        if(self.var_compute_a): # or self.var_method in fft_test_var_methods):
             problem.regularize_bc = RegularizeBc.none
         elif self.do_dual:
             problem.regularize_bc = RegularizeBc.known
@@ -79,7 +70,10 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.m_list = options.get('m_list', range(1, problem.M+1))
 
-        self.do_optimize = options.get('do_optimize', False)
+        # For optimizing basis set sizes
+        if 'n_circle' in options:
+            assert 'n_radius' in options
+            self.setup_basis(options['n_circle'], options['n_radius'])
 
         self.ps_construct_grids(self.scheme_order)
 
@@ -334,21 +328,20 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         if self.var_compute_a:
             var_a = varsol[len(self.c0):]
 
-            if self.var_method in fft_test_var_methods:
-                a_coef = self.problem.fft_a_coef[:self.M]
-            else:
-                a_coef = np.zeros(self.M, dtype=complex)
+            #if self.var_method in fft_test_var_methods:
+            #    a_coef = self.problem.fft_a_coef[:self.M]
+            #else:
+            a_coef = np.zeros(self.M, dtype=complex)
 
-                for i in range(len(self.m_list)):
-                    m = self.m_list[i]
-                    a_coef[m-1] = var_a[i]
+            for i in range(len(self.m_list)):
+                m = self.m_list[i]
+                a_coef[m-1] = var_a[i]
 
             if self.var_compute_a_only:
                 self.a_coef = a_coef
                 return
 
             self.problem.a_coef = a_coef
-            print_a_coef(a_coef)
 
             if self.problem.regularize_bc:
                 self.update_c0()
@@ -362,12 +355,10 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Debugging function for choosing an appropriate number of basis
         functions.
         '''
-        if self.do_optimize:
-            self.optimize_n_basis()
-
-        n_basis_tuple = self.problem.get_n_basis(N=self.N,
-            scheme_order=self.scheme_order)
-        self.setup_basis(*n_basis_tuple)
+        if not hasattr(self, 'B_desc'):
+            n_basis_tuple = self.problem.get_n_basis(N=self.N,
+                scheme_order=self.scheme_order)
+            self.setup_basis(*n_basis_tuple)
 
         #self.plot_gamma()
 

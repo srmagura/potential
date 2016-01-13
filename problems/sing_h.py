@@ -15,13 +15,14 @@ class SingH(SingularProblem):
     k = 1.75
 
     n_basis_dict = {
-        16: (20, 5),
-        32: (24, 11),
-        64: (41, 18),
-        128: (65, 28),
-        256: (80, 34),
-        512: (100, 34),
-        1024: (120, 45),
+        16: (13, 5),
+        32: (23, 7),
+        64: (31, 9),
+        128: (41, 11),
+        256: (60, 17),
+        512: (80, 25),
+        1024: (100, 30),
+        2048: (120, 40)
     }
 
     def __init__(self, **kwargs):
@@ -88,7 +89,7 @@ class SingH_SineRange(SingH):
 
 class SingH_Hat(SingH):
 
-    expected_known = False
+    expected_known = True
     m_max = 199
 
     def eval_phi0(self, th):

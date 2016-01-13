@@ -3,13 +3,14 @@ Command-line interface to the solvers
 """
 import numpy as np
 import sys
-import datetime
 import argparse
 
 import problems
 import solver
 import ps.ps
+
 import ps.dual
+prec_str = ps.dual.prec_str
 
 def add_arguments(parser, args):
     problem_choices = problems.problem_dict.keys()
@@ -38,6 +39,11 @@ def add_arguments(parser, args):
             help='show relative convergence, even if the problem\'s '
             'true solution is known')
 
+    if 'a' in args:
+        parser.add_argument('-a', action='store_true', default=False,
+            help='calculate the a and b coefficients using the variational'
+                'formulation')
+
 def get_N_list(N0, c, ignore_c=False):
     if c is None or ignore_c:
         N_list = [N0]
@@ -51,10 +57,7 @@ def get_N_list(N0, c, ignore_c=False):
 
     return N_list
 
-
 class Interface:
-
-    prec_str = '{:.5}'
 
     def __init__(self, **kwargs):
         """
@@ -67,7 +70,7 @@ class Interface:
         parser = argparse.ArgumentParser()
         self.parser = parser
 
-        arg_list = ['N', 'c', 'o', 'r']
+        arg_list = ['N', 'c', 'o', 'r', 'a']
         if self.problem is None:
             arg_list.append('problem')
 
@@ -76,16 +79,13 @@ class Interface:
         parser.add_argument('-p', action='store_true',
             help='run optimize_n_basis')
 
-        parser.add_argument('-n', choices=ps.ps.norm_names,
-            default=ps.ps.default_norm)
-        parser.add_argument('-a', action='store_true', default=False,
-            help='calculate the a and b coefficients using the variational'
-                'formulation')
+        parser.add_argument('-n', choices=ps.dual.norm_names,
+            default=ps.dual.default_norm)
         parser.add_argument('--no-dual', action='store_true', default=False,
             help='do not use a higher-order scheme to compute the a '
             'coefficients')
-        parser.add_argument('--vm', choices=ps.ps.var_methods,
-            default=ps.ps.default_var_method)
+        parser.add_argument('--vm', choices=ps.dual.var_methods,
+            default=ps.dual.default_var_method)
         parser.add_argument('--print-b', action='store_true', default=False,
             help='print the last 5 b coefficients, to get a sense of how '
                 'close the (finite) Fourier-Bessel sum will be to its true '
@@ -138,38 +138,9 @@ class Interface:
             'var_compute_a': self.args.a,
             'var_method': self.args.vm,
             'do_dual': self.args.a and not self.args.no_dual,
+            'print_a': True,
         }
 
-        print('[{} {}]'.format(self.problem_name, datetime.date.today()))
-
-        print('var_compute_a = {}'.format(options['var_compute_a']))
-        if self.args.a:
-            print('Variational method:', options['var_method'])
-
-        print('Norm:', self.args.n)
-
-        def print_scheme(name, order):
-            msg = '{}: {}'.format(name, order)
-            msg += '  (M={})'.format(ps.ps.get_M(order))
-
-            print(msg)
-
-        if options['do_dual']:
-            print_scheme('Secondary scheme order', options['scheme_order'] + 2)
-            print_scheme('Primary scheme order', options['scheme_order'])
-        else:
-            print_scheme('Scheme order', options['scheme_order'])
-
-        print('k = ' + self.prec_str.format(float(self.problem.k)))
-        print('R = ' + self.prec_str.format(self.problem.R))
-        print('AD_len = ' + self.prec_str.format(self.problem.AD_len))
-        print()
-
-        if hasattr(self.problem, 'get_n_basis'):
-            print('[Basis sets]')
-            for N in N_list:
-                print('{}: {}'.format(N, self.problem.get_n_basis(N=N)))
-        print()
 
         #if self.args.m is not None:
         #    if self.args.mmax is not None:
@@ -186,22 +157,25 @@ class Interface:
         for N in N_list:
             my_solver = ps.dual.DualCoordinator(self.problem, N, options)
 
+            if N == N_list[0]:
+                my_solver.print_info(N_list)
+
             print('---- {0} x {0} ----'.format(N))
             result = my_solver.run()
             if result is None:
                 continue
 
             if result.a_error is not None:
-                print('a error: ' + self.prec_str.format(result.a_error))
+                print('a error: ' + prec_str.format(result.a_error))
 
                 if prev_a_error is not None:
                     a_convergence = np.log2(prev_a_error / result.a_error)
-                    print('a convergence: ' + self.prec_str.format(a_convergence))
+                    print('a convergence: ' + prec_str.format(a_convergence))
 
                 print()
 
             if result.error is not None:
-                print('Error: ' + self.prec_str.format(result.error))
+                print('Error: ' + prec_str.format(result.error))
 
             u2 = u1
             u1 = u0
@@ -210,11 +184,11 @@ class Interface:
             if prev_error is not None:
                 convergence = np.log2(prev_error / result.error)
 
-                print('Convergence: ' + self.prec_str.format(convergence))
+                print('Convergence: ' + prec_str.format(convergence))
 
             if do_rel_conv and u2 is not None:
                 convergence = my_solver.calc_rel_convergence(u0, u1, u2)
-                print('Rel convergence: ' + self.prec_str.format(convergence))
+                print('Rel convergence: ' + prec_str.format(convergence))
 
             print()
 
