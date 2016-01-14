@@ -38,11 +38,12 @@ class SingularProblem(PizzaProblem):
     def print_b(self):
         self.calc_fft_coef(self.m_max)
 
+        np.set_printoptions(precision=4)
+
         n = 5
         print('Last {} of {} b coefficients:'.
             format(n, len(self.fft_b_coef)))
 
-        np.set_printoptions(precision=4)
         print(self.fft_b_coef[-n:])
         print()
 
@@ -80,6 +81,11 @@ class SingularProblem(PizzaProblem):
         self.fft_b_coef = dst(discrete_phi0, type=1)[:m_max] / fourier_N
 
         self.fft_a_coef = self.b_to_a(self.fft_b_coef)
+
+        print('First {} a coefficients:'.format(self.M))
+        np.set_printoptions(precision=15)
+        print(self.fft_a_coef[:self.M])
+        print()
 
     def set_a_coef(self, a_coef):
         self.a_coef = a_coef

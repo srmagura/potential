@@ -33,6 +33,8 @@ def print_a_coef(a_coef):
     else:
         a_coef_to_print = a_coef
 
+    np.set_printoptions(precision=15)
+
     print('a coefficients:')
     print(a_coef_to_print)
 
