@@ -122,24 +122,6 @@ class PsDebug:
         result.error = np.max(np.abs(error))
         return result
 
-    def ps_test_extend_src_f(self, setypes=None):
-        error = []
-
-        for node in self.Kplus:
-            x, y = self.get_coord(*node)
-
-            sid = self._extend_src_f_get_sid(*node)
-            etype = self.get_etype(sid, *node)
-
-            if setypes is None or (sid, etype) in setypes:
-                l = matrices.get_index(self.N, *node)
-                diff = abs(self.problem.eval_f(x, y) - self.src_f[l])
-                error.append(diff)
-
-        result = Result()
-        result.error = max(error)
-        return result
-
     def c0_test(self, plot=True):
         """
         Plot the Dirichlet data along with its Chebyshev expansion. If there

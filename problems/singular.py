@@ -1,11 +1,7 @@
 import numpy as np
 from scipy.special import jv
-from scipy.fftpack import dst
 
 from .problem import PizzaProblem
-
-from enum import Enum
-RegularizeBc = Enum('RegularizeBc', 'none fft known')
 
 class SingularProblem(PizzaProblem):
     """
@@ -19,21 +15,6 @@ class SingularProblem(PizzaProblem):
             self.eval_u_asympt = kwargs.pop('eval_u_asympt')
         else:
             self.eval_u_asympt = lambda r, th: 0
-
-        if 'to_dst' in kwargs:
-            self.regularize_bc = RegularizeBc.fft
-            self.to_dst = kwargs.pop('to_dst')
-        else:
-            self.regularize_bc = RegularizeBc.none
-            self.to_dst = lambda th: 0
-
-    def setup(self):
-        if self.expected_known:
-            m_max = max(self.M, self.m_max)
-        else:
-            m_max = self.M
-
-        self.calc_fft_coef(m_max)
 
     def print_b(self):
         self.calc_fft_coef(self.m_max)
@@ -122,15 +103,6 @@ class SingularProblem(PizzaProblem):
         r, th = self.arg_to_polar(arg, sid)
 
         if sid == 0:
-            if self.regularize_bc != RegularizeBc.none:
-                if self.regularize_bc == RegularizeBc.fft:
-                    b_coef = self.fft_b_coef[:self.M]
-                elif self.regularize_bc == RegularizeBc.known:
-                    b_coef = self.b_coef
-
-                for m in range(1, len(b_coef)+1):
-                    bc -= b_coef[m-1] * np.sin(m*nu*(th - a))
-
             return bc - self.eval_u_asympt(r, th)
 
         if sid == 1:

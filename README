@@ -1,20 +1,17 @@
-# potential - numerical solver for the Helmholtz equation over an irregular 2D domain
-Author: Sam Magura (śȑmȧgũŗa@ncsu.edu)
+# Numerical solver for the Helmholtz equation over an irregular 2D domain
+Author: Sam Magura (śȑmȧgũŗa@ncsu.edu without the accents)
 License: GPL
+
+DISCLAIMER: This code was created to test a specific algorithm for mathematical research --- it was never intended for an end user. For your own sanity, you should contact the author before trying to use this code for anything.
 
 This software package contains a solver for the Helmholtz equation over the two-dimensional "pizza domain" i.e. a disk with a wedge removed. The solver uses finite differences and the method of difference potentials.
 
-`potential` requires Python 3.x as well as the Python packages listed in requirements.txt. To install the packages:
+Requires Python 3.x as well as the Python packages listed in requirements.txt. To install the packages:
 $ pip install -r requirements.txt
-
-If you don't understand the mathematical algorithm that this code implements, you won't understand the code! If you want to run this code or modify it for use in a project of your own, you'll need to do some reading first.
 
 ## How to run
 Command-line interface help:
 $ python3 run.py -h
-
-Example: run the convergence test on the problem sine-pizza on the grids N = 16, 32, 64, 128, 256.
-$ python3 run.py sine-pizza -c 256
 
 ## References
 [R1] M. Medvinsky, S. Tsynkov, E. Turkel. "The Method of Difference Potentials for the Helmholtz Equation Using Compact High Order Schemes." Journal of Scientific Computation 53 (2012).

@@ -39,7 +39,7 @@ class SingH(SingularProblem):
             return 0
 
 
-class SingH_Sine(SingH):
+class H_Sine(SingH):
 
     expected_known = True
     silent = True
@@ -57,19 +57,13 @@ class SingH_Sine(SingH):
         return np.sin(m*nu*(th-a))
 
 
-class SingH_Sine4(SingH_Sine):
-
-    def __init__(self, **kwargs):
-        super().__init__(m=4)
-
-
-class SingH_Sine8(SingH_Sine):
+class H_Sine8(H_Sine):
 
     def __init__(self, **kwargs):
         super().__init__(m=8)
 
 
-class SingH_SineRange(SingH):
+class H_SineRange(SingH):
 
     expected_known = True
     silent = True
@@ -87,7 +81,7 @@ class SingH_SineRange(SingH):
         return phi0
 
 
-class SingH_Hat(SingH):
+class H_Hat(SingH):
 
     expected_known = False
     m_max = 199
@@ -96,7 +90,7 @@ class SingH_Hat(SingH):
         return functions.eval_hat_th(th)
 
 
-class SingH_Parabola(SingH):
+class H_Parabola(SingH):
 
     expected_known = False
     m_max = 5

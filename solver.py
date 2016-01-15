@@ -1,29 +1,16 @@
 import itertools as it
-import math
 
 import numpy as np
-import scipy.sparse.linalg
 
-from debug import SolverDebug
 from extend import SolverExtend
 
-def cart_to_polar(x, y):
-    """
-    Convert Cartesian coordinates (x, y) to a polar coordinates (r, th).
-    """
-    r, th = math.hypot(x, y), math.atan2(y, x)
-
-    if th <= 0:
-        th += 2*np.pi
-
-    return r, th
 
 class Result:
     u_act = None
     a_error = None
 
 
-class Solver(SolverExtend, SolverDebug):
+class Solver(SolverExtend):
     """
     A generic class representing a difference potentials problem.
 
@@ -40,8 +27,6 @@ class Solver(SolverExtend, SolverDebug):
         self.k = self.problem.k
         self.AD_len = problem.AD_len
         self.N = N
-
-        self.verbose = options.get('verbose', False)
 
     def get_coord(self, i, j):
         """
