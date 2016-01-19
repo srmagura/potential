@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import cos, sin
 
-from solver import cart_to_polar
+from domain_util import cart_to_polar
 
 class Problem:
 
@@ -71,6 +71,12 @@ class PizzaProblem(Problem):
                 N1 //= 2
 
     def get_n_basis_dict(self):
+        """
+        Override this function to make the number of basis functions
+        dependent on a parameter other than N (e.g. the order of the
+        scheme.)
+        """
+
         # These values probably need to be adjusted for your specific problem
         return {
             16: (21, 9),

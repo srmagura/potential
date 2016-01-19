@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-from solver import cart_to_polar
+from domain_util import cart_to_polar
 from .multivalue import Multivalue
 
 class PsInhomo:

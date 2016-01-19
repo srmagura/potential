@@ -12,7 +12,7 @@ def cart_to_polar(x, y):
 
     return r, th
 
-def wrap_func(arg, sid):
+def wrap_func(a, arg, sid):
     """
     Can be used to create the smooth extensions of the Dirichlet data
     needed for the Chebyshev fit, for certain problems. In particular,
@@ -32,9 +32,9 @@ def wrap_func(arg, sid):
 
     return (arg, sid)
 
-def arg_to_polar(arg, sid):
+def arg_to_polar(R, a, arg, sid):
     if sid == 0:
-        return (self.R, arg)
+        return (R, arg)
     elif sid == 1:
         if arg >= 0:
             return (arg, 2*np.pi)
@@ -42,11 +42,11 @@ def arg_to_polar(arg, sid):
             return (-arg, np.pi)
     elif sid == 2:
         if arg >= 0:
-            return (arg, self.a)
+            return (arg, a)
         else:
-            return (-arg, np.pi + self.a)
+            return (-arg, np.pi + a)
 
-def get_sid(th):
+def get_sid(a, th):
     """
     Mapping of polar angles in the interval (0, 2*pi] to the set of
     segment ID's, {0, 1, 2}.

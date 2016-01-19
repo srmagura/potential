@@ -7,7 +7,7 @@ import itertools as it
 import matplotlib
 import matplotlib.pyplot as plt
 
-from solver import cart_to_polar, Result
+from solver import Result
 from chebyshev import get_chebyshev_roots
 
 class PsDebug:

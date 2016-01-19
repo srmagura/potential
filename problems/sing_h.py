@@ -1,13 +1,8 @@
 import numpy as np
-from scipy.special import jv, jvp
-
-
-from solver import cart_to_polar
 
 from .problem import PizzaProblem
-from .sympy_problem import SympyProblem
 import problems.functions as functions
-from .singular import SingularProblem, RegularizeBc
+from .singular import SingularProblem
 
 class SingH(SingularProblem):
     homogeneous = True

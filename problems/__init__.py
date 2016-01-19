@@ -9,10 +9,10 @@ from collections import OrderedDict
 from .sing_h import H_Hat, H_Parabola, H_Sine8, H_SineRange
 
 problem_dict = OrderedDict((
-    ('h-sine8', SingH_Sine8),
-    ('h-sine-range', SingH_SineRange),
-    ('h-hat', SingH_Hat),
-    ('h-parabola', SingH_Parabola),
+    ('h-sine8', H_Sine8),
+    ('h-sine-range', H_SineRange),
+    ('h-hat', H_Hat),
+    ('h-parabola', H_Parabola),
 ))
 
 for name, problem in problem_dict.items():

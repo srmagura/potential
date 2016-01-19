@@ -2,7 +2,7 @@ import numpy as np
 from numpy import sin, cos
 import math
 
-from solver import cart_to_polar
+from domain_util import cart_to_polar
 from .multivalue import Multivalue
 
 ETYPE_NAMES = ('standard', 'left', 'right')

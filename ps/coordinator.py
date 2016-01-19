@@ -3,7 +3,7 @@ import datetime
 from io_util import prec_str
 from ps.ps import PizzaSolver
 
-class DualCoordinator:
+class Coordinator:
 
     def __init__(self, problem, N, options):
         self.problem = problem

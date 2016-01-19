@@ -1,7 +1,5 @@
 import numpy as np
-from scipy.special import jv
 
-from solver import cart_to_polar
 from chebyshev import eval_dn_T_t, get_chebyshev_roots
 
 
@@ -130,25 +128,6 @@ class PsBasis:
             self.c0.extend(self.get_chebyshev_coef(sid, func))
 
     def update_c0(self):
-        """
-        Update c0 to reflect the sines that we are subtracting
-        for regularization
-        """
-        def eval_regularized_bc(th):
-            k = self.k
-            R = self.R
-            a = self.a
-            nu = self.nu
-
-            a_coef = self.problem.a_coef
-
-            bc = self.problem.eval_bc_extended(th, 0)
-            #for i in range(len(self.m_list)):
-            for m in range(1, self.M+1):
-                bc -= a_coef[m-1] * jv(m*nu, k*R) * np.sin(m*nu*(th-a))
-
-            return bc
-
         self.c0[:self.segment_desc[0]['n_basis']] =\
             self.get_chebyshev_coef(0, eval_regularized_bc)
 

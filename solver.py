@@ -2,8 +2,8 @@ import itertools as it
 
 import numpy as np
 
+from domain_util import cart_to_polar
 from extend import SolverExtend
-
 
 class Result:
     u_act = None
