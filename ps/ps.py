@@ -5,7 +5,8 @@ import scipy
 
 from solver import Solver, Result
 from linop import apply_B
-from apsolver import APSolver
+import fourier
+import opt
 
 from ps.basis import PsBasis
 from ps.grid import PsGrid
@@ -44,7 +45,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.ps_construct_grids(self.scheme_order)
 
-        apsolver = APSolver(self.N, self.scheme_order, self.AD_len, self.k)
+        apsolver = fourier.APSolver(self.N, self.scheme_order, self.AD_len, self.k)
         self.apply_L = lambda v: apsolver.apply_L(v)
         self.solve_ap = lambda Bf: apsolver.solve(Bf)
 
@@ -62,9 +63,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             Bf[i-1,j-1] = 0
 
         self.ap_sol_f = self.solve_ap(Bf)
-
-    def get_sid(self, th):
-        return self.problem.get_sid(th)
 
     def is_interior(self, i, j):
         r, th = self.get_polar(i, j)
@@ -125,10 +123,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         return trace
 
     def get_Q(self, index):
-        """
-        Get one of the three submatrices that are used in the construction of
-        V.
-        """
         columns = []
 
         for JJ in range(len(self.B_desc)):
@@ -163,23 +157,28 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         return (Q1, rhs)
 
+    def get_var_constraints(self):
+        C = np.zeros((self.M, len(self.B_desc)))
+
+        J = 0
+        for JJ in self.segment_desc[0]['JJ_list']:
+            coef = fourier.arc_dst(self.a, lambda th:
+                self.eval_dn_B_arg(1, JJ, self.R, th, 0))
+
+            C[:, J] = coef[:self.M]
+            J += 1
+
+        d = np.zeros(self.M)
+        return (C, d)
+
     def solve_var(self):
         """
         Setup and solve the variational formulation.
         """
         Q1, rhs = self.get_var()
+        C, d = self.get_var_constraints()
 
-        varsol = np.linalg.lstsq(Q1, rhs)[0]
-        self.handle_varsol(varsol)
-
-    def handle_varsol(self, varsol):
-        """
-        Break up the solution vector of the variational formulation into
-        its meaningful parts.
-
-        Set c1. Update the boundary data if necessary.
-        """
-        self.c1 = varsol
+        self.c1 = opt.constrained_lstsq(Q1, rhs, C, d)
 
     def run(self):
         """
@@ -198,7 +197,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         its Chebyshev series, which has coefficients c0. There is also an
         analogous function c1_test().
         '''
-        #self.c0_test(plot=False)
+        #self.c0_test(plot=True)
 
         self.solve_var()
 

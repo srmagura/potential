@@ -86,3 +86,13 @@ class APSolver:
 
     def apply_L(self, v):
         return self._fourier(v, False)
+
+
+def arc_dst(a, func):
+    N = 1024
+
+    # The slice at the end removes the endpoints
+    th_data = np.linspace(a, 2*np.pi, N+1)[1:-1]
+
+    discrete_func = np.array([func(th) for th in th_data])
+    return dst(discrete_func, type=1) / N

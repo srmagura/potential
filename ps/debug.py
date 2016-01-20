@@ -8,6 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from solver import Result
+import domain_util
 from chebyshev import get_chebyshev_roots
 
 class PsDebug:
@@ -137,8 +138,8 @@ class PsDebug:
             p = sample[l]
             s_data[l] = p['s']
 
-            r, th = cart_to_polar(p['x'], p['y'])
-            sid = self.get_sid(th)
+            r, th = domain_util.cart_to_polar(p['x'], p['y'])
+            sid = domain_util.get_sid(self.a, th)
 
             exact_data[l] = self.problem.eval_bc_extended(p['arg'], sid).real
 
@@ -201,7 +202,7 @@ class PsDebug:
             if do_exact:
                 exact_data[l] = self.problem.eval_d_u_outwards(p['arg'], p['sid']).real
 
-            r, th = cart_to_polar(p['x'], p['y'])
+            r, th = domain_util.cart_to_polar(p['x'], p['y'])
             for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\
                     (self.c1[JJ] *

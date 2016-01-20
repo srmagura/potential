@@ -1,7 +1,9 @@
 import numpy as np
+from scipy.fftpack import dst
 
 from chebyshev import eval_dn_T_t, get_chebyshev_roots
-
+import fourier
+import domain_util
 
 class PsBasis:
     """
@@ -70,10 +72,8 @@ class PsBasis:
         span, center = self.get_span_center(sid)
         return 1 / span
 
-    def eval_dn_B_arg(self, n, JJ, r, th, sid=None):
-        if sid is None:
-            sid = self.get_sid(th)
-
+    def eval_dn_B_arg(self, n, JJ, r, th, sid):
+        # TODO: change (r, th, sid) to (arg, sid)?
         desc = self.B_desc[JJ]
 
         if desc['sid'] == sid:
@@ -121,15 +121,28 @@ class PsBasis:
         """
         self.c0 = []
 
-        for sid in range(self.N_SEGMENT):
+        a = self.a
+        nu = self.nu
+
+        b_coef = fourier.arc_dst(a,
+            lambda th: self.problem.eval_bc_extended(th, 0)
+        )
+
+        def eval_phi0_reg(th):
+            phi0 = self.problem.eval_bc_extended(th, 0)
+
+            for m in range(1, self.M+1):
+                phi0 -= b_coef[m-1] * np.sin(m*nu*(th-a))
+
+            return phi0
+
+        self.c0.extend(self.get_chebyshev_coef(0, eval_phi0_reg))
+
+        for sid in (1, 2):
             def func(arg):
                 return self.problem.eval_bc_extended(arg, sid)
 
             self.c0.extend(self.get_chebyshev_coef(sid, func))
-
-    def update_c0(self):
-        self.c0[:self.segment_desc[0]['n_basis']] =\
-            self.get_chebyshev_coef(0, eval_regularized_bc)
 
     def extend_basis(self, JJ, index):
         """

@@ -2,7 +2,9 @@ import numpy as np
 from scipy.special import jv
 from scipy.fftpack import dst
 
-from domain_util import arg_to_polar
+import domain_util
+import fourier
+
 from .problem import PizzaProblem
 
 class SingularProblem(PizzaProblem):
@@ -24,7 +26,8 @@ class SingularProblem(PizzaProblem):
             self.to_dst = lambda th: 0
 
     def setup(self):
-        self.calc_fft_coef(self.m_max)
+        fft_b_coef = fourier.arc_dst(self.a, self.to_dst)[:self.m_max]
+        self.fft_a_coef = self.b_to_a(fft_b_coef)
 
     def a_to_b(self, a_coef):
         return self._convert_ab(a_coef, 'a')
@@ -49,17 +52,6 @@ class SingularProblem(PizzaProblem):
             other_coef[m-1] = coef[m-1] * factor
 
         return other_coef
-
-    def calc_fft_coef(self, m_max):
-        fourier_N = 1024
-
-        # The slice at the end removes the endpoints
-        th_data = np.linspace(self.a, 2*np.pi, fourier_N+1)[1:-1]
-
-        discrete_phi0 = np.array([self.to_dst(th) for th in th_data])
-        fft_b_coef = dst(discrete_phi0, type=1)[:m_max] / fourier_N
-
-        self.fft_a_coef = self.b_to_a(fft_b_coef)
 
     def print_b(self):
         self.calc_fft_coef(self.m_max)
@@ -98,7 +90,7 @@ class SingularProblem(PizzaProblem):
         R = self.R
 
         bc = self.eval_bc__no_reg(arg, sid)
-        r, th = arg_to_polar(R, a, arg, sid)
+        r, th = domain_util.arg_to_polar(R, a, arg, sid)
 
         if sid == 0:
             return bc - self.eval_u_asympt(r, th)
