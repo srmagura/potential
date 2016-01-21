@@ -7,17 +7,16 @@ from .singular import SingularProblem
 class SingH(SingularProblem):
     homogeneous = True
 
-    k = 1.75
+    k = 5.5
 
     n_basis_dict = {
-        16: (13, 5),
-        32: (23, 7),
-        64: (31, 9),
-        128: (41, 11),
-        256: (60, 17),
-        512: (80, 25),
-        1024: (100, 30),
-        2048: (120, 40)
+        16: (24, 6),
+        32: (33, 8),
+        64: (42, 12),
+        128: (65, 18),
+        256: (80, 24),
+        512: (100, 30),
+        1024: (120, 35),
     }
 
     def __init__(self, **kwargs):
