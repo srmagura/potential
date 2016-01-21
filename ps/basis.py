@@ -125,11 +125,11 @@ class PsBasis:
         nu = self.nu
 
         b_coef = fourier.arc_dst(a,
-            lambda th: self.problem.eval_bc_extended(th, 0)
+            lambda th: self.problem.eval_bc(th, 0)
         )
 
         def eval_phi0_reg(th):
-            phi0 = self.problem.eval_bc_extended(th, 0)
+            phi0 = self.problem.eval_bc(th, 0)
 
             for m in range(1, self.M+1):
                 phi0 -= b_coef[m-1] * np.sin(m*nu*(th-a))
@@ -140,7 +140,7 @@ class PsBasis:
 
         for sid in (1, 2):
             def func(arg):
-                return self.problem.eval_bc_extended(arg, sid)
+                return self.problem.eval_bc(arg, sid)
 
             self.c0.extend(self.get_chebyshev_coef(sid, func))
 

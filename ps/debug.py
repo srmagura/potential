@@ -141,7 +141,7 @@ class PsDebug:
             r, th = domain_util.cart_to_polar(p['x'], p['y'])
             sid = domain_util.get_sid(self.a, th)
 
-            exact_data[l] = self.problem.eval_bc_extended(p['arg'], sid).real
+            exact_data[l] = self.problem.eval_bc(p['arg'], sid).real
 
             for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\

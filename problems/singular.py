@@ -21,12 +21,11 @@ class SingularProblem(PizzaProblem):
             self.eval_u_asympt = lambda r, th: 0
 
         if 'to_dst' in kwargs:
-            self.to_dst = kwargs.pop('to_dst')
+            to_dst = kwargs.pop('to_dst')
         else:
-            self.to_dst = lambda th: 0
+            to_dst = lambda th: 0
 
-    def setup(self):
-        fft_b_coef = fourier.arc_dst(self.a, self.to_dst)[:self.m_max]
+        fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
         self.fft_a_coef = self.b_to_a(fft_b_coef)
 
     def a_to_b(self, a_coef):
@@ -72,13 +71,13 @@ class SingularProblem(PizzaProblem):
         R = self.R
 
         u = self.eval_expected_polar__no_reg(r, th)
-        for m in range(self.M+1, self.m_max+1):
+        for m in range(1, self.m_max+1):
             ac = self.fft_a_coef[m-1]
             u += ac * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
         return u - self.eval_u_asympt(r, th)
 
-    def eval_bc_extended(self, arg, sid):
+    def eval_bc(self, arg, sid):
         """
         Evaluate extended boundary condition.
 

@@ -2,6 +2,7 @@ import sys
 import math
 import numpy as np
 import scipy
+from scipy.special import jv
 
 from solver import Solver, Result
 from linop import apply_B
@@ -35,8 +36,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.M = get_M(self.scheme_order)
         problem.M = self.M
-
-        problem.setup()
 
         # For optimizing basis set sizes
         if 'n_circle' in options:
@@ -163,7 +162,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         J = 0
         for JJ in self.segment_desc[0]['JJ_list']:
             coef = fourier.arc_dst(self.a, lambda th:
-                self.eval_dn_B_arg(1, JJ, self.R, th, 0))
+                self.eval_dn_B_arg(0, JJ, self.R, th, 0))
 
             C[:, J] = coef[:self.M]
             J += 1
@@ -179,6 +178,41 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         C, d = self.get_var_constraints()
 
         self.c1 = opt.constrained_lstsq(Q1, rhs, C, d)
+
+    def get_singular_part(self):
+        n_nodes = 1024
+        th_data = np.linspace(self.a, 2*np.pi, n_nodes+2)[1:-1]
+
+        singular_data = np.zeros(n_nodes, dtype=complex)
+        for i, th in zip(range(n_nodes), th_data):
+            regular_part = 0
+
+            for JJ in self.segment_desc[0]['JJ_list']:
+                regular_part += (self.c0[JJ] *
+                    self.eval_dn_B_arg(0, JJ, self.R, th, 0))
+
+            singular_data[i] = self.problem.eval_bc(th, 0) - regular_part
+
+        k = self.k
+        R = self.R
+        a = self.a
+        nu = self.nu
+
+        A = np.zeros((n_nodes, self.M))
+        for m in range(1, self.M+1):
+            for i, th in zip(range(n_nodes), th_data):
+                A[i, m-1] = jv(m*nu, k*R) * np.sin(m*nu*(th-a))
+
+        a_coef = np.linalg.lstsq(A, singular_data)[0]
+
+        singular_part = np.zeros((self.N-1, self.N-1), dtype=complex)
+        for i, j in self.global_Mplus:
+            r, th = self.get_polar(i, j)
+            for m in range(1, self.M+1):
+                singular_part[i-1, j-1] += (a_coef[m-1] * jv(m*nu, k*r) *
+                    np.sin(m*nu*(th-a)))
+
+        return singular_part
 
     def run(self):
         """
@@ -205,17 +239,15 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #self.c1_test()
 
         ext = self.extend_boundary()
-        potential = self.get_potential(ext) + self.ap_sol_f
-        u_act = potential
+        regular_part = self.get_potential(ext) + self.ap_sol_f
 
-        for i, j in self.M0:
-            r, th = self.get_polar(i, j)
-            u_act[i-1, j-1] += self.problem.get_restore_polar(r, th)
+        u_act = regular_part + self.get_singular_part()
 
         error = self.eval_error(u_act)
 
         result = Result()
         result.error = error
         result.u_act = u_act
+
 
         return result

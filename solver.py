@@ -100,17 +100,12 @@ class Solver(SolverExtend):
         if not self.problem.expected_known:
             return None
 
-        N = self.N
-        u_exp = np.zeros((N-1, N-1), dtype=complex)
-        for i, j in self.M0:
-            x, y = self.get_coord(i, j)
-            u_exp[i-1, j-1] = self.problem.eval_expected(x, y)
-
         error = []
         max_error = 0
 
         for i, j in self.global_Mplus:
-            diff = abs(u_exp[i-1, j-1] - u_act[i-1, j-1])
+            x, y = self.get_coord(i, j)
+            diff = abs(self.problem.eval_expected(x, y) - u_act[i-1, j-1])
             error.append(diff)
 
         return max(error)

@@ -86,6 +86,3 @@ class PizzaProblem(Problem):
             256: (45, 29),
             None: (53, 34)
         }
-
-    def get_restore_polar(self, r, th):
-        return 0
