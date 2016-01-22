@@ -7,6 +7,7 @@ from .singular import SingularProblem
 class SingH(SingularProblem):
     homogeneous = True
 
+    # 4th order
     k = 5.5
 
     n_basis_dict = {
@@ -15,9 +16,26 @@ class SingH(SingularProblem):
         64: (42, 12),
         128: (65, 18),
         256: (80, 30),
-        512: (100, 35),
+        512: (100, 40),
         1024: (120, 45),
     }
+
+
+    # 2nd order
+    '''
+    k = 1.75
+
+    n_basis_dict = {
+        16: (16, 5),
+        32: (27, 7),
+        64: (35, 11),
+        128: (41, 15),
+        256: (60, 22),
+        512: (80, 30),
+        1024: (100, 40),
+        2048: (120, 45)
+    }
+    '''
 
     def __init__(self, **kwargs):
         kwargs['to_dst'] = self.eval_phi0
@@ -87,7 +105,7 @@ class H_Hat(SingH):
 class H_Parabola(SingH):
 
     expected_known = False
-    m_max = 5
+    m_max = 199
 
     def eval_phi0(self, th):
         return -(th - np.pi/6) * (th - 2*np.pi)
