@@ -175,9 +175,13 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Setup and solve the variational formulation.
         """
         Q1, rhs = self.get_var()
+        #print(np.vdot(Q1[:,0], Q1[:,1]))
         C, d = self.get_var_constraints()
 
         self.c1 = opt.constrained_lstsq(Q1, rhs, C, d)
+
+        #np.set_printoptions(precision=15)
+        #print(self.c1)
 
     def get_singular_part(self):
         n_nodes = 1024

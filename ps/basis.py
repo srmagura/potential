@@ -128,13 +128,21 @@ class PsBasis:
             lambda th: self.problem.eval_bc(th, 0)
         )
 
+        regularized_c0 = True
+
         def eval_phi0_reg(th):
             phi0 = self.problem.eval_bc(th, 0)
 
-            for m in range(1, self.M+1):
-                phi0 -= b_coef[m-1] * np.sin(m*nu*(th-a))
+            if regularized_c0:
+                for m in range(1, self.M+1):
+                    phi0 -= b_coef[m-1] * np.sin(m*nu*(th-a))
 
             return phi0
+
+        if regularized_c0:
+            print('regularized-c0')
+        else:
+            print('full-c0')
 
         self.c0.extend(self.get_chebyshev_coef(0, eval_phi0_reg))
 
