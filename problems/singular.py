@@ -1,7 +1,8 @@
 import numpy as np
-from scipy.special import jv
+#from scipy.special import jv
 from scipy.fftpack import dst
 
+from bessel import mpjv
 import domain_util
 import fourier
 
@@ -44,7 +45,7 @@ class SingularProblem(PizzaProblem):
         other_coef = np.zeros(len(coef), dtype=complex)
 
         for m in range(1, len(coef)+1):
-            factor = jv(m*nu, k*R)
+            factor = mpjv(m*nu, k*R)
             if coef_type == 'b':
                 factor = 1/factor
 
@@ -73,7 +74,7 @@ class SingularProblem(PizzaProblem):
         u = self.eval_expected_polar__no_reg(r, th)
         for m in range(1, self.m_max+1):
             ac = self.fft_a_coef[m-1]
-            u += ac * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
+            u += ac * mpjv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
         return u - self.eval_u_asympt(r, th)
 

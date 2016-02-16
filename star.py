@@ -1,7 +1,7 @@
 import math
+from bessel import mpjv
 
 import numpy as np
-from scipy.special import jv
 import matplotlib.pyplot as plt
 
 from problems.sing_h import H_Hat, H_SineRange, H_Sine8
@@ -34,10 +34,10 @@ def calc_a_coef(m1):
 
         phi0_data[i] = eval_phi0(r, th)
         for m in range(1, m1+1):
-            W[i, m-1] = jv(m*nu, k*r) * np.sin(m*nu*(th-a))
+            W[i, m-1] = mpjv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
     for m in range(M+1, m1+1):
-        exp = -math.frexp(jv(m*nu, k*R))[1]
+        exp = -math.frexp(mpjv(m*nu, k*R))[1]
         W[:, m-1] = 2**exp * W[:, m-1]
 
     result = np.linalg.lstsq(W, phi0_data)
