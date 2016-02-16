@@ -7,6 +7,7 @@ from .singular import SingularProblem
 class SingH(SingularProblem):
     homogeneous = True
 
+    '''
     # 4th order
     k = 5.5
 
@@ -19,10 +20,10 @@ class SingH(SingularProblem):
         512: (100, 40),
         1024: (120, 45),
     }
+    '''
 
 
     # 2nd order
-    '''
     k = 1.75
 
     n_basis_dict = {
@@ -35,7 +36,7 @@ class SingH(SingularProblem):
         1024: (100, 40),
         2048: (120, 45)
     }
-    '''
+    
 
     def __init__(self, **kwargs):
         kwargs['to_dst'] = self.eval_phi0

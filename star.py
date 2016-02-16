@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from scipy.special import jv
 import matplotlib.pyplot as plt
@@ -10,8 +12,8 @@ k = problem.k
 R = problem.R
 a = problem.a
 nu = problem.nu
-
-M = 7
+print(k)
+M = 3
 
 n_nodes = 1024
 th_data = np.linspace(a, 2*np.pi, n_nodes + 2)[1:-1]
@@ -22,8 +24,7 @@ def eval_phi0(r, th):
 def get_boundary_r(th):
     return R + 0.5*np.sin(nu*(th-a))
 
-def calc_a_coef():
-    m1 = 45
+def calc_a_coef(m1):
     phi0_data = np.zeros(n_nodes, dtype=complex)
     W = np.zeros((n_nodes, m1), dtype=complex)
 
@@ -35,9 +36,17 @@ def calc_a_coef():
         for m in range(1, m1+1):
             W[i, m-1] = jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
-    a_coef = np.linalg.lstsq(W, phi0_data)[0]
+    for m in range(M+1, m1+1):
+        exp = -math.frexp(jv(m*nu, k*R))[1]
+        W[:, m-1] = 2**exp * W[:, m-1]
+
+    result = np.linalg.lstsq(W, phi0_data)
+
+    a_coef = result[0]
+    #rank = result[2]
+    #print('Rank:', rank)
     error = np.max(np.abs(a_coef[:M] - problem.fft_a_coef[:M]))
-    print(error)
+    return error
 
 def do_plot():
     x_data0 = np.zeros(n_nodes)
@@ -60,4 +69,14 @@ def do_plot():
     plt.plot(x_data1, y_data1)
     plt.show()
 
-calc_a_coef()
+
+min_error = float('inf')
+for m1 in range(10, 200, 10):
+    error = calc_a_coef(m1)
+
+    print('m1={}   error={}'.format(m1, error), end=' ')
+    if error < min_error:
+        min_error = error
+        print('!!!')
+    else:
+        print()
