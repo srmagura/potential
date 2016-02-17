@@ -36,7 +36,7 @@ class SingH(SingularProblem):
         1024: (100, 40),
         2048: (120, 45)
     }
-    
+
 
     def __init__(self, **kwargs):
         kwargs['to_dst'] = self.eval_phi0
@@ -97,7 +97,7 @@ class H_SineRange(SingH):
 class H_Hat(SingH):
 
     expected_known = False
-    m_max = 199
+    m_max = 200
 
     def eval_phi0(self, th):
         return functions.eval_hat_th(th)
@@ -106,7 +106,7 @@ class H_Hat(SingH):
 class H_Parabola(SingH):
 
     expected_known = False
-    m_max = 199
+    m_max = 200
 
     def eval_phi0(self, th):
         return -(th - np.pi/6) * (th - 2*np.pi)
