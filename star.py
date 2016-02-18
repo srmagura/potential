@@ -5,9 +5,6 @@ import numpy as np
 import scipy
 
 from scipy.special import jv
-import bessel
-
-jv = bessel.mpjv
 
 import numpy as np
 import matplotlib.pyplot as plt

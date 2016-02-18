@@ -1,11 +1,7 @@
 import numpy as np
 
 from scipy.fftpack import dst
-
 from scipy.special import jv
-
-import bessel
-jv = bessel.mpjv
 
 import domain_util
 import fourier
