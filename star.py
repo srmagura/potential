@@ -1,12 +1,15 @@
 import math
+import sys
 
 import numpy as np
+import scipy
 from scipy.special import jv
 import matplotlib.pyplot as plt
 
 from problems.sing_h import H_Hat, H_SineRange, H_Sine8
 
-problem = H_Hat()
+#problem = H_Hat()
+problem = H_SineRange()
 print('[{}]'.format(problem.name))
 print('m_max =', problem.m_max)
 
@@ -78,17 +81,29 @@ def do_plot():
     plt.axes().set_aspect('equal', 'datalim')
     plt.show()
 
-def test_many():
-    min_error3 = float('inf')
-    for m1 in range(10, 200, 2):
+def print_array(array):
+    assert np.max(np.abs(scipy.imag(array))) == 0
+    for x in scipy.real(array):
+        print('{:.15e}'.format(x), end=' ')
+    print()
+
+
+def test_many(m1_list=None):
+    min_error7 = float('inf')
+
+    if m1_list is None:
+        m1_list = range(7, 100, 1)
+
+    for m1 in m1_list:
         print('\n----- m1={} -----'.format(m1))
         a_coef = calc_a_coef(m1)
-        error3 = np.max(np.abs(a_coef[:3] - problem.fft_a_coef[:3]))
+        error7 = np.max(np.abs(a_coef - problem.fft_a_coef[:7]))
 
-        print('a_coef=', a_coef)
-        print('max_error(1-3)={}'.format(error3), end=' ')
-        if error3 < min_error3:
-            min_error3 = error3
+        print('a_coef=')
+        print_array(a_coef)
+        print('max_error(a1-a7)={}'.format(error7), end=' ')
+        if error7 < min_error7:
+            min_error7 = error7
             print('!!!')
         else:
             print()
