@@ -3,13 +3,19 @@ import sys
 
 import numpy as np
 import scipy
+
 from scipy.special import jv
+import bessel
+
+jv = bessel.mpjv
+
+import numpy as np
 import matplotlib.pyplot as plt
 
 from problems.sing_h import H_Hat, H_SineRange, H_Sine8
 
-#problem = H_Hat()
-problem = H_SineRange()
+problem = H_Hat()
+
 print('[{}]'.format(problem.name))
 print('m_max =', problem.m_max)
 
@@ -92,7 +98,7 @@ def test_many(m1_list=None):
     min_error7 = float('inf')
 
     if m1_list is None:
-        m1_list = range(7, 100, 1)
+        m1_list = range(2, 200, 2)
 
     for m1 in m1_list:
         print('\n----- m1={} -----'.format(m1))
@@ -108,4 +114,4 @@ def test_many(m1_list=None):
         else:
             print()
 
-test_many()
+test_many([144])
