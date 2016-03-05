@@ -1,13 +1,21 @@
 prec_str = '{:.5}'
 
 import problems
+import problems.boundary
 
 def add_arguments(parser, args):
-    problem_choices = problems.problem_dict.keys()
     if 'problem' in args:
+        problem_choices = problems.problem_dict.keys()
         parser.add_argument('problem', metavar='problem',
             choices=problem_choices,
             help='name of the problem to run: ' + ', '.join(problem_choices))
+
+
+    if 'boundary' in args:
+        boundary_choices = problems.boundary.boundaries.keys()
+        parser.add_argument('boundary', metavar='boundary',
+            default='arc',
+            choices=boundary_choices)
 
     if 'N' in args:
         parser.add_argument('-N', type=int, default=16,

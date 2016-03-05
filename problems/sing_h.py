@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.special import jv
 
 from .problem import PizzaProblem
 import problems.functions as functions
@@ -7,7 +8,7 @@ from .singular import SingularProblem
 class SingH(SingularProblem):
     homogeneous = True
 
-    '''
+    
     # 4th order
     k = 5.5
 
@@ -20,9 +21,10 @@ class SingH(SingularProblem):
         512: (100, 40),
         1024: (120, 45),
     }
+
+
+
     '''
-
-
     # 2nd order
     k = 1.75
 
@@ -36,7 +38,7 @@ class SingH(SingularProblem):
         1024: (100, 40),
         2048: (120, 45)
     }
-
+    '''
 
     def __init__(self, **kwargs):
         kwargs['to_dst'] = self.eval_phi0
@@ -109,4 +111,19 @@ class H_Parabola(SingH):
     m_max = 200
 
     def eval_phi0(self, th):
-        return -(th - np.pi/6) * (th - 2*np.pi)
+        a = self.a
+        return -(th - a) * (th - 2*np.pi)
+
+
+class H_LineSine(SingH):
+
+    expected_known = False
+    m_max = 200
+
+    def eval_phi0(self, th):
+        k = self.k
+        R = self.R
+        a = self.a
+        nu = self.nu
+
+        return jv(nu/2, k*R) * ((th - a)/(2*np.pi - a) - np.sin(nu/2*(th-a)))

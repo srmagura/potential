@@ -5,18 +5,20 @@ from ps.ps import PizzaSolver
 
 class Coordinator:
 
-    def __init__(self, problem, N, options):
+    def __init__(self, problem, N, options={}):
         self.problem = problem
         self.N = N
 
         self.options = options
 
     def print_info(self, N_list=None):
-        print('[{} {}]'.format(self.problem.name, datetime.date.today()))
-
         options = self.options
 
-        print('Scheme order: {}'.format(options['scheme_order']))
+        print('[{} {} {}]'.format(self.problem.name, options['boundary'].name,
+            datetime.date.today()))
+
+        if 'scheme_order' in options:
+            print('Scheme order: {}'.format(options['scheme_order']))
 
         print('k = ' + prec_str.format(float(self.problem.k)))
         print('R = ' + prec_str.format(self.problem.R))
