@@ -1,8 +1,13 @@
 import numpy as np
 from scipy.special import jv
 
-def calc_a_coef(eval_phi0, m1, a):
-    n_nodes = 1024
+def calc_a_coef(problem, boundary, eval_phi0, M, m1):
+    k = problem.k
+    R = problem.R
+    a = problem.a
+    nu = problem.nu
+
+    n_nodes = 2048
     th_data = np.linspace(a, 2*np.pi, n_nodes + 2)[1:-1]
 
     phi0_data = np.zeros(n_nodes, dtype=complex)

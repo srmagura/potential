@@ -47,7 +47,7 @@ def print_array(array):
     print()
 
 def do_test(m1):
-    a_coef = calc_a_coef(eval_phi0, m1, a)
+    a_coef = calc_a_coef(problem, boundary, eval_phi0, M, m1)
     errors = np.abs(problem.fft_a_coef[:M] - a_coef)
     error7 = np.max(errors)
 
@@ -76,7 +76,7 @@ def test_many(m1_list=None):
 
     for m1 in m1_list:
         print('\n----- m1={} -----'.format(m1))
-        a_coef = calc_a_coef(eval_phi0, m1, a)
+        a_coef = calc_a_coef(problem, boundary, eval_phi0, M, m1)
         error7 = np.max(np.abs(a_coef - problem.fft_a_coef[:7]))
 
         print('a_coef=')
