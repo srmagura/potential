@@ -26,8 +26,8 @@ class SingularProblem(PizzaProblem):
         else:
             to_dst = lambda th: 0
 
-        fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
-        self.fft_a_coef = self.b_to_a(fft_b_coef)
+        self.fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
+        self.fft_a_coef = self.b_to_a(self.fft_b_coef)
 
     def a_to_b(self, a_coef):
         return self._convert_ab(a_coef, 'a')

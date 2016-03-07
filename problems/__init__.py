@@ -16,5 +16,5 @@ problem_dict = OrderedDict((
     ('h-line-sine', H_LineSine),
 ))
 
-for name, problem in problem_dict.items():
-    problem.name = name
+for _name, _problem in problem_dict.items():
+    _problem.name = _name

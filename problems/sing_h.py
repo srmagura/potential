@@ -8,7 +8,7 @@ from .singular import SingularProblem
 class SingH(SingularProblem):
     homogeneous = True
 
-    
+
     # 4th order
     k = 5.5
 
@@ -126,4 +126,4 @@ class H_LineSine(SingH):
         a = self.a
         nu = self.nu
 
-        return jv(nu/2, k*R) * ((th - a)/(2*np.pi - a) - np.sin(nu/2*(th-a)))
+        return (th - a)/(2*np.pi - a) - np.sin(nu/2*(th-a))
