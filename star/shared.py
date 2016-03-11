@@ -24,12 +24,9 @@ def calc_a_coef(problem, boundary, eval_phi0, M, m1):
     for m in range(M+1, m1+1):
         W[:, m-1] = W[:, m-1] / jv(m*nu, k*R)
 
-    result = np.linalg.lstsq(W, phi0_data)
-
-    a_coef = result[0]
-    rank = result[2]
+    a_coef, residuals, rank, s = np.linalg.lstsq(W, phi0_data)
 
     if rank != m1:
         print('\n!!!! Rank deficient !!!!\n')
 
-    return a_coef[:M]
+    return a_coef[:M], s

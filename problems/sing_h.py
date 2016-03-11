@@ -98,7 +98,7 @@ class H_SineRange(SingH):
 
 class H_Hat(SingH):
 
-    expected_known = False
+    expected_known = True
     m_max = 200
 
     def eval_phi0(self, th):
@@ -107,7 +107,7 @@ class H_Hat(SingH):
 
 class H_Parabola(SingH):
 
-    expected_known = False
+    expected_known = True
     m_max = 200
 
     def eval_phi0(self, th):

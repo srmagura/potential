@@ -15,6 +15,8 @@ import ps.coordinator
 
 from star.shared import calc_a_coef
 
+import json
+
 parser = argparse.ArgumentParser()
 
 io_util.add_arguments(parser, ('problem', 'boundary'))
@@ -29,10 +31,10 @@ boundary_cls = problems.boundary.boundaries[args.boundary]
 m1 = 140
 M = 7
 
-print('k =', problem.k)
-print('m1 =', m1)
-print('m_max =', problem.m_max)
-print()
+output = {}
+output['m1'] = m1
+output['M'] = M
+output['results'] = []
 
 k = problem.k
 R = problem.R
@@ -42,20 +44,21 @@ nu = problem.nu
 def eval_phi0(r, th):
     return problem.eval_expected_polar(r, th)
 
-def print_array(array):
-    assert np.max(np.abs(scipy.imag(array))) == 0
-    for x in scipy.real(array):
-        print('{:.15e}'.format(x), end=' ')
-    print()
-
 def test_many():
     bet = boundary_cls.bet0
-    for i in range(200):
+
+    for i in range(3):
+        result_dict = {}
+        result_dict['bet'] = bet
+
         boundary = boundary_cls(R, bet)
+        a_coef, singular_vals = calc_a_coef(problem, boundary, eval_phi0, M, m1)
 
-        a_coef = calc_a_coef(problem, boundary, eval_phi0, M, m1)
-        print_array([bet] + list(np.abs(a_coef - problem.fft_a_coef[:7])))
+        result_dict['a_error'] = list(np.abs(a_coef - problem.fft_a_coef[:7]))
+        result_dict['singular_vals'] = list(singular_vals)
+        bet *= .95
 
-        bet *= 8/9
+        output['results'].append(result_dict)
 
 test_many()
+print(json.dumps(output))

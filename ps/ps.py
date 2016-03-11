@@ -175,13 +175,10 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Setup and solve the variational formulation.
         """
         Q1, rhs = self.get_var()
-        #print(np.vdot(Q1[:,0], Q1[:,1]))
         C, d = self.get_var_constraints()
 
         self.c1 = opt.constrained_lstsq(Q1, rhs, C, d)
 
-        #np.set_printoptions(precision=15)
-        #print(self.c1)
 
     def get_singular_part(self):
         n_nodes = 1024
@@ -224,7 +221,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         """
 
         if not hasattr(self, 'B_desc'):
-            n_basis_tuple = self.problem.get_n_basis(N=self.N,
+            n_basis_tuple = self.problem.get_n_basis(self.N,
                 scheme_order=self.scheme_order)
             self.setup_basis(*n_basis_tuple)
 
@@ -245,13 +242,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         ext = self.extend_boundary()
         regular_part = self.get_potential(ext) + self.ap_sol_f
 
-        u_act = regular_part + self.get_singular_part()
+        u_act = regular_part #+ self.get_singular_part()
 
         error = self.eval_error(u_act)
 
         result = Result()
         result.error = error
         result.u_act = u_act
-
 
         return result

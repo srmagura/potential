@@ -146,7 +146,7 @@ class PsDebug:
             for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\
                     (self.c0[JJ] *
-                    self.eval_dn_B_arg(0, JJ, r, th)).real
+                    self.eval_dn_B_arg(0, JJ, r, th, sid)).real
 
         print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
 
@@ -203,10 +203,12 @@ class PsDebug:
                 exact_data[l] = self.problem.eval_d_u_outwards(p['arg'], p['sid']).real
 
             r, th = domain_util.cart_to_polar(p['x'], p['y'])
+            sid = domain_util.get_sid(self.a, th)
+
             for JJ in range(len(self.B_desc)):
                 expansion_data[l] +=\
                     (self.c1[JJ] *
-                    self.eval_dn_B_arg(0, JJ, r, th)).real
+                    self.eval_dn_B_arg(0, JJ, r, th, sid)).real
 
         if do_exact:
             error = np.max(np.abs(exact_data - expansion_data))

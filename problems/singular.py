@@ -13,6 +13,7 @@ class SingularProblem(PizzaProblem):
     A problem that should be treated as if it has a singularity.
     """
 
+    regularize = True
     m_max = 100
 
     def __init__(self, **kwargs):
@@ -81,8 +82,6 @@ class SingularProblem(PizzaProblem):
     def eval_bc(self, arg, sid):
         """
         Evaluate extended boundary condition.
-
-        If self.var_compute_a is false, subtract the sines.
         """
         a = self.a
         nu = self.nu

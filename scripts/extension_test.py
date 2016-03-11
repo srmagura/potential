@@ -11,20 +11,22 @@ import numpy as np
 import argparse
 import itertools as it
 
+import ps.coordinator
+
 import problems
-import interface
+import io_util
 
 setypes = None
 
-def set_setypes(ps):
+def set_setypes(solver):
     if args.s is None:
         return
 
     global setypes
     etype_dict = {
-        'l': ps.etypes['left'],
-        's': ps.etypes['standard'],
-        'r': ps.etypes['right'],
+        'l': solver.etypes['left'],
+        's': solver.etypes['standard'],
+        'r': solver.etypes['right'],
     }
 
     setypes = set()
@@ -36,22 +38,25 @@ def set_setypes(ps):
     return setypes
 
 def run_test(N):
-    ps = problem.get_solver(N)
+    coord = ps.coordinator.Coordinator(problem, N,
+        {'scheme_order': 4}
+    )
+    solver = coord.solver
 
     if setypes is None:
-        set_setypes(ps)
+        set_setypes(solver)
 
     n_basis_tuple = problem.get_n_basis(N)
-    ps.setup_basis(*n_basis_tuple)
+    solver.setup_basis(*n_basis_tuple)
 
-    ps.calc_c0()
-    ps.calc_c1_exact()
+    solver.calc_c0()
+    solver.calc_c1_exact()
 
-    mv_ext = ps.mv_extend_boundary()
+    mv_ext = solver.mv_extend_boundary()
     error = []
 
-    for node in ps.union_gamma:
-        r, th = ps.get_polar(*node)
+    for node in solver.union_gamma:
+        r, th = solver.get_polar(*node)
 
         for data in mv_ext[node]:
             if setypes is None or data['setype'] in setypes:
@@ -59,8 +64,8 @@ def run_test(N):
                 diff = abs(exp - data['value'])
                 error.append(diff)
 
-                if diff > 1e-1:
-                    print(r, th, diff)
+                #if diff > 1e-1:
+                #    print(r, th, diff)
 
     return np.max(np.abs(error))
 
@@ -70,7 +75,11 @@ prec_str = '{:.5}'
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    interface.add_arguments(parser, ('problem', 'N', 'c'))
+    io_util.add_arguments(parser, ('problem', 'N'))
+
+    parser.add_argument('-c', type=int, default=128,
+        help='run convergence test, up to the C x C grid. '
+        'Default is 128.')
 
     setype_choices = []
     for s, e in it.product('012', 'lsr'):

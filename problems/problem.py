@@ -54,21 +54,19 @@ class PizzaProblem(Problem):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def get_n_basis(self, **kwargs):
+    def get_n_basis(self, N, **kwargs):
         if hasattr(self, 'n_basis_dict'):
             n_basis_dict = self.n_basis_dict
         else:
             n_basis_dict = self.get_n_basis_dict(**kwargs)
 
-        N1 = kwargs['N']
-
-        # If N is not in n_basis_dict, choose go with the largest N that
+        # If N is not in n_basis_dict, go with the largest N that
         # is in n_basis_dict
         while True:
-            if N1 in n_basis_dict:
-                return n_basis_dict[N1]
+            if N in n_basis_dict:
+                return n_basis_dict[N]
             else:
-                N1 //= 2
+                N //= 2
 
     def get_n_basis_dict(self):
         """
