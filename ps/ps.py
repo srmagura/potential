@@ -7,7 +7,6 @@ from scipy.special import jv
 from solver import Solver, Result
 from linop import apply_B
 import fourier
-import opt
 
 from ps.basis import PsBasis
 from ps.grid import PsGrid
@@ -156,30 +155,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         return (Q1, rhs)
 
-    def get_var_constraints(self):
-        C = np.zeros((self.M, len(self.B_desc)))
-
-        J = 0
-        for JJ in self.segment_desc[0]['JJ_list']:
-            coef = fourier.arc_dst(self.a, lambda th:
-                self.eval_dn_B_arg(0, JJ, self.R, th, 0))
-
-            C[:, J] = coef[:self.M]
-            J += 1
-
-        d = np.zeros(self.M)
-        return (C, d)
-
     def solve_var(self):
         """
         Setup and solve the variational formulation.
         """
         Q1, rhs = self.get_var()
-        C, d = self.get_var_constraints()
+        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
-        self.c1 = opt.constrained_lstsq(Q1, rhs, C, d)
-
-
+    '''
     def get_singular_part(self):
         n_nodes = 1024
         th_data = np.linspace(self.a, 2*np.pi, n_nodes+2)[1:-1]
@@ -214,6 +197,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
                     np.sin(m*nu*(th-a)))
 
         return singular_part
+    '''
 
     def run(self):
         """
