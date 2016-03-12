@@ -69,6 +69,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
     def get_radius_point(self, sid, x, y):
         assert sid == 2
 
+        a = self.a
+
+        if a == np.pi/2:
+            return (0, y)
+
+        if a > .45*np.pi:
+            print('warning: a is close to pi/2')
+
         m = np.tan(self.a)
         x1 = (x/m + y)/(m + 1/m)
         y1 = m*x1
@@ -83,8 +91,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
     def signed_dist_to_radius(self, sid, x, y):
         unsigned = self.dist_to_radius(sid, x, y)
 
-        m = np.tan(self.a)
-        if y > m*x:
+        x1, y1 = self.get_radius_point(sid, x, y)
+        if x < x1:
             return -unsigned
         else:
             return unsigned
@@ -162,32 +170,14 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Q1, rhs = self.get_var()
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
-    '''
+
     def get_singular_part(self):
-        n_nodes = 1024
-        th_data = np.linspace(self.a, 2*np.pi, n_nodes+2)[1:-1]
-
-        singular_data = np.zeros(n_nodes, dtype=complex)
-        for i, th in zip(range(n_nodes), th_data):
-            regular_part = 0
-
-            for JJ in self.segment_desc[0]['JJ_list']:
-                regular_part += (self.c0[JJ] *
-                    self.eval_dn_B_arg(0, JJ, self.R, th, 0))
-
-            singular_data[i] = self.problem.eval_bc(th, 0) - regular_part
-
         k = self.k
         R = self.R
         a = self.a
         nu = self.nu
 
-        A = np.zeros((n_nodes, self.M))
-        for m in range(1, self.M+1):
-            for i, th in zip(range(n_nodes), th_data):
-                A[i, m-1] = jv(m*nu, k*R) * np.sin(m*nu*(th-a))
-
-        a_coef = np.linalg.lstsq(A, singular_data)[0]
+        a_coef = self.problem.b_to_a(self.b_coef)
 
         singular_part = np.zeros((self.N-1, self.N-1), dtype=complex)
         for i, j in self.global_Mplus:
@@ -197,7 +187,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
                     np.sin(m*nu*(th-a)))
 
         return singular_part
-    '''
+
 
     def run(self):
         """
@@ -226,7 +216,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         ext = self.extend_boundary()
         regular_part = self.get_potential(ext) + self.ap_sol_f
 
-        u_act = regular_part #+ self.get_singular_part()
+        u_act = regular_part + self.get_singular_part()
 
         error = self.eval_error(u_act)
 

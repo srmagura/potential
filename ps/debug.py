@@ -254,6 +254,25 @@ class PsDebug:
 
         return x_data, y_data
 
+    def plot_Mplus(self):
+        self.plot_Gamma()
+
+        colors = ('red', 'green', 'blue')
+        markers = ('o', 'x', '^')
+
+        for sid in range(3):
+            Mplus = self.all_Mplus[sid]
+            x_data, y_data = self.nodes_to_plottable(Mplus)
+
+            label_text = 'Mplus{}'.format(sid)
+            plt.plot(x_data, y_data, markers[sid], label=label_text,
+                mfc='none', mec=colors[sid], mew=1)
+
+        plt.xlim(-4,4)
+        plt.ylim(-4,4)
+        plt.legend(loc=3)
+        plt.show()
+
     def plot_gamma(self):
         self.plot_Gamma()
 

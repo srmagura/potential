@@ -35,14 +35,14 @@ class PsExtend:
                 return self.etypes['standard']
 
         elif sid == 2:
-            slope = -1/np.tan(a)
-            if y < slope*x:
+            x1, y1 = self.get_radius_point(2, x, y)
+            if y1 < 0:
                 return self.etypes['left']
-            elif y - R*np.sin(a) > slope*(x - R*np.cos(a)):
+            elif y1 > R*np.sin(a):
                 return self.etypes['right']
             else:
                 return self.etypes['standard']
-
+                
     def extend_from_radius(self, Y, xi0, xi1, d2_xi0_X,
         d2_xi1_X, d4_xi0_X):
 

@@ -28,20 +28,6 @@ class SmoothProblem(PizzaProblem):
         r, th = domain_util.arg_to_polar(self.R, self.a, arg, sid)
         return self.eval_expected_polar(r, th)
 
-
-class Smooth_H(SmoothProblem):
-
-    homogeneous = True
-
-    def eval_expected(self, x, y):
-        k = self.k
-
-        kx = .8*k
-        ky = .6*k
-
-        return np.sin(k*x)
-        #return np.exp(1j*(kx*x + ky*y))
-
     def eval_d_u_outwards(self, arg, sid):
         k = self.k
         a = self.a
@@ -49,7 +35,7 @@ class Smooth_H(SmoothProblem):
         r, th = domain_util.arg_to_polar(self.R, a, arg, sid)
         x, y = r*np.cos(th), r*np.sin(th)
 
-        grad = (k*np.cos(k*x), 0)
+        grad = self.get_grad(x, y)
 
         if sid == 0:
             normal = (np.cos(th), np.sin(th))
@@ -58,4 +44,37 @@ class Smooth_H(SmoothProblem):
         elif sid == 2:
             normal = (np.sin(a), -np.cos(a))
 
-        return np.vdot(grad, normal)
+        return np.dot(grad, normal)
+
+
+
+class SmoothH_Sine(SmoothProblem):
+
+    homogeneous = True
+
+    def eval_expected(self, x, y):
+        return np.sin(self.k*x)
+
+    def get_grad(self, x, y):
+        k = self.k
+        return (k*np.cos(k*x), 0)
+
+
+class SmoothH_E(SmoothProblem):
+
+    homogeneous = True
+
+    def eval_expected(self, x, y):
+        k = self.k
+
+        self.kx = kx = .8*k
+        self.ky = ky = .6*k
+
+        return np.exp(1j*(kx*x + ky*y))
+
+    def get_grad(self, x, y):
+        kx = self.kx
+        ky = self.ky
+
+        u = np.exp(1j*(kx*x + ky*y))
+        return (1j*kx*u, 1j*ky*u)

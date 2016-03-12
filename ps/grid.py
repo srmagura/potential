@@ -8,47 +8,38 @@ class PsGrid:
         R = self.R
         a = self.a
 
-        self.all_Mplus = {}
-        self.all_Mminus = {}
+        self.all_Mplus = {0: set(), 1: set(), 2: set()}
+        self.all_Mminus = {0: set(), 1: set(), 2: set()}
         self.all_gamma = {}
-
-        # Segments 1 and 2
-        for sid in (1, 2):
-            min_x = 0
-
-            if sid == 1:
-                max_x = R
-                slope = 0
-            elif sid == 2:
-                max_x = R*np.cos(a)
-                slope = np.tan(a)
-
-            self.all_Mplus[sid] = set()
-            self.all_Mminus[sid] = set()
-
-            for i, j in self.M0:
-                x, y = self.get_coord(i, j)
-
-                if min_x <= x and x <= max_x:
-                    if((sid == 1 and y <= slope*x) or
-                        (sid == 2 and y >= slope*x and not (x == 0 and y == 0))):
-                        self.all_Mplus[sid].add((i, j))
-                    else:
-                        self.all_Mminus[sid].add((i, j))
-
-        # Segment 0
-        self.all_Mplus[0] = set()
-        self.all_Mminus[0] = set()
 
         for i, j in self.M0:
             r, th = self.get_polar(i, j)
+            x, y = self.get_coord(i, j)
 
+            # Segment 0
             if th >= a:
                 if r <= self.R:
                     self.all_Mplus[0].add((i, j))
                 else:
                     self.all_Mminus[0].add((i, j))
 
+            # Segment 1
+            if 0 <= x and x <= R:
+                if y <= 0:
+                    if r <= R:
+                        self.all_Mplus[1].add((i, j))
+                else:
+                    self.all_Mminus[1].add((i, j))
+
+            # Segment 2
+            x1, y1 = self.get_radius_point(2, x, y)
+            dist = self.signed_dist_to_radius(2, x, y)
+            if 0 <= x1 and x1 <= R*np.cos(a):
+                if dist <= 0:
+                    if r <= R and y >= 0:
+                        self.all_Mplus[2].add((i, j))
+                else:
+                    self.all_Mminus[2].add((i, j))
 
         union_gamma_set = set()
 

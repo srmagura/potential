@@ -1,5 +1,7 @@
 import numpy as np
-from scipy.special import jv
+from scipy.special import jv, jvp
+
+import domain_util
 
 from .problem import PizzaProblem
 import problems.functions as functions
@@ -52,6 +54,27 @@ class SingH(SingularProblem):
             return self.eval_phi0(arg)
         else:
             return 0
+
+    def eval_d_u_outwards(self, arg, sid):
+        k = self.k
+        R = self.R
+        a = self.a
+        nu = self.nu
+
+        r, th = domain_util.arg_to_polar(R, a, arg, sid)
+
+        d_u = 0
+
+        for m in range(8, self.m_max+1):
+            ac = self.fft_a_coef[m-1]
+            if sid == 0:
+                d_u += ac * k * jvp(m*nu, k*r, 1) * np.sin(m*nu*(th-a))
+            elif sid == 1:
+                d_u += ac * jv(m*nu, k*r) * m * nu * np.cos(m*nu*(th-a))
+            elif sid == 2:
+                d_u += -ac * jv(m*nu, k*r) * m * nu * np.cos(m*nu*(th-a))
+
+        return d_u
 
 
 class H_Sine(SingH):

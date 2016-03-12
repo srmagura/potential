@@ -61,6 +61,7 @@ def run_test(N):
         for data in mv_ext[node]:
             if setypes is None or data['setype'] in setypes:
                 exp = problem.eval_expected_polar(r, th)
+
                 diff = abs(exp - data['value'])
                 error.append(diff)
 

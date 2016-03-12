@@ -124,16 +124,16 @@ class PsBasis:
         a = self.a
         nu = self.nu
 
-        b_coef = fourier.arc_dst(a,
+        self.b_coef = fourier.arc_dst(a,
             lambda th: self.problem.eval_bc(th, 0)
-        )
+        )[:self.M]
 
         def eval_phi0_reg(th):
             phi0 = self.problem.eval_bc(th, 0)
 
             if self.problem.regularize:
                 for m in range(1, self.M+1):
-                    phi0 -= b_coef[m-1] * np.sin(m*nu*(th-a))
+                    phi0 -= self.b_coef[m-1] * np.sin(m*nu*(th-a))
 
             return phi0
 
