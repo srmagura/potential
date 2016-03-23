@@ -28,10 +28,12 @@ boundary_cls = problems.boundary.boundaries[args.boundary]
 #coord = ps.coordinator.Coordinator(problem, None, {'boundary': boundary})
 #coord.print_info()
 
-m1 = 140
+m1 = 138
 M = 7
 
 output = {}
+output['k'] = problem.k
+output['a'] = problem.a
 output['m1'] = m1
 output['M'] = M
 output['results'] = []
@@ -45,9 +47,10 @@ def eval_phi0(r, th):
     return problem.eval_expected_polar(r, th)
 
 def test_many():
-    bet = boundary_cls.bet0
+    #bet = boundary_cls.bet0
+    bet = .5
 
-    for i in range(3):
+    for i in range(200):
         result_dict = {}
         result_dict['bet'] = bet
 

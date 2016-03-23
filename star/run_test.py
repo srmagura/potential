@@ -23,8 +23,8 @@ args = parser.parse_args()
 problem = problems.problem_dict[args.problem]()
 boundary = problems.boundary.boundaries[args.boundary](problem.R)
 
-coord = ps.coordinator.Coordinator(problem, None, {'boundary': boundary})
-coord.print_info()
+#coord = ps.coordinator.Coordinator(problem, None, {'boundary': boundary})
+#coord.print_info()
 
 M = 7
 
@@ -72,11 +72,13 @@ def test_many(m1_list=None):
     min_error7 = float('inf')
 
     if m1_list is None:
-        m1_list = range(10, 200, 2)
+        m1_list = range(10, 250, 2)
 
     for m1 in m1_list:
         print('\n----- m1={} -----'.format(m1))
-        a_coef = calc_a_coef(problem, boundary, eval_phi0, M, m1)
+
+        a_coef, singular_vals = calc_a_coef(problem, boundary,
+            eval_phi0, M, m1)
         error7 = np.max(np.abs(a_coef - problem.fft_a_coef[:7]))
 
         print('a_coef=')
