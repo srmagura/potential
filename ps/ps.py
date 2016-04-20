@@ -7,6 +7,7 @@ from scipy.special import jv
 from solver import Solver, Result
 from linop import apply_B
 import fourier
+import singular_util
 
 from ps.basis import PsBasis
 from ps.grid import PsGrid
@@ -177,7 +178,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         a = self.a
         nu = self.nu
 
-        a_coef = self.problem.b_to_a(self.b_coef)
+        a_coef = singular_util.b_to_a(self.b_coef, k, R, nu)
 
         singular_part = np.zeros((self.N-1, self.N-1), dtype=complex)
         for i, j in self.global_Mplus:

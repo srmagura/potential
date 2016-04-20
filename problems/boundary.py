@@ -6,6 +6,8 @@ from .problem import PizzaProblem
 
 class Boundary:
 
+    additional_params = {}
+
     def __init__(self, R, bet=None):
         self.R = R
 
@@ -20,6 +22,8 @@ class Boundary:
             'a': PizzaProblem.a,
             'nu': PizzaProblem.nu
         }
+
+        self.subs_dict.update(self.additional_params)
 
         self.parse_r_expr_str()
 
@@ -53,11 +57,15 @@ class Sine7(Boundary):
     r_expr_str = 'R + bet*sin(7*nu*(th-a))'
     bet0 = 0.15
 
+
+cubic_C = (91*np.sqrt(91) - 136)*np.pi**3/2916
+
 class Cubic(Boundary):
     name = 'cubic'
-    # TODO
-    r_expr_str = 'R + .025*(th-a)*(th-pi)*(th-2*pi)'
+    r_expr_str = 'R + bet/C*(th-a)*(th-pi)*(th-2*pi)'
 
+    bet0 = 0.025*cubic_C
+    additional_params = {'C': cubic_C}
 
 _boundary_cls = (Arc, OuterSine, InnerSine, Sine7, Cubic)
 

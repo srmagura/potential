@@ -124,6 +124,8 @@ class PsBasis:
         a = self.a
         nu = self.nu
 
+        # Way to get b_coef, even if the problem doesn't have fft_b_coef
+        # defined
         self.b_coef = fourier.arc_dst(a,
             lambda th: self.problem.eval_bc(th, 0)
         )[:self.M]

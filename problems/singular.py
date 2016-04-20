@@ -5,6 +5,7 @@ from scipy.special import jv
 
 import domain_util
 import fourier
+import singular_util
 
 from .problem import PizzaProblem
 
@@ -23,40 +24,16 @@ class SingularProblem(PizzaProblem):
             self.eval_u_asympt = lambda r, th: 0
 
         if 'to_dst' in kwargs:
-            to_dst = kwargs.pop('to_dst')
+            self.outside_bdata = kwargs.pop('to_dst')
         else:
-            to_dst = lambda th: 0
+            self.outside_bdata = lambda th: 0
 
-        self.fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
-        self.fft_a_coef = self.b_to_a(self.fft_b_coef)
+        self.fft_b_coef = fourier.arc_dst(self.a, self.outside_bdata)[:self.m_max]
+        self.fft_a_coef = singular_util.b_to_a(self.fft_b_coef, self.k,
+            self.R, self.nu)
 
-    def a_to_b(self, a_coef):
-        return self._convert_ab(a_coef, 'a')
-
-    def b_to_a(self, b_coef):
-        return self._convert_ab(b_coef, 'b')
-
-    def _convert_ab(self, coef, coef_type):
-        assert coef_type in ('a', 'b')
-
-        k = self.k
-        R = self.R
-        nu = self.nu
-
-        other_coef = np.zeros(len(coef), dtype=complex)
-
-        for m in range(1, len(coef)+1):
-            factor = jv(m*nu, k*R)
-            if coef_type == 'b':
-                factor = 1/factor
-
-            other_coef[m-1] = coef[m-1] * factor
-
-        return other_coef
-
+    # deprecate?
     def print_b(self):
-        self.calc_fft_coef(self.m_max)
-
         np.set_printoptions(precision=4)
 
         n = 5

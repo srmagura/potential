@@ -97,6 +97,8 @@ class H_Sine(SingH):
 
 class H_Sine8(H_Sine):
 
+    m_max = 9
+
     def __init__(self, **kwargs):
         super().__init__(m=8)
 
