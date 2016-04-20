@@ -35,3 +35,24 @@ def add_arguments(parser, args):
         parser.add_argument('-r', action='store_true',
             help='show relative convergence, even if the problem\'s '
             'true solution is known')
+
+
+def print_options(options, N_list=None):
+    print('[{} {} {}]'.format(options['problem'].name,
+        options['boundary'].name,
+        datetime.date.today()))
+
+    if 'scheme_order' in options:
+        print('Scheme order: {}'.format(options['scheme_order']))
+
+    print('k = ' + prec_str.format(float(self.problem.k)))
+    print('R = ' + prec_str.format(self.problem.R))
+    print('a = ' + prec_str.format(self.problem.a))
+    print('AD_len = ' + prec_str.format(self.problem.AD_len))
+    print()
+
+    if hasattr(self.problem, 'get_n_basis') and N_list:
+        print('[Basis sets]')
+        for N in N_list:
+            print('{}: {}'.format(N, self.problem.get_n_basis(N)))
+        print()

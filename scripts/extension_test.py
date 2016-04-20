@@ -38,8 +38,8 @@ def set_setypes(solver):
     return setypes
 
 def run_test(N):
-    coord = ps.coordinator.Coordinator(problem, N,
-        {'scheme_order': 4}
+    coord = ps.coordinator.Coordinator(problem,
+        {'N': N, 'scheme_order': 4}
     )
     solver = coord.solver
 
@@ -76,7 +76,7 @@ prec_str = '{:.5}'
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    io_util.add_arguments(parser, ('problem', 'N'))
+    io_util.add_arguments(parser, ('problem', 'boundary', 'N'))
 
     parser.add_argument('-c', type=int, default=128,
         help='run convergence test, up to the C x C grid. '
