@@ -25,17 +25,19 @@ def get_M(scheme_order):
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
 
-    def __init__(self, problem, N, options={}, **kwargs):
-        self.a = problem.a
-        self.nu = problem.nu
-        self.R = problem.R
-        super().__init__(problem, N, options, **kwargs)
+    def __init__(self, options):
+        super().__init__(options)
+        self.a = self.problem.a
+        self.nu = self.problem.nu
+        self.R = self.problem.R
+
+        self.boundary = options['boundary']
 
         self.scheme_order = options['scheme_order']
         self.extension_order = self.scheme_order + 1
 
         self.M = get_M(self.scheme_order)
-        problem.M = self.M
+        self.problem.M = self.M
 
         # For optimizing basis set sizes
         if 'n_circle' in options:

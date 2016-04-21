@@ -11,7 +11,7 @@ import numpy as np
 import argparse
 import itertools as it
 
-import ps.coordinator
+import ps.ps
 
 import problems
 import io_util
@@ -38,10 +38,8 @@ def set_setypes(solver):
     return setypes
 
 def run_test(N):
-    coord = ps.coordinator.Coordinator(problem,
-        {'N': N, 'scheme_order': 4}
-    )
-    solver = coord.solver
+    options['N'] = N
+    solver = ps.ps.PizzaSolver(options)
 
     if setypes is None:
         set_setypes(solver)
@@ -93,6 +91,16 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     problem = problems.problem_dict[args.problem]()
+    boundary = problems.boundary.boundaries[args.boundary](problem.R)
+
+    options = {
+        'problem': problem,
+        'boundary': boundary,
+        'scheme_order': 4
+    }
+
+    meta_options = {'procedure_name': 'extension_test'}
+    io_util.print_options(options, meta_options)
 
     N = args.N
     prev_error = None

@@ -41,11 +41,12 @@ class Boundary:
 class Arc(Boundary):
     name = 'arc'
     r_expr_str = 'R'
+    bet0 = 0
 
 class OuterSine(Boundary):
     name = 'outer-sine'
     r_expr_str = 'R + bet*sin(nu*(th-a))'
-    bet0 = 0.5
+    bet0 = 0.25
 
 class InnerSine(Boundary):
     name = 'inner-sine'

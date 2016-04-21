@@ -1,7 +1,9 @@
-prec_str = '{:.5}'
+import datetime
 
 import problems
 import problems.boundary
+
+prec_str = '{:.5}'
 
 def add_arguments(parser, args):
     if 'problem' in args:
@@ -37,22 +39,31 @@ def add_arguments(parser, args):
             'true solution is known')
 
 
-def print_options(options, N_list=None):
-    print('[{} {} {}]'.format(options['problem'].name,
+def print_options(options, meta_options={}):
+    problem = options['problem']
+
+    heading_items = [
+        problem.name,
         options['boundary'].name,
-        datetime.date.today()))
+        str(datetime.date.today())
+    ]
+
+    if 'procedure_name' in meta_options:
+        heading_items.insert(0, meta_options['procedure_name'])
+
+    print('[{}]'.format(' '.join(heading_items)))
 
     if 'scheme_order' in options:
         print('Scheme order: {}'.format(options['scheme_order']))
 
-    print('k = ' + prec_str.format(float(self.problem.k)))
-    print('R = ' + prec_str.format(self.problem.R))
-    print('a = ' + prec_str.format(self.problem.a))
-    print('AD_len = ' + prec_str.format(self.problem.AD_len))
+    print('k = ' + prec_str.format(float(problem.k)))
+    print('R = ' + prec_str.format(problem.R))
+    print('a = ' + prec_str.format(problem.a))
+    print('AD_len = ' + prec_str.format(problem.AD_len))
     print()
 
-    if hasattr(self.problem, 'get_n_basis') and N_list:
+    if hasattr(problem, 'get_n_basis') and 'N_list' in meta_options:
         print('[Basis sets]')
         for N in N_list:
-            print('{}: {}'.format(N, self.problem.get_n_basis(N)))
+            print('{}: {}'.format(N, problem.get_n_basis(N)))
         print()

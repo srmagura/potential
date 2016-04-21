@@ -5,7 +5,7 @@ class PsGrid:
     def ps_construct_grids(self, scheme_order):
         self.construct_grids(scheme_order)
 
-        R = self.R
+        R = self.R # remove eventually?
         a = self.a
 
         self.all_Mplus = {0: set(), 1: set(), 2: set()}
@@ -16,9 +16,11 @@ class PsGrid:
             r, th = self.get_polar(i, j)
             x, y = self.get_coord(i, j)
 
+            boundary_r = self.boundary.eval_r(th)
+
             # Segment 0
             if th >= a:
-                if r <= self.R:
+                if r <= boundary_r:
                     self.all_Mplus[0].add((i, j))
                 else:
                     self.all_Mminus[0].add((i, j))
@@ -26,7 +28,7 @@ class PsGrid:
             # Segment 1
             if 0 <= x and x <= R:
                 if y <= 0:
-                    if r <= R:
+                    if r <= boundary_r:
                         self.all_Mplus[1].add((i, j))
                 else:
                     self.all_Mminus[1].add((i, j))
@@ -36,7 +38,7 @@ class PsGrid:
             dist = self.signed_dist_to_radius(2, x, y)
             if 0 <= x1 and x1 <= R*np.cos(a):
                 if dist <= 0:
-                    if r <= R and y >= 0:
+                    if r <= boundary_r and y >= 0:
                         self.all_Mplus[2].add((i, j))
                 else:
                     self.all_Mminus[2].add((i, j))

@@ -42,12 +42,13 @@ class PsDebug:
         if sid == 0:
             for i in range(len(arg_data)):
                 th = arg_data[i]
+                r = self.boundary.eval_r(th)
 
                 points.append({
                     'arg': th,
-                    'x': R * np.cos(th),
-                    'y': R * np.sin(th),
-                    's': R * (th - a),
+                    'x': r * np.cos(th),
+                    'y': r * np.sin(th),
+                    's': R * (th - a), # rough approximation of arclength
                     'sid': sid
                 })
 
@@ -225,87 +226,6 @@ class PsDebug:
         plt.title('c1')
         plt.xlabel('Arclength s')
         plt.ylabel('Reconstructed Neumann data')
-        plt.show()
-
-    def plot_Gamma(self):
-        sample = self.get_boundary_sample()
-
-        n = len(sample) + 1
-        Gamma_x_data = np.zeros(n)
-        Gamma_y_data = np.zeros(n)
-
-        for l in range(n):
-            p = sample[l % len(sample)]
-            Gamma_x_data[l] = p['x']
-            Gamma_y_data[l] = p['y']
-
-        plt.plot(Gamma_x_data, Gamma_y_data, color='black')
-
-    def nodes_to_plottable(self, nodes):
-        x_data = np.zeros(len(nodes))
-        y_data = np.zeros(len(nodes))
-
-        l = 0
-        for i, j in nodes:
-            x, y = self.get_coord(i, j)
-            x_data[l] = x
-            y_data[l] = y
-            l += 1
-
-        return x_data, y_data
-
-    def plot_Mplus(self):
-        self.plot_Gamma()
-
-        colors = ('red', 'green', 'blue')
-        markers = ('o', 'x', '^')
-
-        for sid in range(3):
-            Mplus = self.all_Mplus[sid]
-            x_data, y_data = self.nodes_to_plottable(Mplus)
-
-            label_text = 'Mplus{}'.format(sid)
-            plt.plot(x_data, y_data, markers[sid], label=label_text,
-                mfc='none', mec=colors[sid], mew=1)
-
-        plt.xlim(-4,4)
-        plt.ylim(-4,4)
-        plt.legend(loc=3)
-        plt.show()
-
-    def plot_gamma(self):
-        self.plot_Gamma()
-
-        colors = ('red', 'green', 'blue')
-        markers = ('o', 'x', '^')
-
-        for sid in range(3):
-            gamma = self.all_gamma[sid]
-            x_data, y_data = self.nodes_to_plottable(gamma)
-
-            label_text = '$\gamma_{}$'.format(sid)
-            plt.plot(x_data, y_data, markers[sid], label=label_text,
-                mfc='none', mec=colors[sid], mew=1)
-
-        #plt.title('$\gamma$ nodes')
-        plt.xlim(-4,4)
-        plt.ylim(-4,4)
-        plt.legend(loc=3)
-        plt.show()
-
-    # Old?
-    def plot_union_gamma(self):
-        self.plot_Gamma()
-
-        for sid in range(3):
-            gamma = self.all_gamma[sid]
-            x_data, y_data = self.nodes_to_plottable(gamma)
-
-            plt.plot(x_data, y_data, 'o', mfc='purple')
-
-        plt.title('union_gamma')
-        plt.xlim(-3,3)
-        plt.ylim(-3,3)
         plt.show()
 
     def color_plot(self, u=None):

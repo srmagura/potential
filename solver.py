@@ -21,12 +21,12 @@ class Solver(SolverExtend):
     Solvers for specific domains and cases should extend this class.
     """
 
-    def __init__(self, problem, N, options={}):
+    def __init__(self, options):
         super().__init__()
-        self.problem = problem
+        self.problem = options['problem']
         self.k = self.problem.k
-        self.AD_len = problem.AD_len
-        self.N = N
+        self.AD_len = self.problem.AD_len
+        self.N = options['N']
 
     def get_coord(self, i, j):
         """
