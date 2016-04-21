@@ -22,6 +22,8 @@ class SolverExtend:
 
         derivs = []
         derivs.append(xi0)
+
+        '''
         derivs.append(xi1)
         derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
 
@@ -34,6 +36,7 @@ class SolverExtend:
                 6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
                 (3*k**2 / R**2 - k**4) * xi0 +
                 2 * k**2 / R * xi1)
+        '''
 
         v = 0
         for l in range(len(derivs)):

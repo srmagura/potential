@@ -32,9 +32,9 @@ def wrap_func(a, arg, sid):
 
     return (arg, sid)
 
-def arg_to_polar(R, a, arg, sid):
+def arg_to_polar(boundary, a, arg, sid):
     if sid == 0:
-        return (R, arg)
+        return (boundary.eval_r(arg), arg)
     elif sid == 1:
         if arg >= 0:
             return (arg, 2*np.pi)

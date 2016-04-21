@@ -48,6 +48,7 @@ def run_test(N):
     solver.setup_basis(*n_basis_tuple)
 
     solver.calc_c0()
+    #solver.c0_test()
     solver.calc_c1_exact()
 
     mv_ext = solver.mv_extend_boundary()
@@ -92,6 +93,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     problem = problems.problem_dict[args.problem]()
     boundary = problems.boundary.boundaries[args.boundary](problem.R)
+    problem.boundary = boundary
 
     options = {
         'problem': problem,
