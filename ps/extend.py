@@ -42,7 +42,7 @@ class PsExtend:
                 return self.etypes['right']
             else:
                 return self.etypes['standard']
-                
+
     def extend_from_radius(self, Y, xi0, xi1, d2_xi0_X,
         d2_xi1_X, d4_xi0_X):
 
@@ -63,7 +63,7 @@ class PsExtend:
 
         return v
 
-    def ext_calc_certain_xi_derivs(self, i, j, param_r, param_th, options):
+    def ext_calc_certain_xi_derivs(self, param_r, param_th, options):
         if 'sid' in options:
             sid = options['sid']
         else:
@@ -179,7 +179,7 @@ class PsExtend:
 
         if taylor_sid == 0:
             r, th = self.get_polar(i, j)
-            v = self.extend_circle(r, *ext_params)
+            v = self.extend_arbitrary(r, *ext_params)
 
             elen = abs(delta_arg)*self.R + abs(r - self.R)
 
@@ -201,9 +201,10 @@ class PsExtend:
 
     def do_extend_0_standard(self, i, j, options):
         options['sid'] = 0
-        r, th = self.get_polar(i, j)
-        derivs = self.ext_calc_certain_xi_derivs(i, j, self.R, th, options)
-        return {'elen': abs(self.R - r), 'value': self.extend_circle(r, *derivs)}
+        n, th = self.get_boundary_coord(i, j)
+        derivs = self.ext_calc_certain_xi_derivs(self.R, th, options)
+
+        return {'elen': abs(n), 'value': self.extend_arbitrary(n, *derivs)}
 
     def do_extend_0_left(self, i, j, options):
         x, y = self.get_coord(i, j)
@@ -231,7 +232,7 @@ class PsExtend:
     def do_extend_1_standard(self, i, j, options):
         x, y = self.get_coord(i, j)
         options['sid'] = 1
-        derivs = self.ext_calc_certain_xi_derivs(i, j, x, 2*np.pi, options)
+        derivs = self.ext_calc_certain_xi_derivs(x, 2*np.pi, options)
 
         return {'elen': abs(y), 'value': self.extend_from_radius(y, *derivs)}
 
@@ -266,7 +267,7 @@ class PsExtend:
 
         param_r = cart_to_polar(x0, y0)[0]
         options['sid'] = 2
-        derivs = self.ext_calc_certain_xi_derivs(i, j, param_r, self.a, options)
+        derivs = self.ext_calc_certain_xi_derivs(param_r, self.a, options)
 
         Y = self.signed_dist_to_radius(2, x, y)
         return {'elen': abs(Y), 'value': self.extend_from_radius(Y, *derivs)}

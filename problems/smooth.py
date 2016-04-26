@@ -38,7 +38,7 @@ class SmoothProblem(PizzaProblem):
         grad = self.get_grad(x, y)
 
         if sid == 0:
-            normal = (np.cos(th), np.sin(th))
+            normal = self.boundary.eval_normal(th)
         elif sid == 1:
             normal = (0, 1)
         elif sid == 2:

@@ -6,15 +6,15 @@ class SolverExtend:
     Extension procedures available to all Solvers.
     """
 
-    def extend_circle(self, r, xi0, xi1,
+    def extend_arbitrary(self, n, xi0, xi1,
         d2_xi0_th, d2_xi1_th, d4_xi0_th):
         """
-        Homogeneous extension from the circle/arc.
+        Homogeneous extension from the outside boundary.
 
         Computes a Taylor expansion with five derivatives. See [R1]
         section 4.2.
 
-        r -- polar radius of the point we are extending to
+        n -- signed distance from boundary
         """
 
         R = self.R
@@ -23,9 +23,9 @@ class SolverExtend:
         derivs = []
         derivs.append(xi0)
 
-        '''
+
         derivs.append(xi1)
-        derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
+        '''derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
 
         if self.extension_order > 3:
             derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
@@ -40,7 +40,7 @@ class SolverExtend:
 
         v = 0
         for l in range(len(derivs)):
-            v += derivs[l] / math.factorial(l) * (r - R)**l
+            v += derivs[l] / math.factorial(l) * n**l
 
         return v
 

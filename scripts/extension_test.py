@@ -48,7 +48,6 @@ def run_test(N):
     solver.setup_basis(*n_basis_tuple)
 
     solver.calc_c0()
-    #solver.c0_test()
     solver.calc_c1_exact()
 
     mv_ext = solver.mv_extend_boundary()

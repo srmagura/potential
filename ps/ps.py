@@ -100,6 +100,17 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         else:
             return unsigned
 
+    def get_boundary_coord(self, i, j):
+        """
+        Coordinates relative to the outside boundary.
+        """
+        print('--------')
+        r1, th1 = self.get_polar(i, j)
+        print('th1=', th1)
+        n, th0 = self.problem.boundary.get_boundary_coord(r1, th1)
+        print('th1-th0=', th1-th0)
+        return (n, th0)
+
     def get_potential(self, ext):
         """
         Compute the difference potential of `ext`.
