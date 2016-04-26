@@ -31,31 +31,52 @@ class Boundary:
 
     def do_algebra(self):
         """
-        Parse the string for the r expression. Calculate d_x_th, d_y_th
-        using the formula from:
-        http://tutorial.math.lamar.edu/Classes/CalcII/PolarTangents.aspx
+        Setup sympy expressions and lambda functions for r, components of
+        tangent vector, curvature, .etc.
         """
-
-        # Setup expression for evaluating r
+        # Get expression for r
         R, th, a, nu, bet = sympy.symbols('R th a nu bet')
-        self.r_expr = r_expr = sympy.sympify(self.r_expr_str)
+        self.r_expr = r = sympy.sympify(self.r_expr_str)
 
-        self.r_lambda = sympy.lambdify(th, r_expr.subs(self.subs_dict))
+        self.eval_r = sympy.lambdify(th, r.subs(self.subs_dict))
 
-        # Setup expressions for finding tangent vector
-        d_r_th_expr = sympy.diff(r_expr, th)
-        d_x_th_expr = d_r_th_expr * sympy.cos(th) - r_expr * sympy.sin(th)
-        d_y_th_expr = d_r_th_expr * sympy.sin(th) + r_expr * sympy.cos(th)
+        ## Setup expressions for finding tangent vector
+        # Calculate d_x_th, d_y_th using the formula from:
+        # http://tutorial.math.lamar.edu/Classes/CalcII/PolarTangents.aspx
+        d_r_th = sympy.diff(r, th)
+        d_x_th = d_r_th * sympy.cos(th) - r * sympy.sin(th)
+        d_y_th = d_r_th * sympy.sin(th) + r * sympy.cos(th)
 
-        self.d_x_th_lambda = sympy.lambdify(th,
-            d_x_th_expr.subs(self.subs_dict))
-        self.d_y_th_lambda = sympy.lambdify(th,
-            d_y_th_expr.subs(self.subs_dict))
+        self.d_x_th_lambda = sympy.lambdify(th, d_x_th.subs(self.subs_dict))
+        self.d_y_th_lambda = sympy.lambdify(th, d_y_th.subs(self.subs_dict))
 
+        ## Get expression for curvature
+        d2_x_th = sympy.diff(d_x_th, th)
+        d2_y_th = sympy.diff(d_y_th, th)
 
+        d_r_th = sympy.diff(r, th)
 
-    def eval_r(self, th):
-        return self.r_lambda(th)
+        # Arclength in polar coordinates:
+        # http://tutorial.math.lamar.edu/Classes/CalcII/PolarArcLength.aspx
+        d_th_s = 1 / sympy.sqrt(r**2 + d_r_th**2)
+        self.eval_d_th_s = sympy.lambdify(th, d_th_s.subs(self.subs_dict))
+
+        # Norm of tangent vector
+        tangent_norm = sympy.sqrt(d_x_th**2 + d_y_th**2)
+        f = d_th_s / tangent_norm
+
+        # Assuming curvature is always negative. Then
+        # curvature = - norm(derivative of tangent vector wrt arclength)
+        curv = -sympy.sqrt((f * d2_x_th)**2 + (f * d2_y_th)**2)
+        self.eval_curv = sympy.lambdify(th, curv.subs(self.subs_dict))
+
+        ## Lame coefficient Hs
+        n = sympy.symbols('n')
+        Hs = 1 - n*curv
+        d_Hs_s = sympy.diff(Hs, th) * d_th_s
+
+        self.eval_Hs = sympy.lambdify(th, Hs.subs(self.subs_dict))
+        self.eval_d_Hs_s = sympy.lambdify(th, d_Hs_s.subs(self.subs_dict))
 
     def eval_tangent(self, th):
         tangent = np.array((self.d_x_th_lambda(th), self.d_y_th_lambda(th)))
@@ -66,6 +87,10 @@ class Boundary:
         return np.array((tangent[1], -tangent[0]))
 
     def get_boundary_coord(self, r1, th1, extended):
+        """
+        Given a point with polar coordinates (r1, th1), find its
+        coordinates (n, th) with respect to the boundary.
+        """
         x1 = r1 * np.cos(th1)
         y1 = r1 * np.sin(th1)
 
@@ -129,7 +154,7 @@ class InnerSine(Boundary):
 class Sine7(Boundary):
     name = 'sine7'
     r_expr_str = 'R + bet*sin(7*nu*(th-a))'
-    bet0 = 0.15
+    bet0 = 0.05
 
 
 cubic_C = (91*np.sqrt(91) - 136)*np.pi**3/2916

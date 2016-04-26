@@ -6,8 +6,7 @@ class SolverExtend:
     Extension procedures available to all Solvers.
     """
 
-    def extend_arbitrary(self, n, xi0, xi1,
-        d2_xi0_th, d2_xi1_th, d4_xi0_th):
+    def extend_arbitrary(self, values):
         """
         Homogeneous extension from the outside boundary.
 
@@ -16,6 +15,18 @@ class SolverExtend:
 
         n -- signed distance from boundary
         """
+        n = values['n']
+
+        xi0 = values['xi0']
+        xi1 = values['xi1']
+        d2_xi0_th = values['d2_xi0_arg']
+        d2_xi1_th = values['d2_xi1_arg']
+        d4_xi0_th = values['d4_xi0_arg']
+
+        curv = values['curv']
+        Hs = values['Hs']
+        d_Hs_s = values['d_Hs_s']
+        d_th_s = values['d_th_s']
 
         R = self.R
         k = self.k

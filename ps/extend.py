@@ -43,8 +43,12 @@ class PsExtend:
             else:
                 return self.etypes['standard']
 
-    def extend_from_radius(self, Y, xi0, xi1, d2_xi0_X,
-        d2_xi1_X, d4_xi0_X):
+    def extend_from_radius(self, Y, derivs):
+        xi0 = derivs['xi0']
+        xi1 = derivs['xi1']
+        d2_xi0_X = derivs['d2_xi0_arg']
+        d2_xi1_X = derivs['d2_xi1_arg']
+        d4_xi0_X = derivs['d4_xi0_arg']
 
         k = self.k
 
@@ -100,7 +104,11 @@ class PsExtend:
                 if self.extension_order > 3:
                     d2_xi1_arg += c1[JJ] * d2_B_arg
 
-        return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
+        return {
+            'xi0': xi0, 'xi1': xi1,
+            'd2_xi0_arg': d2_xi0_arg, 'd2_xi1_arg': d2_xi1_arg,
+            'd4_xi0_arg': d4_xi0_arg
+        }
 
     def ext_calc_B_derivs(self, JJ, arg, sid):
         derivs = np.zeros(self.taylor_n_derivs, dtype=complex)
@@ -171,17 +179,23 @@ class PsExtend:
                 fac = delta_arg**ll / math.factorial(ll)
                 d4_xi0_arg += derivs0[l] * fac
 
-        ext_params = (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
+        values = {
+            'xi0': xi0, 'xi1': xi1,
+            'd2_xi0_arg': d2_xi0_arg, 'd2_xi1_arg': d2_xi1_arg,
+            'd4_xi0_arg': d4_xi0_arg
+        }
 
         if taylor_sid == 0:
             r, th = self.get_polar(i, j)
-            v = self.extend_arbitrary(r, *ext_params)
+            # FIXME
+            v = 0
+            #v = self.extend_arbitrary(r, *ext_params)
 
             elen = abs(delta_arg)*self.R + abs(r - self.R)
 
         elif taylor_sid in {1, 2}:
             Y = options['Y']
-            v = self.extend_from_radius(Y, *ext_params)
+            v = self.extend_from_radius(Y, values)
 
             elen = abs(delta_arg) + abs(Y)
 
@@ -200,9 +214,15 @@ class PsExtend:
     def do_extend_0_standard(self, i, j, options):
         options['sid'] = 0
         n, th = self.get_boundary_coord(i, j, extended=False)
-        derivs = self.ext_calc_certain_xi_derivs(th, options)
+        values = self.ext_calc_certain_xi_derivs(th, options)
 
-        return {'elen': abs(n), 'value': self.extend_arbitrary(n, *derivs)}
+        values['n'] = n
+        values['curv'] = self.boundary.eval_curv(th)
+        values['Hs'] = self.boundary.eval_Hs(th)
+        values['d_Hs_s'] = self.boundary.eval_d_Hs_s(th)
+        values['d_th_s'] = self.boundary.eval_d_th_s(th)
+
+        return {'elen': abs(n), 'value': self.extend_arbitrary(values)}
 
     def do_extend_0_left(self, i, j, options):
         x, y = self.get_coord(i, j)
@@ -232,7 +252,7 @@ class PsExtend:
         options['sid'] = 1
         derivs = self.ext_calc_certain_xi_derivs(x, options)
 
-        return {'elen': abs(y), 'value': self.extend_from_radius(y, *derivs)}
+        return {'elen': abs(y), 'value': self.extend_from_radius(y, derivs)}
 
     def do_extend_1_left(self, i, j, options):
         x, y = self.get_coord(i, j)
@@ -266,7 +286,7 @@ class PsExtend:
         derivs = self.ext_calc_certain_xi_derivs(param_r, options)
 
         Y = self.signed_dist_to_radius(2, x, y)
-        return {'elen': abs(Y), 'value': self.extend_from_radius(Y, *derivs)}
+        return {'elen': abs(Y), 'value': self.extend_from_radius(Y, derivs)}
 
     def do_extend_2_left(self, i, j, options):
         x, y = self.get_coord(i, j)
