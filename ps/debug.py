@@ -19,11 +19,11 @@ class PsDebug:
     I.e. there's no core functionality in this module.
     """
 
-    def get_boundary_sample(self, n=100):
+    def get_boundary_sample(self, n=100, extended=False):
         ep = 1e-5
         th_data = np.linspace(self.a+ep, 2*np.pi-ep, 3*n)
 
-        r_data = np.arange(ep, self.R, self.R/n)
+        r_data = np.linspace(ep, self.R, n)
 
         points = []
         arg_datas = (th_data, r_data[::-1], r_data)
@@ -31,7 +31,16 @@ class PsDebug:
             points.extend(
                 self.get_boundary_sample_by_sid(sid, arg_datas[sid]))
 
-        return points
+        if not extended:
+            return points
+
+        dth = self.a/4
+        extension1 = self.get_boundary_sample_by_sid(0,
+            np.linspace(2*np.pi, 2*np.pi+dth, n))
+        extension2 = self.get_boundary_sample_by_sid(0,
+            np.linspace(self.a-dth, self.a, n))
+
+        return (points, extension1, extension2)
 
     def get_boundary_sample_by_sid(self, sid, arg_data):
         a = self.a

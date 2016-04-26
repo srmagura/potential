@@ -201,7 +201,7 @@ class PsExtend:
 
     def do_extend_0_standard(self, i, j, options):
         options['sid'] = 0
-        n, th = self.get_boundary_coord(i, j)
+        n, th = self.get_boundary_coord(i, j, extended=False)
         derivs = self.ext_calc_certain_xi_derivs(self.R, th, options)
 
         return {'elen': abs(n), 'value': self.extend_arbitrary(n, *derivs)}

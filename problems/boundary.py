@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import minimize_scalar
 import sympy
 
 from .problem import PizzaProblem
@@ -64,54 +65,50 @@ class Boundary:
         tangent = self.eval_tangent(th)
         return np.array((tangent[1], -tangent[0]))
 
-    def get_boundary_coord(self, r1, th1):
+    def get_boundary_coord(self, r1, th1, extended):
         x1 = r1 * np.cos(th1)
         y1 = r1 * np.sin(th1)
-        # Solve the boundary coordinate inverse problem
-        #x1, y1 = sympy.symbols('x1 y1')
 
-        th = sympy.symbols('th')
-        x0 = self.r_expr * sympy.cos(th)
-        y0 = self.r_expr * sympy.sin(th)
+        def eval_distance2(th):
+            # (Squared) distance between (x0, y0) and (x1, y1)
 
-        # (Squared) distance between (x0, y0) and (x1, y1)
-        d = (x1 - x0)**2 + (y1 - y0)**2
-        d = d.subs(self.subs_dict)
+            r = self.eval_r(th)
+            x0 = r * np.cos(th)
+            y0 = r * np.sin(th)
 
-        # Solve d'(th) = 0 to get minimum
-        # TODO: What if d'(th) is never 0?
-        d_d_th = sympy.diff(d, th)
-        th0_list = sympy.solve(d_d_th, th)
-        assert len(th0_list) != 0
-        print('th0_list=', th0_list)
+            return (x1 - x0)**2 + (y1 - y0)**2
 
-        min_th_diff = float('inf')
+        # Optimization bound
+        diff = np.pi/6
+        bounds = [th1 - diff, th1 + diff]
 
-        for i in range(len(th0_list)):
-            _th0 = float(th0_list[i])
+        if not extended:
+            # Restrict optimization to the non-extended boundary
+            if bounds[0] < self.a:
+                bounds[0] = self.a
+            if bounds[1] > 2*np.pi:
+                bounds[1] = 2*np.pi
 
-            # Add 2pi to get _th0 in the interval [a, 2pi]
-            if _th0 < self.a/2:
-                _th0 += 2*np.pi
+        result = minimize_scalar(eval_distance2,
+            bounds=bounds,
+            method='bounded'
+        )
 
-            # Choice the _th0 that is closest to th1
-            if abs(th1 - _th0) < min_th_diff:
-                th0 = _th0
-                min_th_diff = abs(th1 - _th0)
+        th0 = result.x
 
         # Unsigned
-        n = np.sqrt(float(d.subs(th, th0)))
+        n = np.sqrt(eval_distance2(th0))
 
         # Find the sign
-        x0 = float(x0.subs(self.subs_dict).subs(th, th0))
-        y0 = float(y0.subs(self.subs_dict).subs(th, th0))
+        r = self.eval_r(th0)
+        x0 = r * np.cos(th0)
+        y0 = r * np.sin(th0)
+
         normal = self.eval_normal(th0)
 
         if np.dot(normal, [x1-x0, y1-y0]) < 0:
             n = -n
 
-        print('n=',n)
-        print('th0=', th0)
         return n, th0
 
 class Arc(Boundary):

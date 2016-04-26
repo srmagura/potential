@@ -14,18 +14,22 @@ import problems
 from problems.smooth import SmoothH_Sine
 
 def plot_Gamma():
-    sample = solver.get_boundary_sample()
+    linestyle = '-'
+    color = 'black'
 
-    n = len(sample) + 1
-    Gamma_x_data = np.zeros(n)
-    Gamma_y_data = np.zeros(n)
+    for sample in solver.get_boundary_sample(extended=True):
+        n = len(sample)
+        Gamma_x_data = np.zeros(n)
+        Gamma_y_data = np.zeros(n)
 
-    for l in range(n):
-        p = sample[l % len(sample)]
-        Gamma_x_data[l] = p['x']
-        Gamma_y_data[l] = p['y']
+        for l in range(n):
+            p = sample[l]
+            Gamma_x_data[l] = p['x']
+            Gamma_y_data[l] = p['y']
 
-    plt.plot(Gamma_x_data, Gamma_y_data, color='black')
+        plt.plot(Gamma_x_data, Gamma_y_data, linestyle, color=color)
+        linestyle = '-'
+        color = '#d580ff'
 
     # Plot auxiliary domain
     s = solver.AD_len/2
