@@ -25,9 +25,9 @@ class SolverExtend:
 
 
         derivs.append(xi1)
-        '''derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
+        #derivs.append(-xi1 / R - d2_xi0_th / R**2 - k**2 * xi0)
 
-        if self.extension_order > 3:
+        '''if self.extension_order > 3:
             derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
                 d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
 

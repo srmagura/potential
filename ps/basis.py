@@ -72,16 +72,8 @@ class PsBasis:
         span, center = self.get_span_center(sid)
         return 1 / span
 
-    def eval_dn_B_arg(self, n, JJ, r, th, sid):
-        # TODO: change (r, th, sid) to (arg, sid)?
-        desc = self.B_desc[JJ]
-
-        if desc['sid'] == sid:
-            if sid == 0:
-                arg = th
-            elif sid == 1 or sid == 2:
-                arg = r
-
+    def eval_dn_B_arg(self, n, JJ, arg, sid):
+        if self.B_desc[JJ]['sid'] == sid:
             t = self.eval_g_inv(sid, arg)
 
             J = self.B_desc[JJ]['J']

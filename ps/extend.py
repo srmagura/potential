@@ -63,11 +63,8 @@ class PsExtend:
 
         return v
 
-    def ext_calc_certain_xi_derivs(self, param_r, param_th, options):
-        if 'sid' in options:
-            sid = options['sid']
-        else:
-            sid = None
+    def ext_calc_certain_xi_derivs(self, arg, options):
+        sid = options['sid']
 
         if 'JJ' in options:
             JJ_list = (options['JJ'],)
@@ -84,11 +81,11 @@ class PsExtend:
         d4_xi0_arg = 0
 
         for JJ in JJ_list:
-            B = self.eval_dn_B_arg(0, JJ, param_r, param_th, sid)
-            d2_B_arg = self.eval_dn_B_arg(2, JJ, param_r, param_th, sid)
+            B = self.eval_dn_B_arg(0, JJ, arg, sid)
+            d2_B_arg = self.eval_dn_B_arg(2, JJ, arg, sid)
 
             if self.extension_order > 3:
-                d4_B_arg = self.eval_dn_B_arg(4, JJ, param_r, param_th, sid)
+                d4_B_arg = self.eval_dn_B_arg(4, JJ, arg, sid)
 
             if index is None or index == 0:
                 xi0 += c0[JJ] * B
@@ -105,15 +102,15 @@ class PsExtend:
 
         return (xi0, xi1, d2_xi0_arg, d2_xi1_arg, d4_xi0_arg)
 
-    def ext_calc_B_derivs(self, JJ, sid, param_r, param_th):
+    def ext_calc_B_derivs(self, JJ, arg, sid):
         derivs = np.zeros(self.taylor_n_derivs, dtype=complex)
 
         for n in range(self.taylor_n_derivs):
-            derivs[n] = self.eval_dn_B_arg(n, JJ, param_r, param_th, sid)
+            derivs[n] = self.eval_dn_B_arg(n, JJ, arg, sid)
 
         return derivs
 
-    def ext_calc_xi_derivs(self, param_r, param_th, sid, index):
+    def ext_calc_xi_derivs(self, arg, sid, index):
         derivs = np.zeros(self.taylor_n_derivs, dtype=complex)
 
         if index == 0:
@@ -123,7 +120,7 @@ class PsExtend:
 
         for n in range(self.taylor_n_derivs):
             for JJ in range(len(self.B_desc)):
-                dn_B_arg = self.eval_dn_B_arg(n, JJ, param_r, param_th, sid)
+                dn_B_arg = self.eval_dn_B_arg(n, JJ, arg, sid)
                 derivs[n] += c[JJ] * dn_B_arg
 
         return derivs
@@ -132,8 +129,7 @@ class PsExtend:
         taylor_sid = options['taylor_sid']
         delta_arg = options['delta_arg']
 
-        param_r = options['param_r']
-        param_th = options['param_th']
+        arg = options['arg']
 
         if 'JJ' in options:
             JJ = options['JJ']
@@ -146,12 +142,12 @@ class PsExtend:
         derivs1 = np.zeros(self.taylor_n_derivs)
 
         if JJ is None:
-            derivs0 = self.ext_calc_xi_derivs(param_r, param_th, taylor_sid, 0)
-            derivs1 = self.ext_calc_xi_derivs(param_r, param_th, taylor_sid, 1)
+            derivs0 = self.ext_calc_xi_derivs(arg, taylor_sid, 0)
+            derivs1 = self.ext_calc_xi_derivs(arg, taylor_sid, 1)
         elif index == 0:
-            derivs0 = self.ext_calc_B_derivs(JJ, taylor_sid, param_r, param_th)
+            derivs0 = self.ext_calc_B_derivs(JJ, arg, taylor_sid)
         elif index == 1:
-            derivs1 = self.ext_calc_B_derivs(JJ, taylor_sid, param_r, param_th)
+            derivs1 = self.ext_calc_B_derivs(JJ, arg, taylor_sid)
 
         xi0 = xi1 = 0
         d2_xi0_arg = d2_xi1_arg = 0
@@ -192,17 +188,19 @@ class PsExtend:
         return {'elen': elen, 'value': v}
 
     def do_extend_12_left(self, i, j, options):
-        options['param_r'] = 0
+        # r = 0
+        options['arg'] = 0
         return self.do_extend_taylor(i, j, options)
 
     def do_extend_12_right(self, i, j, options):
-        options['param_r'] = self.R
+        # r = R
+        options['arg'] = self.R
         return self.do_extend_taylor(i, j, options)
 
     def do_extend_0_standard(self, i, j, options):
         options['sid'] = 0
         n, th = self.get_boundary_coord(i, j, extended=False)
-        derivs = self.ext_calc_certain_xi_derivs(self.R, th, options)
+        derivs = self.ext_calc_certain_xi_derivs(th, options)
 
         return {'elen': abs(n), 'value': self.extend_arbitrary(n, *derivs)}
 
@@ -213,10 +211,10 @@ class PsExtend:
         options.update({
             'taylor_sid': 0,
             'delta_arg': th - self.a,
-            'param_th': self.a
+            'arg': self.a
         })
 
-        return self.do_extend_12_right(i, j, options)
+        return self.do_extend_taylor(i, j, options)
 
     def do_extend_0_right(self, i, j, options):
         r, th = self.get_polar(i, j)
@@ -224,15 +222,15 @@ class PsExtend:
         options.update({
             'taylor_sid': 0,
             'delta_arg': th,
-            'param_th': 2*np.pi
+            'arg': 2*np.pi
         })
 
-        return self.do_extend_12_right(i, j, options)
+        return self.do_extend_taylor(i, j, options)
 
     def do_extend_1_standard(self, i, j, options):
         x, y = self.get_coord(i, j)
         options['sid'] = 1
-        derivs = self.ext_calc_certain_xi_derivs(x, 2*np.pi, options)
+        derivs = self.ext_calc_certain_xi_derivs(x, options)
 
         return {'elen': abs(y), 'value': self.extend_from_radius(y, *derivs)}
 
@@ -243,7 +241,6 @@ class PsExtend:
         options.update({
             'taylor_sid': 1,
             'delta_arg': x,
-            'param_th': 2*np.pi,
             'Y': y,
         })
 
@@ -255,7 +252,6 @@ class PsExtend:
         options.update({
             'taylor_sid': 1,
             'delta_arg': x - self.R,
-            'param_th': 2*np.pi,
             'Y': y
         })
 
@@ -267,7 +263,7 @@ class PsExtend:
 
         param_r = cart_to_polar(x0, y0)[0]
         options['sid'] = 2
-        derivs = self.ext_calc_certain_xi_derivs(param_r, self.a, options)
+        derivs = self.ext_calc_certain_xi_derivs(param_r, options)
 
         Y = self.signed_dist_to_radius(2, x, y)
         return {'elen': abs(Y), 'value': self.extend_from_radius(Y, *derivs)}
@@ -279,7 +275,6 @@ class PsExtend:
         options.update({
             'taylor_sid': 2,
             'delta_arg': -np.sqrt(x1**2 + y1**2),
-            'param_th': 2*np.pi,
             'Y': self.signed_dist_to_radius(2, x, y)
         })
 
@@ -298,7 +293,6 @@ class PsExtend:
         options.update({
             'taylor_sid': 2,
             'delta_arg': np.sqrt((x1 - x0)**2 + (y1 - y0)**2),
-            'param_th': a,
             'Y': self.signed_dist_to_radius(2, x, y)
         })
 
