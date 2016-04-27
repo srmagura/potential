@@ -86,7 +86,7 @@ class Boundary:
         tangent = self.eval_tangent(th)
         return np.array((tangent[1], -tangent[0]))
 
-    def get_boundary_coord(self, r1, th1, extended):
+    def get_boundary_coord(self, r1, th1):
         """
         Given a point with polar coordinates (r1, th1), find its
         coordinates (n, th) with respect to the boundary.
@@ -107,12 +107,10 @@ class Boundary:
         diff = np.pi/6
         bounds = [th1 - diff, th1 + diff]
 
-        if not extended:
-            # Restrict optimization to the non-extended boundary
-            if bounds[0] < self.a:
-                bounds[0] = self.a
-            if bounds[1] > 2*np.pi:
-                bounds[1] = 2*np.pi
+        if bounds[0] < self.a/4:
+            bounds[0] = self.a/4
+        if bounds[1] > 2*np.pi + self.a/4:
+            bounds[1] = 2*np.pi + self.a/4
 
         result = minimize_scalar(eval_distance2,
             bounds=bounds,

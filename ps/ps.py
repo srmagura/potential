@@ -46,6 +46,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.ps_construct_grids(self.scheme_order)
 
+        self.build_boundary_coord_cache()
+
         apsolver = fourier.APSolver(self.N, self.scheme_order, self.AD_len, self.k)
         self.apply_L = lambda v: apsolver.apply_L(v)
         self.solve_ap = lambda Bf: apsolver.solve(Bf)
@@ -101,15 +103,22 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         else:
             return unsigned
 
-    def get_boundary_coord(self, i, j, extended):
+    def get_boundary_coord(self, i, j):
         """
-        Coordinates relative to the outside boundary.
+        Get the coordinates (n, th) relative to the outside boundary.
         """
         r1, th1 = self.get_polar(i, j)
-        #print('-------')
-        #print('th1=', th1)
-        n, th0 = self.problem.boundary.get_boundary_coord(r1, th1, extended)
-        return (n, th0)
+        return self.boundary.get_boundary_coord(r1, th1)
+
+    def build_boundary_coord_cache(self):
+        """
+        Build a cache of the boundary coordinates of each node in
+        all_gama[0].
+        """
+        self.boundary_coord_cache = {}
+        for i, j in self.all_gamma[0]:
+            self.boundary_coord_cache[(i, j)] = self.get_boundary_coord(i, j)
+
 
     def get_potential(self, ext):
         """

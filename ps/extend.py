@@ -16,10 +16,11 @@ class PsExtend:
         R = self.R
 
         x, y = self.get_coord(i, j)
-        r, th = self.get_polar(i, j)
 
         if sid == 0:
-            if th < a/2:
+            n, th = self.boundary_coord_cache[(i, j)]
+
+            if th > 2*np.pi:
                 return self.etypes['right']
             elif th < a:
                 return self.etypes['left']
@@ -213,7 +214,7 @@ class PsExtend:
 
     def do_extend_0_standard(self, i, j, options):
         options['sid'] = 0
-        n, th = self.get_boundary_coord(i, j, extended=False)
+        n, th = self.boundary_coord_cache[(i, j)]
         values = self.ext_calc_certain_xi_derivs(th, options)
 
         values['n'] = n
