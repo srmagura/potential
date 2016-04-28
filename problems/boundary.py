@@ -73,10 +73,12 @@ class Boundary:
         ## Lame coefficient Hs
         n = sympy.symbols('n')
         Hs = 1 - n*curv
-        d_Hs_s = sympy.diff(Hs, th) * d_th_s
 
-        self.eval_Hs = sympy.lambdify(th, Hs.subs(self.subs_dict))
-        self.eval_d_Hs_s = sympy.lambdify(th, d_Hs_s.subs(self.subs_dict))
+        # Derivative of 1/Hs wrt s
+        d_Hs1_s = sympy.diff(1/Hs, th) * d_th_s
+
+        self.eval_Hs = sympy.lambdify((n, th), Hs.subs(self.subs_dict))
+        self.eval_d_Hs1_s = sympy.lambdify((n, th), d_Hs1_s.subs(self.subs_dict))
 
     def eval_tangent(self, th):
         tangent = np.array((self.d_x_th_lambda(th), self.d_y_th_lambda(th)))
@@ -103,18 +105,19 @@ class Boundary:
 
             return (x1 - x0)**2 + (y1 - y0)**2
 
-        # Optimization bound
+        # Optimization bounds
         diff = np.pi/6
         bounds = [th1 - diff, th1 + diff]
 
-        if bounds[0] < self.a/4:
-            bounds[0] = self.a/4
-        if bounds[1] > 2*np.pi + self.a/4:
-            bounds[1] = 2*np.pi + self.a/4
+        if bounds[0] < self.a/2:
+            bounds[0] = self.a/2
+        if bounds[1] > 2*np.pi + self.a/2:
+            bounds[1] = 2*np.pi + self.a/2
 
         result = minimize_scalar(eval_distance2,
             bounds=bounds,
-            method='bounded'
+            method='bounded',
+            options={'xatol': 1e-15}
         )
 
         th0 = result.x

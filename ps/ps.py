@@ -70,7 +70,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
     def is_interior(self, i, j):
         r, th = self.get_polar(i, j)
         rb = self.boundary.eval_r(th)
-        return r <= rb and th >= self.a
+        return r <= rb and th >= self.a and th <= 2*np.pi
 
     def get_radius_point(self, sid, x, y):
         assert sid == 2
@@ -102,6 +102,13 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             return -unsigned
         else:
             return unsigned
+
+    def get_polar(self, i, j):
+        r, th = super().get_polar(i, j)
+        if th < self.a/2:
+            th += 2*np.pi
+
+        return r, th
 
     def get_boundary_coord(self, i, j):
         """

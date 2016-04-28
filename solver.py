@@ -12,13 +12,10 @@ class Result:
 
 class Solver(SolverExtend):
     """
-    A generic class representing a difference potentials problem.
+    A generic solver for a difference potentials problem.
 
-    This class doesn't make any assumptions about the shape of the domain
-    (except that it is 2D). It only contains functionality that is
-    expected to be relevant for all solvers.
-
-    Solvers for specific domains and cases should extend this class.
+    The functionality in this class is expected to apply to a wider
+    range of problems/domains than just the pizza domain.
     """
 
     def __init__(self, options):

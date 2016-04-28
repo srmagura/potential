@@ -68,48 +68,47 @@ class PsExtend:
 
         return v
 
-    def ext_calc_certain_xi_derivs(self, arg, options):
+    def ext_calc_xi_derivs(self, deriv_types, arg, options):
+        """
+        Calculate derivatives of xi0 and xi1.
+
+        deriv_types -- iterable of 2-tuples of the form
+            (order, index) where order is an integer >= 0 that
+            indicates which derivative to take, and index=0,1
+            specifies xi0 or xi1
+        arg -- location on the boundary where derivative is evaluated
+
+        Returns a dictionary containing all of the requested derivatives.
+        """
         sid = options['sid']
 
         if 'JJ' in options:
             JJ_list = (options['JJ'],)
-            c0 = c1 = {options['JJ']: 1}
-            index = options['index']
+            _c ={options['JJ']: 1}
+            c = [_c, _c]
+            index = options['index'] # FIXME ??
         else:
             JJ_list = range(len(self.B_desc))
-            c0 = self.c0
-            c1 = self.c1
-            index = None
+            c = [self.c0, self.c1]
 
-        xi0 = xi1 = 0
-        d2_xi0_arg = d2_xi1_arg = 0
-        d4_xi0_arg = 0
+        derivs = {}
 
-        for JJ in JJ_list:
-            B = self.eval_dn_B_arg(0, JJ, arg, sid)
-            d2_B_arg = self.eval_dn_B_arg(2, JJ, arg, sid)
+        for (order, index) in deriv_types:
+            deriv = 0
+            for JJ in range(len(self.B_desc)):
+                dn_B_arg = self.eval_dn_B_arg(order, JJ, arg, sid)
+                deriv += c[index][JJ] * dn_B_arg
 
-            if self.extension_order > 3:
-                d4_B_arg = self.eval_dn_B_arg(4, JJ, arg, sid)
+            if order == 0:
+                name = 'xi{}'.format(index)
+            elif order == 1:
+                name = 'd_xi{}_arg'.format(index)
+            else:
+                name = 'd{}_xi{}_arg'.format(order, index)
 
-            if index is None or index == 0:
-                xi0 += c0[JJ] * B
-                d2_xi0_arg += c0[JJ] * d2_B_arg
+            derivs[name] = deriv
 
-                if self.extension_order > 3:
-                    d4_xi0_arg += c0[JJ] * d4_B_arg
-
-            if index is None or index == 1:
-                xi1 += c1[JJ] * B
-
-                if self.extension_order > 3:
-                    d2_xi1_arg += c1[JJ] * d2_B_arg
-
-        return {
-            'xi0': xi0, 'xi1': xi1,
-            'd2_xi0_arg': d2_xi0_arg, 'd2_xi1_arg': d2_xi1_arg,
-            'd4_xi0_arg': d4_xi0_arg
-        }
+        return derivs
 
     def ext_calc_B_derivs(self, JJ, arg, sid):
         derivs = np.zeros(self.taylor_n_derivs, dtype=complex)
@@ -119,7 +118,8 @@ class PsExtend:
 
         return derivs
 
-    def ext_calc_xi_derivs(self, arg, sid, index):
+    # TODO get rid of
+    def ext_calc_xi_derivs_OLD(self, arg, sid, index):
         derivs = np.zeros(self.taylor_n_derivs, dtype=complex)
 
         if index == 0:
@@ -151,8 +151,8 @@ class PsExtend:
         derivs1 = np.zeros(self.taylor_n_derivs)
 
         if JJ is None:
-            derivs0 = self.ext_calc_xi_derivs(arg, taylor_sid, 0)
-            derivs1 = self.ext_calc_xi_derivs(arg, taylor_sid, 1)
+            derivs0 = self.ext_calc_xi_derivs_OLD(arg, taylor_sid, 0)
+            derivs1 = self.ext_calc_xi_derivs_OLD(arg, taylor_sid, 1)
         elif index == 0:
             derivs0 = self.ext_calc_B_derivs(JJ, arg, taylor_sid)
         elif index == 1:
@@ -215,12 +215,17 @@ class PsExtend:
     def do_extend_0_standard(self, i, j, options):
         options['sid'] = 0
         n, th = self.boundary_coord_cache[(i, j)]
-        values = self.ext_calc_certain_xi_derivs(th, options)
+
+        deriv_types = (
+            (0, 0), (0, 1), (1, 0), (2, 0), (2, 1), (4, 0),
+        )
+
+        values = self.ext_calc_xi_derivs(deriv_types, th, options)
 
         values['n'] = n
         values['curv'] = self.boundary.eval_curv(th)
-        values['Hs'] = self.boundary.eval_Hs(th)
-        values['d_Hs_s'] = self.boundary.eval_d_Hs_s(th)
+        values['Hs'] = self.boundary.eval_Hs(n, th)
+        values['d_Hs1_s'] = self.boundary.eval_d_Hs1_s(n, th)
         values['d_th_s'] = self.boundary.eval_d_th_s(th)
 
         return {'elen': abs(n), 'value': self.extend_arbitrary(values)}
@@ -251,7 +256,11 @@ class PsExtend:
     def do_extend_1_standard(self, i, j, options):
         x, y = self.get_coord(i, j)
         options['sid'] = 1
-        derivs = self.ext_calc_certain_xi_derivs(x, options)
+
+        deriv_types = (
+            (0, 0), (0, 1), (1, 0), (2, 0), (2, 1), (4, 0),
+        )
+        derivs = self.ext_calc_xi_derivs(deriv_types, x, options)
 
         return {'elen': abs(y), 'value': self.extend_from_radius(y, derivs)}
 
@@ -284,7 +293,11 @@ class PsExtend:
 
         param_r = cart_to_polar(x0, y0)[0]
         options['sid'] = 2
-        derivs = self.ext_calc_certain_xi_derivs(param_r, options)
+
+        deriv_types = (
+            (0, 0), (0, 1), (1, 0), (2, 0), (2, 1), (4, 0),
+        )
+        derivs = self.ext_calc_xi_derivs(deriv_types, param_r, options)
 
         Y = self.signed_dist_to_radius(2, x, y)
         return {'elen': abs(Y), 'value': self.extend_from_radius(Y, derivs)}

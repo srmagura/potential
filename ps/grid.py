@@ -19,7 +19,7 @@ class PsGrid:
             boundary_r = self.boundary.eval_r(th)
 
             # Segment 0
-            if th >= a:
+            if th >= a and th <= 2*np.pi:
                 if r <= boundary_r:
                     self.all_Mplus[0].add((i, j))
                 else:
