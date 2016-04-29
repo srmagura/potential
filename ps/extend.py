@@ -2,6 +2,8 @@ import numpy as np
 from numpy import sin, cos
 import math
 
+import copy
+
 from domain_util import cart_to_polar
 from .multivalue import Multivalue
 
@@ -217,15 +219,13 @@ class PsExtend:
         n, th = self.boundary_coord_cache[(i, j)]
 
         deriv_types = (
-            (0, 0), (0, 1), (1, 0), (2, 0), (2, 1), (4, 0),
+            (0, 0), (0, 1), (2, 0), (2, 1), (4, 0),
         )
 
         values = self.ext_calc_xi_derivs(deriv_types, th, options)
 
         values['n'] = n
         values['curv'] = self.boundary.eval_curv(th)
-        values['Hs'] = self.boundary.eval_Hs(n, th)
-        values['d_Hs1_s'] = self.boundary.eval_d_Hs1_s(n, th)
         values['d_th_s'] = self.boundary.eval_d_th_s(th)
 
         return {'elen': abs(n), 'value': self.extend_arbitrary(values)}
@@ -348,6 +348,10 @@ class PsExtend:
             gamma = self.all_gamma[sid]
 
             for l in range(len(gamma)):
+                # Subroutines may modify options, so create a new copy
+                # of the original each time
+                _options = copy.copy(options)
+
                 i, j = gamma[l]
                 etype = self.get_etype(sid, i, j)
 
@@ -355,27 +359,27 @@ class PsExtend:
 
                 if sid == 0:
                     if etype == self.etypes['standard']:
-                        result = self.do_extend_0_standard(i, j, options)
+                        result = self.do_extend_0_standard(i, j, _options)
                     elif etype == self.etypes['left']:
-                        result = self.do_extend_0_left(i, j, options)
+                        result = self.do_extend_0_left(i, j, _options)
                     elif etype == self.etypes['right']:
-                        result = self.do_extend_0_right(i, j, options)
+                        result = self.do_extend_0_right(i, j, _options)
 
                 elif sid == 1:
                     if etype == self.etypes['standard']:
-                        result = self.do_extend_1_standard(i, j, options)
+                        result = self.do_extend_1_standard(i, j, _options)
                     elif etype == self.etypes['left']:
-                        result = self.do_extend_1_left(i, j, options)
+                        result = self.do_extend_1_left(i, j, _options)
                     elif etype == self.etypes['right']:
-                        result = self.do_extend_1_right(i, j, options)
+                        result = self.do_extend_1_right(i, j, _options)
 
                 elif sid == 2:
                     if etype == self.etypes['standard']:
-                        result = self.do_extend_2_standard(i, j, options)
+                        result = self.do_extend_2_standard(i, j, _options)
                     elif etype == self.etypes['left']:
-                        result = self.do_extend_2_left(i, j, options)
+                        result = self.do_extend_2_left(i, j, _options)
                     elif etype == self.etypes['right']:
-                        result = self.do_extend_2_right(i, j, options)
+                        result = self.do_extend_2_right(i, j, _options)
 
                 result['setype'] = (sid, etype)
                 mv_ext[(i, j)].append(result)

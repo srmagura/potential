@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.optimize import minimize_scalar
+from scipy.optimize import brentq
 import sympy
 
 from .problem import PizzaProblem
@@ -47,30 +47,24 @@ class Boundary:
         d_x_th = d_r_th * sympy.cos(th) - r * sympy.sin(th)
         d_y_th = d_r_th * sympy.sin(th) + r * sympy.cos(th)
 
-        self.d_x_th_lambda = sympy.lambdify(th, d_x_th.subs(self.subs_dict))
-        self.d_y_th_lambda = sympy.lambdify(th, d_y_th.subs(self.subs_dict))
+        self.eval_d_r_th = sympy.lambdify(th, d_r_th.subs(self.subs_dict))
+        self.eval_d_x_th = sympy.lambdify(th, d_x_th.subs(self.subs_dict))
+        self.eval_d_y_th = sympy.lambdify(th, d_y_th.subs(self.subs_dict))
 
-        ## Get expression for curvature
-        d2_x_th = sympy.diff(d_x_th, th)
-        d2_y_th = sympy.diff(d_y_th, th)
-
-        d_r_th = sympy.diff(r, th)
-
+        ## Derivative of polar angle th wrt arclength s
         # Arclength in polar coordinates:
         # http://tutorial.math.lamar.edu/Classes/CalcII/PolarArcLength.aspx
         d_th_s = 1 / sympy.sqrt(r**2 + d_r_th**2)
         self.eval_d_th_s = sympy.lambdify(th, d_th_s.subs(self.subs_dict))
 
-        # Norm of tangent vector
-        tangent_norm = sympy.sqrt(d_x_th**2 + d_y_th**2)
-        f = d_th_s / tangent_norm
+        ## Curvature
+        d_r_th = sympy.diff(r, th)
+        d2_r_th = sympy.diff(r, th, 2)
 
-        # Assuming curvature is always negative. Then
-        # curvature = - norm(derivative of tangent vector wrt arclength)
-        curv = -sympy.sqrt((f * d2_x_th)**2 + (f * d2_y_th)**2)
+        curv = - abs(r**2 + 2*d_r_th**2 - r*d2_r_th) / (r**2 + d_r_th**2)**(3/2)
         self.eval_curv = sympy.lambdify(th, curv.subs(self.subs_dict))
 
-        ## Lame coefficient Hs
+        ## Lame coefficient Hs (TODO delete?)
         n = sympy.symbols('n')
         Hs = 1 - n*curv
 
@@ -81,7 +75,7 @@ class Boundary:
         self.eval_d_Hs1_s = sympy.lambdify((n, th), d_Hs1_s.subs(self.subs_dict))
 
     def eval_tangent(self, th):
-        tangent = np.array((self.d_x_th_lambda(th), self.d_y_th_lambda(th)))
+        tangent = np.array((self.eval_d_x_th(th), self.eval_d_y_th(th)))
         return tangent / np.linalg.norm(tangent)
 
     def eval_normal(self, th):
@@ -96,42 +90,39 @@ class Boundary:
         x1 = r1 * np.cos(th1)
         y1 = r1 * np.sin(th1)
 
-        def eval_distance2(th):
-            # (Squared) distance between (x0, y0) and (x1, y1)
-
+        def eval_dist_deriv(th):
+            # Let d = distance between (x0, y0) and (x1, y1)
+            # This function returns the derivative of (1/2 d**2) wrt th
             r = self.eval_r(th)
+            dr = self.eval_d_r_th(th)
+
             x0 = r * np.cos(th)
             y0 = r * np.sin(th)
 
-            return (x1 - x0)**2 + (y1 - y0)**2
+            return ((x1 - x0) * (-dr*np.cos(th) + r*np.sin(th)) +
+                (y1 - y0) * (-dr*np.sin(th) - r*np.cos(th)))
 
         # Optimization bounds
         diff = np.pi/6
-        bounds = [th1 - diff, th1 + diff]
 
-        if bounds[0] < self.a/2:
-            bounds[0] = self.a/2
-        if bounds[1] > 2*np.pi + self.a/2:
-            bounds[1] = 2*np.pi + self.a/2
+        lbound = th1 - diff
+        if lbound < self.a/2:
+            lbound = self.a/2
 
-        result = minimize_scalar(eval_distance2,
-            bounds=bounds,
-            method='bounded',
-            options={'xatol': 1e-15}
-        )
+        ubound = th1 + diff
+        if ubound > 2*np.pi + self.a/2:
+            ubound = 2*np.pi + self.a/2
 
-        th0 = result.x
+        th0 = brentq(eval_dist_deriv, lbound, ubound, xtol=1e-16)
 
-        # Unsigned
-        n = np.sqrt(eval_distance2(th0))
-
-        # Find the sign
+        # Get (absolute value of) n
         r = self.eval_r(th0)
         x0 = r * np.cos(th0)
         y0 = r * np.sin(th0)
+        n = np.sqrt((x1-x0)**2 + (y1-y0)**2)
 
+        # Find the sign
         normal = self.eval_normal(th0)
-
         if np.dot(normal, [x1-x0, y1-y0]) < 0:
             n = -n
 

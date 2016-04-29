@@ -19,25 +19,22 @@ class SolverExtend:
 
         xi0 = values['xi0']
         xi1 = values['xi1']
-        d_xi0_th = values['d_xi0_arg']
+        #d_xi0_th = values['d_xi0_arg']
         d2_xi0_th = values['d2_xi0_arg']
         d2_xi1_th = values['d2_xi1_arg']
         d4_xi0_th = values['d4_xi0_arg']
 
         curv = values['curv']
-        Hs = values['Hs']
-        d_Hs1_s = values['d_Hs1_s']
         d_th_s = values['d_th_s']
 
         R = self.R
-        kt = Hs * self.k
+        k = self.k
 
         derivs = []
         derivs.append(xi0)
 
         derivs.append(xi1)
-        derivs.append(-kt**2 * xi0 - d_Hs1_s * d_xi0_th * d_th_s
-            - 1/Hs * d2_xi0_th * d_th_s**2 + curv * xi1)
+        derivs.append(-k**2 * xi0 + curv * xi1 - d2_xi0_th * d_th_s**2)
 
         '''if self.extension_order > 3:
             derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
