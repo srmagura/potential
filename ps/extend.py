@@ -57,29 +57,6 @@ class PsExtend:
         }
 
         return self.extend_arbitrary(new_values)
-        '''
-        xi0 = derivs['xi0']
-        xi1 = derivs['xi1']
-        d2_xi0_X = derivs['d2_xi0_arg']
-        d2_xi1_X = derivs['d2_xi1_arg']
-        d4_xi0_X = derivs['d4_xi0_arg']
-
-        k = self.k
-
-        derivs = []
-        derivs.append(xi0)
-        derivs.append(xi1)
-        derivs.append(-(d2_xi0_X + k**2 * xi0))
-
-        if self.extension_order > 3:
-            derivs.append(-(d2_xi1_X + k**2 * xi1))
-            derivs.append(d4_xi0_X + k**2 * (2*d2_xi0_X + k**2 * xi0))
-
-        v = 0
-        for l in range(len(derivs)):
-            v += derivs[l] / math.factorial(l) * Y**l
-
-        return v'''
 
     def ext_calc_xi_derivs(self, deriv_types, arg, options):
         """

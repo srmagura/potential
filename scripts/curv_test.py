@@ -30,8 +30,11 @@ def eval_curv1(r, th):
     y = r * np.sin(th)
     return -1/(a**2 * b**2) * (x**2 / a**4 + y**2 / b**4)**(-3/2)
 
+error = []
 for r, th in zip(r_data, th_data):
      curv1 = eval_curv1(r, th)
      curv2 = boundary.eval_curv(th)
      #print(curv1, curv2)
-     print(abs(curv1-curv2))
+     error.append(abs(curv1-curv2))
+
+print(np.max(error))

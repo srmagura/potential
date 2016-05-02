@@ -59,19 +59,8 @@ class Boundary:
 
         ## Curvature
         d2_r_th = sympy.diff(r, th, 2)
-
         curv = - abs(r**2 + 2*d_r_th**2 - r*d2_r_th) / (r**2 + d_r_th**2)**(3/2)
-        self.eval_curv = sympy.lambdify(th, curv.subs(self.subs_dict))
-
-        ## Lame coefficient Hs (TODO delete?)
-        n = sympy.symbols('n')
-        Hs = 1 - n*curv
-
-        # Derivative of 1/Hs wrt s
-        d_Hs1_s = sympy.diff(1/Hs, th) * d_th_s
-
-        self.eval_Hs = sympy.lambdify((n, th), Hs.subs(self.subs_dict))
-        self.eval_d_Hs1_s = sympy.lambdify((n, th), d_Hs1_s.subs(self.subs_dict))
+        #self.eval_curv = sympy.lambdify(th, curv.subs(self.subs_dict))
 
     def eval_tangent(self, th):
         tangent = np.array((self.eval_d_x_th(th), self.eval_d_y_th(th)))
@@ -157,7 +146,14 @@ class Cubic(Boundary):
     bet0 = 0.025*cubic_C
     additional_params = {'C': cubic_C}
 
-_boundary_cls = (Arc, OuterSine, InnerSine, Sine7, Cubic)
+# For tests only
+class Ellipse(Boundary):
+    name = 'ellipse'
+    r_expr_str = '_a*_b/(sqrt((_b*cos(th))**2 + (_a*sin(th))**2))'
+    bet0 = 0.05
+    additional_params = {'_a': 2.5, '_b': 2}
+
+_boundary_cls = (Arc, OuterSine, InnerSine, Sine7, Cubic, Ellipse)
 
 boundaries = {}
 for boundary in _boundary_cls:

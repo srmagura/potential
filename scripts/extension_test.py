@@ -57,6 +57,10 @@ def run_test(N):
     for node in solver.union_gamma:
         r, th = solver.get_polar(*node)
 
+        # FIXME remove
+        if th > 1.75*np.pi or th < np.pi/3:
+            continue
+
         for data in mv_ext[node]:
             if setypes is None or data['setype'] in setypes:
                 exp = problem.eval_expected_polar(r, th)

@@ -20,7 +20,7 @@ options = {
     'problem': problem,
     'boundary': boundary,
     'scheme_order': 4,
-    'N': 128
+    'N': 256
 }
 
 solver = ps.ps.PizzaSolver(options)
