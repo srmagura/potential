@@ -58,7 +58,6 @@ class Boundary:
         self.eval_d_th_s = sympy.lambdify(th, d_th_s.subs(self.subs_dict))
 
         ## Curvature
-        d_r_th = sympy.diff(r, th)
         d2_r_th = sympy.diff(r, th, 2)
 
         curv = - abs(r**2 + 2*d_r_th**2 - r*d2_r_th) / (r**2 + d_r_th**2)**(3/2)

@@ -6,35 +6,46 @@ class SolverExtend:
     Extension procedures available to all Solvers.
     """
 
+    def extend_polar(self, values):
+        """
+        Homogeneous extension from an arbitrary boundary curve that
+        is parameterized by the polar angle th.
+        """
+        d_th_s = values['d_th_s']
+
+        new_values = {
+            'n': values['n'],
+            'xi0': values['xi0'],
+            'xi1': values['xi1'],
+            'd2_xi0_s': d_th_s**2 * values['d2_xi0_arg'],
+            'curv': values['curv']
+        }
+
+        return self.extend_arbitrary(new_values)
+
+
     def extend_arbitrary(self, values):
         """
         Homogeneous extension from an arbitrary boundary curve.
 
-        Computes a Taylor expansion with five derivatives. See [R1]
-        section 4.2.
-
-        n -- signed distance from boundary
+        Computes a Taylor expansion with five derivatives.
         """
         n = values['n']
+        curv = values['curv']
 
         xi0 = values['xi0']
         xi1 = values['xi1']
-        #d_xi0_th = values['d_xi0_arg']
-        d2_xi0_th = values['d2_xi0_arg']
-        d2_xi1_th = values['d2_xi1_arg']
-        d4_xi0_th = values['d4_xi0_arg']
+        d2_xi0_s = values['d2_xi0_s']
+        #d2_xi1_th = values['d2_xi1_arg']
+        #d4_xi0_th = values['d4_xi0_arg']
 
-        curv = values['curv']
-        d_th_s = values['d_th_s']
-
-        R = self.R
         k = self.k
 
         derivs = []
         derivs.append(xi0)
-
         derivs.append(xi1)
-        derivs.append(-k**2 * xi0 + curv * xi1 - d2_xi0_th * d_th_s**2)
+
+        derivs.append(-k**2 * xi0 + curv * xi1 - d2_xi0_s)
 
         '''if self.extension_order > 3:
             derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -

@@ -13,6 +13,8 @@ import itertools as it
 
 import ps.ps
 
+import matplotlib.pyplot as plt
+
 import problems
 import io_util
 
@@ -44,13 +46,12 @@ def run_test(N):
     if setypes is None:
         set_setypes(solver)
 
-    n_basis_tuple = problem.get_n_basis(N)
-    solver.setup_basis(*n_basis_tuple)
-
     solver.calc_c0()
     solver.calc_c1_exact()
 
     mv_ext = solver.mv_extend_boundary()
+
+    th_list = []
     error = []
 
     for node in solver.union_gamma:
@@ -62,9 +63,10 @@ def run_test(N):
 
                 diff = abs(exp - data['value'])
                 error.append(diff)
+                th_list.append(th)
 
-                #if diff > 1e-1:
-                #    print(r, th, diff)
+    #plt.plot(th_list, np.log10(error), 'o')
+    #plt.show()
 
     return np.max(np.abs(error))
 

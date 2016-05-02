@@ -39,6 +39,11 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.M = get_M(self.scheme_order)
         self.problem.M = self.M
 
+        # Get basis set sizes from the Problem
+        n_basis_tuple = self.problem.get_n_basis(self.N,
+            scheme_order=self.scheme_order)
+        self.setup_basis(*n_basis_tuple)
+
         # For optimizing basis set sizes
         if 'n_circle' in options:
             assert 'n_radius' in options
@@ -223,12 +228,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         """
         The main procedure for PizzaSolver.
         """
-
-        if not hasattr(self, 'B_desc'):
-            n_basis_tuple = self.problem.get_n_basis(self.N,
-                scheme_order=self.scheme_order)
-            self.setup_basis(*n_basis_tuple)
-
         self.calc_c0()
 
         '''
