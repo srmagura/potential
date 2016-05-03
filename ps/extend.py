@@ -207,7 +207,7 @@ class PsExtend:
         n, th = self.boundary_coord_cache[(i, j)]
 
         deriv_types = (
-            (0, 0), (0, 1), (2, 0),# (2, 1), (4, 0),
+            (0, 0), (0, 1), (1, 0), (2, 0),# (2, 1), (4, 0),
         )
 
         values = self.ext_calc_xi_derivs(deriv_types, th, options)
@@ -215,6 +215,7 @@ class PsExtend:
         values['n'] = n
         values['curv'] = self.boundary.eval_curv(th)
         values['d_th_s'] = self.boundary.eval_d_th_s(th)
+        values['d2_th_s'] = self.boundary.eval_d2_th_s(th)
 
         return {'elen': abs(n), 'value': self.extend_polar(values)}
 

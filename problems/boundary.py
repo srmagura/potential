@@ -54,13 +54,19 @@ class Boundary:
         ## Derivative of polar angle th wrt arclength s
         # Arclength in polar coordinates:
         # http://tutorial.math.lamar.edu/Classes/CalcII/PolarArcLength.aspx
-        d_th_s = 1 / sympy.sqrt(r**2 + d_r_th**2)
+        d_s_th = sympy.sqrt(r**2 + d_r_th**2)
+        d2_s_th = sympy.diff(d_s_th, th)
+
+        d_th_s = 1 / d_s_th
+        d2_th_s = -d2_s_th * (d_th_s)**3
+
         self.eval_d_th_s = sympy.lambdify(th, d_th_s.subs(self.subs_dict))
+        self.eval_d2_th_s = sympy.lambdify(th, d2_th_s.subs(self.subs_dict))
 
         ## Curvature
         d2_r_th = sympy.diff(r, th, 2)
         curv = - abs(r**2 + 2*d_r_th**2 - r*d2_r_th) / (r**2 + d_r_th**2)**(3/2)
-        #self.eval_curv = sympy.lambdify(th, curv.subs(self.subs_dict))
+        self.eval_curv = sympy.lambdify(th, curv.subs(self.subs_dict))
 
     def eval_tangent(self, th):
         tangent = np.array((self.eval_d_x_th(th), self.eval_d_y_th(th)))
@@ -94,6 +100,7 @@ class Boundary:
         diff = np.pi/6
 
         lbound = th1 - diff
+
         if lbound < self.a/2:
             lbound = self.a/2
 

@@ -12,12 +12,16 @@ class SolverExtend:
         is parameterized by the polar angle th.
         """
         d_th_s = values['d_th_s']
+        d2_th_s = values['d2_th_s']
+
+        d_xi0_th = values['d_xi0_arg']
+        d2_xi0_th = values['d2_xi0_arg']
 
         new_values = {
             'n': values['n'],
             'xi0': values['xi0'],
             'xi1': values['xi1'],
-            'd2_xi0_s': d_th_s**2 * values['d2_xi0_arg'],
+            'd2_xi0_s': d2_xi0_th * d_th_s**2 + d_xi0_th * d2_th_s,
             'curv': values['curv']
         }
 
