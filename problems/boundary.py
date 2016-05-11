@@ -56,17 +56,34 @@ class Boundary:
         self.eval_d_x_th = sympy.lambdify(th, d_x_th.subs(subs_dict))
         self.eval_d_y_th = sympy.lambdify(th, d_y_th.subs(subs_dict))
 
-        ## Derivative of polar angle th wrt arclength s
+        ## Derivatives of the polar angle th wrt arclength s
         # Arclength in polar coordinates:
         # http://tutorial.math.lamar.edu/Classes/CalcII/PolarArcLength.aspx
         d_s_th = sympy.sqrt(r**2 + d_r_th**2)
         d2_s_th = sympy.diff(d_s_th, th)
+        d3_s_th = sympy.diff(d2_s_th, th)
+        d4_s_th = sympy.diff(d3_s_th, th)
 
+        # These formulas come from the chain rule. See
+        # https://en.wikipedia.org/wiki/Inverse_functions_and_differentiation#Higher_derivatives
         d_th_s = 1 / d_s_th
         d2_th_s = -d2_s_th * (d_th_s)**3
+        d3_th_s = (-d3_s_th * (d_th_s)**4 -
+            3 * d2_s_th * d2_th_s * (d_th_s)**2
+        )
+        d4_th_s = (-d4_s_th * (d_th_s)**5 -
+            4 * d3_s_th * (d_th_s)**3 * d2_th_s -
+            3 * (
+                (d3_s_th * d_th_s * d2_th_s + d2_s_th * d3_th_s) *
+                (d_th_s)**2 +
+                2 * d2_s_th * (d2_th_s)**2 * d_th_s
+            )
+        )
 
         self.eval_d_th_s = sympy.lambdify(th, d_th_s.subs(subs_dict))
         self.eval_d2_th_s = sympy.lambdify(th, d2_th_s.subs(subs_dict))
+        self.eval_d3_th_s = sympy.lambdify(th, d3_th_s.subs(subs_dict))
+        self.eval_d4_th_s = sympy.lambdify(th, d4_th_s.subs(subs_dict))
 
         ## Curvature
         d2_r_th = sympy.diff(r, th, 2)

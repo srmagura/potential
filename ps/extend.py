@@ -56,8 +56,10 @@ class PsExtend:
             xi0=values['xi0'],
             xi1=values['xi1'],
             d_xi0_s=values['d_xi0_arg'],
+            d_xi1_s=values['d_xi1_arg'],
             d2_xi0_s=values['d2_xi0_arg'],
             d2_xi1_s=values['d2_xi1_arg'],
+            d4_xi0_s=values['d4_xi0_arg'],
         )
 
     def ext_calc_xi_derivs(self, deriv_types, arg, options):
@@ -207,7 +209,7 @@ class PsExtend:
         n, th = self.boundary_coord_cache[(i, j)]
 
         deriv_types = (
-            (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1),
+            (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (3, 0), (4, 0)
         )
 
         derivs = self.ext_calc_xi_derivs(deriv_types, th, options)
@@ -216,14 +218,19 @@ class PsExtend:
             n=n,
             curv=self.boundary.eval_curv(th),
             d_curv_th=self.boundary.eval_d_curv_th(th),
+            d2_curv_th=self.boundary.eval_d2_curv_th(th),
             d_th_s=self.boundary.eval_d_th_s(th),
             d2_th_s=self.boundary.eval_d2_th_s(th),
+            d3_th_s=self.boundary.eval_d3_th_s(th),
+            d4_th_s=self.boundary.eval_d4_th_s(th),
             xi0=derivs['xi0'],
             xi1=derivs['xi1'],
             d_xi0_th=derivs['d_xi0_arg'],
             d_xi1_th=derivs['d_xi1_arg'],
             d2_xi0_th=derivs['d2_xi0_arg'],
             d2_xi1_th=derivs['d2_xi1_arg'],
+            d3_xi0_th=derivs['d3_xi0_arg'],
+            d4_xi0_th=derivs['d4_xi0_arg'],
         )
 
         return {'elen': abs(n), 'value': value}
@@ -256,7 +263,7 @@ class PsExtend:
         options['sid'] = 1
 
         deriv_types = (
-            (0, 0), (0, 1), (1, 0), (2, 0), (2, 1), (4, 0),
+            (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (4, 0),
         )
         values = self.ext_calc_xi_derivs(deriv_types, x, options)
         values['n'] = y
@@ -294,7 +301,7 @@ class PsExtend:
         options['sid'] = 2
 
         deriv_types = (
-            (0, 0), (0, 1), (1, 0), (2, 0), (2, 1), (4, 0),
+            (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (4, 0),
         )
         values = self.ext_calc_xi_derivs(deriv_types, param_r, options)
 
