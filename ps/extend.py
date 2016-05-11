@@ -1,3 +1,6 @@
+import itertools as it
+import enum
+
 import numpy as np
 from numpy import sin, cos
 import math
@@ -7,12 +10,20 @@ import copy
 from domain_util import cart_to_polar
 from .multivalue import Multivalue
 
-ETYPE_NAMES = ('standard', 'left', 'right')
+EType = enum.Enum('EType', 'left standard right')
+
+def get_deriv_name(order, index):
+    if order == 0:
+        return 'xi{}'.format(index)
+    elif order == 1:
+        return 'd_xi{}_arg'.format(index)
+    else:
+        return'd{}_xi{}_arg'.format(order, index)
+
 
 class PsExtend:
 
-    etypes = dict(zip(ETYPE_NAMES, range(len(ETYPE_NAMES))))
-    taylor_n_derivs = 5
+    taylor_n_terms = 5
 
     def get_etype(self, sid, i, j):
         a = self.a
@@ -24,63 +35,66 @@ class PsExtend:
             n, th = self.boundary_coord_cache[(i, j)]
 
             if th > 2*np.pi:
-                return self.etypes['right']
+                return EType.right
             elif th < a:
-                return self.etypes['left']
+                return EType.left
             else:
-                return self.etypes['standard']
+                return EType.standard
 
         elif sid == 1:
             if x < 0:
-                return self.etypes['left']
+                return EType.left
             elif x > R:
-                return self.etypes['right']
+                return EType.right
             else:
-                return self.etypes['standard']
+                return EType.standard
 
         elif sid == 2:
             x1, y1 = self.get_radius_point(2, x, y)
             if y1 < 0:
-                return self.etypes['left']
+                return EType.left
             elif y1 > R*np.sin(a):
-                return self.etypes['right']
+                return EType.right
             else:
-                return self.etypes['standard']
+                return EType.standard
 
-    def extend_radius(self, values):
+    def extend_radius(self, **kwargs):
         return self.extend_arbitrary(
-            n=values['n'],
+            n=kwargs['n'],
             curv=0,
             d_curv_s=0,
             d2_curv_s=0,
-            xi0=values['xi0'],
-            xi1=values['xi1'],
-            d_xi0_s=values['d_xi0_arg'],
-            d_xi1_s=values['d_xi1_arg'],
-            d2_xi0_s=values['d2_xi0_arg'],
-            d2_xi1_s=values['d2_xi1_arg'],
-            d4_xi0_s=values['d4_xi0_arg'],
+            xi0=kwargs['xi0'],
+            xi1=kwargs['xi1'],
+            d_xi0_s=kwargs['d_xi0_arg'],
+            d_xi1_s=kwargs['d_xi1_arg'],
+            d2_xi0_s=kwargs['d2_xi0_arg'],
+            d2_xi1_s=kwargs['d2_xi1_arg'],
+            d4_xi0_s=kwargs['d4_xi0_arg'],
         )
 
-    def ext_calc_xi_derivs(self, deriv_types, arg, options):
+    def _ext_calc_xi_derivs(self, deriv_types, arg, sid, JJ,
+        human_readable_keys=True):
         """
-        Calculate derivatives of xi0 and xi1.
+        Calculate derivatives of xi0, xi1, or a basis function.
+
+        Should not be accessed directly. Call ext_calc_xi_derivs or
+        ext_calc_B_derivs instead.
 
         deriv_types -- iterable of 2-tuples of the form
             (order, index) where order is an integer >= 0 that
             indicates which derivative to take, and index=0,1
             specifies xi0 or xi1
         arg -- location on the boundary where derivative is evaluated
+        JJ -- ID of basis function to calculate derivatives of.
+            If None,
 
         Returns a dictionary containing all of the requested derivatives.
         """
-        sid = options['sid']
-
-        if 'JJ' in options:
-            JJ_list = (options['JJ'],)
-            _c ={options['JJ']: 1}
+        if JJ is not None:
+            JJ_list = [JJ]
+            _c ={JJ: 1}
             c = [_c, _c]
-            index = options['index'] # FIXME ??
         else:
             JJ_list = range(len(self.B_desc))
             c = [self.c0, self.c1]
@@ -89,130 +103,123 @@ class PsExtend:
 
         for (order, index) in deriv_types:
             deriv = 0
-            for JJ in range(len(self.B_desc)):
+            for JJ in JJ_list:
                 dn_B_arg = self.eval_dn_B_arg(order, JJ, arg, sid)
                 deriv += c[index][JJ] * dn_B_arg
 
-            if order == 0:
-                name = 'xi{}'.format(index)
-            elif order == 1:
-                name = 'd_xi{}_arg'.format(index)
+            if human_readable_keys:
+                key = get_deriv_name(order, index)
             else:
-                name = 'd{}_xi{}_arg'.format(order, index)
+                key = (order, index)
 
-            derivs[name] = deriv
-
-        return derivs
-
-    def ext_calc_B_derivs(self, JJ, arg, sid):
-        derivs = np.zeros(self.taylor_n_derivs, dtype=complex)
-
-        for n in range(self.taylor_n_derivs):
-            derivs[n] = self.eval_dn_B_arg(n, JJ, arg, sid)
+            derivs[key] = deriv
 
         return derivs
 
-    # TODO get rid of
-    def ext_calc_xi_derivs_OLD(self, arg, sid, index):
-        derivs = np.zeros(self.taylor_n_derivs, dtype=complex)
+    def ext_calc_xi_derivs(self, deriv_types, arg, sid,
+        human_readable_keys=True):
+        """
+        Calculate derivatives of xi0 and xi1.
 
-        if index == 0:
-            c = self.c0
-        elif index == 1:
-            c = self.c1
+        deriv_types -- iterable of 2-tuples of the form
+            (order, index) where order is an integer >= 0 that
+            indicates which derivative to take, and index=0,1
+            specifies xi0 or xi1
+        arg -- location on the boundary where derivative is evaluated
+        human_readable_keys -- If True, key for second derivative
+            of xi0 will be 'd2_xi0_arg'. If False, the key will be the
+            tuple (2, 0).
 
-        for n in range(self.taylor_n_derivs):
-            for JJ in range(len(self.B_desc)):
-                dn_B_arg = self.eval_dn_B_arg(n, JJ, arg, sid)
-                derivs[n] += c[JJ] * dn_B_arg
+        Returns a dictionary containing all of the requested derivatives.
+        """
+        return self._ext_calc_xi_derivs(deriv_types, arg, sid, JJ=None,
+            human_readable_keys=human_readable_keys)
 
-        return derivs
+    def ext_calc_basis_derivs(self, JJ, deriv_types, arg, sid):
+        """
+        Calculate derivatives of a basis function.
 
-    def do_extend_taylor(self, i, j, options):
-        taylor_sid = options['taylor_sid']
-        delta_arg = options['delta_arg']
+        JJ -- ID of the basis function
+        deriv_types -- iterable of 2-tuples of the form
+            (order, index) where order is an integer >= 0 that
+            indicates which derivative to take, and index=0,1
+            specifies xi0 or xi1
+        arg -- location on the boundary where derivative is evaluated
 
-        arg = options['arg']
+        Returns a dictionary containing all of the requested derivatives.
+        """
+        return self._ext_calc_xi_derivs(deriv_types, arg, sid, JJ=JJ,
+            human_readable_keys=False)
 
-        if 'JJ' in options:
-            JJ = options['JJ']
-            index = options['index']
-        else:
-            JJ = None
-            index = None
+    def do_extend_taylor(self, i, j, arg, taylor_sid, delta_arg, n=None,
+        JJ=None):
+        """
+        Use a Taylor expansion to extend the boundary data from the
+        physical boundary to the "extended boundary". Then extend to
+        the grid node (i, j) using the equation-based extension.
 
-        derivs0 = np.zeros(self.taylor_n_derivs)
-        derivs1 = np.zeros(self.taylor_n_derivs)
+        # FIXME
+        If 'JJ' is in options, then the single basis function with ID
+        JJ is extended. Otherwise, the full Dirichlet/Neumann data is
+        extended.
+        """
+        # Build the dictionary xi_derivs0, which will hold the
+        # tangential derivatives at the "starting point" of the
+        # Taylor expansion. Keys of the dictionary are of the
+        # form (order, index)
 
         if JJ is None:
-            derivs0 = self.ext_calc_xi_derivs_OLD(arg, taylor_sid, 0)
-            derivs1 = self.ext_calc_xi_derivs_OLD(arg, taylor_sid, 1)
-        elif index == 0:
-            derivs0 = self.ext_calc_B_derivs(JJ, arg, taylor_sid)
-        elif index == 1:
-            derivs1 = self.ext_calc_B_derivs(JJ, arg, taylor_sid)
+            # For extension of entire Dirichlet/Neumann data
+            deriv_types = list(it.product(range(self.taylor_n_terms), (0, 1)))
+            xi_derivs0 = self.ext_calc_xi_derivs(deriv_types, arg, taylor_sid,
+                human_readable_keys=False)
+        else:
+            # TODO
+            pass
 
-        xi0 = xi1 = 0
-        d2_xi0_arg = d2_xi1_arg = 0
-        d4_xi0_arg = 0
 
-        for l in range(len(derivs0)):
-            fac = delta_arg**l / math.factorial(l)
-            xi0 += derivs0[l] * fac
-            xi1 += derivs1[l] * fac
+        # To hold the results of the Taylor expansion. Tangential
+        # derivatives, with respect to the argument (r or th) for
+        # this section of the boundary
+        xi_derivs = {}
 
-            ll = l - 2
-            if ll >= 0:
-                fac = delta_arg**ll / math.factorial(ll)
-                d2_xi0_arg += derivs0[l] * fac
-                d2_xi1_arg += derivs1[l] * fac
+        for index in (0, 1):
+            for m in range(self.taylor_n_terms):
+                # Compute m-th derivative by Taylor series.
+                # Taylor series will have (taylor_n_terms-m) terms.
+                xi_derivs[(m, index)] = 0
 
-            ll = l - 4
-            if ll >= 0:
-                fac = delta_arg**ll / math.factorial(ll)
-                d4_xi0_arg += derivs0[l] * fac
+                for l in range(m, self.taylor_n_terms):
+                    # Contribution of the l-th derivative to the m-th
+                    # derivative
+                    fac = delta_arg**(l-m) / math.factorial(l-m)
+                    xi_derivs[(m, index)] += xi_derivs0[(l, index)] * fac
 
-        values = {
-            'xi0': xi0, 'xi1': xi1,
-            'd2_xi0_arg': d2_xi0_arg, 'd2_xi1_arg': d2_xi1_arg,
-            'd4_xi0_arg': d4_xi0_arg
-        }
+        # Convert to human readable dictionary keys
+        for key in list(xi_derivs.keys()):
+            order, index = key
+            deriv_name = get_deriv_name(order, index)
+            xi_derivs[deriv_name] = xi_derivs[key]
+            del xi_derivs[key]
 
         if taylor_sid == 0:
-            r, th = self.get_polar(i, j)
-            # FIXME
-            v = 0
-            #v = self.extend_arbitrary(r, *ext_params)
+            v = self.do_extend_0(i, j, xi_derivs)
 
+            r, th = self.get_polar(i, j)
             elen = abs(delta_arg)*self.R + abs(r - self.R)
 
         elif taylor_sid in {1, 2}:
-            Y = options['Y']
-            v = 0#self.extend_radius(Y, values)
+            v = self.extend_radius(
+                n=n,
+                **xi_derivs
+            )
 
-            elen = abs(delta_arg) + abs(Y)
+            elen = abs(delta_arg) + abs(n)
 
         return {'elen': elen, 'value': v}
 
-    def do_extend_12_left(self, i, j, options):
-        # r = 0
-        options['arg'] = 0
-        return self.do_extend_taylor(i, j, options)
-
-    def do_extend_12_right(self, i, j, options):
-        # r = R
-        options['arg'] = self.R
-        return self.do_extend_taylor(i, j, options)
-
-    def do_extend_0_standard(self, i, j, options):
-        options['sid'] = 0
+    def do_extend_0(self, i, j, derivs):
         n, th = self.boundary_coord_cache[(i, j)]
-
-        deriv_types = (
-            (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (3, 0), (4, 0)
-        )
-
-        derivs = self.ext_calc_xi_derivs(deriv_types, th, options)
 
         value = self.extend_polar(
             n=n,
@@ -233,92 +240,79 @@ class PsExtend:
             d4_xi0_th=derivs['d4_xi0_arg'],
         )
 
-        return {'elen': abs(n), 'value': value}
+        return value
+
+    def do_extend_0_standard(self, i, j, options):
+        n, th = self.boundary_coord_cache[(i, j)]
+
+        deriv_types = (
+            (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (3, 0), (4, 0)
+        )
+
+        derivs = self.ext_calc_xi_derivs(deriv_types, th, 0)
+        return {'elen': abs(n), 'value': self.do_extend_0(i, j, derivs)}
 
     def do_extend_0_left(self, i, j, options):
         x, y = self.get_coord(i, j)
         r, th = self.get_polar(i, j)
 
-        options.update({
-            'taylor_sid': 0,
-            'delta_arg': th - self.a,
-            'arg': self.a
-        })
-
-        return self.do_extend_taylor(i, j, options)
+        return self.do_extend_taylor(i, j, arg=self.a,
+            taylor_sid=0, delta_arg=th-self.a)
 
     def do_extend_0_right(self, i, j, options):
         r, th = self.get_polar(i, j)
 
-        options.update({
-            'taylor_sid': 0,
-            'delta_arg': th,
-            'arg': 2*np.pi
-        })
-
-        return self.do_extend_taylor(i, j, options)
+        return self.do_extend_taylor(i, j, arg=2*np.pi,
+            taylor_sid=0, delta_arg=th)
 
     def do_extend_1_standard(self, i, j, options):
         x, y = self.get_coord(i, j)
-        options['sid'] = 1
 
         deriv_types = (
             (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (4, 0),
         )
-        values = self.ext_calc_xi_derivs(deriv_types, x, options)
-        values['n'] = y
 
-        return {'elen': abs(y), 'value': self.extend_radius(values)}
+        # FIXME won't work for basis extension
+        derivs = self.ext_calc_xi_derivs(deriv_types, x, 1)
+        value = self.extend_radius(n=y, **derivs)
+
+        return {'elen': abs(y), 'value': value}
 
     def do_extend_1_left(self, i, j, options):
         x, y = self.get_coord(i, j)
-        r, th = self.get_polar(i, j)
-
-        options.update({
-            'taylor_sid': 1,
-            'delta_arg': x,
-            'Y': y,
-        })
-
-        return self.do_extend_12_left(i, j, options)
+        return self.do_extend_taylor(i, j, arg=0, taylor_sid=1,
+            delta_arg=x, n=y)
 
     def do_extend_1_right(self, i, j, options):
         x, y = self.get_coord(i, j)
-
-        options.update({
-            'taylor_sid': 1,
-            'delta_arg': x - self.R,
-            'Y': y
-        })
-
-        return self.do_extend_12_right(i, j, options)
+        R = self.R
+        return self.do_extend_taylor(i, j, arg=R, taylor_sid=1,
+            delta_arg=x-R, n=y)
 
     def do_extend_2_standard(self, i, j, options):
         x, y = self.get_coord(i, j)
         x0, y0 = self.get_radius_point(2, x, y)
 
         param_r = cart_to_polar(x0, y0)[0]
-        options['sid'] = 2
 
         deriv_types = (
             (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (4, 0),
         )
-        values = self.ext_calc_xi_derivs(deriv_types, param_r, options)
+        derivs = self.ext_calc_xi_derivs(deriv_types, param_r, 2)
+        n = self.signed_dist_to_radius(2, x, y)
 
-        values['n'] = self.signed_dist_to_radius(2, x, y)
-        return {'elen': abs(values['n']), 'value': self.extend_radius(values)}
+        value = self.extend_radius(n=n, **derivs)
+
+        return {'elen': n, 'value': value}
 
     def do_extend_2_left(self, i, j, options):
         x, y = self.get_coord(i, j)
         x1, y1 = self.get_radius_point(2, x, y)
 
-        options.update({
-            'taylor_sid': 2,
-            'delta_arg': -np.sqrt(x1**2 + y1**2),
-            'Y': self.signed_dist_to_radius(2, x, y)
-        })
-
-        return self.do_extend_12_left(i, j, options)
+        return self.do_extend_taylor(i, j, arg=0, taylor_sid=2,
+            delta_arg=-np.sqrt(x1**2 + y1**2),
+            n=self.signed_dist_to_radius(2, x, y)
+        )
 
     def do_extend_2_right(self, i, j, options):
         R = self.R
@@ -330,13 +324,10 @@ class PsExtend:
         y0 = R*sin(a)
         x1, y1 = self.get_radius_point(2, x, y)
 
-        options.update({
-            'taylor_sid': 2,
-            'delta_arg': np.sqrt((x1 - x0)**2 + (y1 - y0)**2),
-            'Y': self.signed_dist_to_radius(2, x, y)
-        })
-
-        return self.do_extend_12_right(i, j, options)
+        return self.do_extend_taylor(i, j, arg=R, taylor_sid=2,
+            delta_arg=np.sqrt((x1 - x0)**2 + (y1 - y0)**2),
+            n=self.signed_dist_to_radius(2, x, y)
+        )
 
     def mv_extend_boundary(self, options={}):
         """
@@ -362,27 +353,27 @@ class PsExtend:
                 result = None
 
                 if sid == 0:
-                    if etype == self.etypes['standard']:
+                    if etype == EType.standard:
                         result = self.do_extend_0_standard(i, j, _options)
-                    elif etype == self.etypes['left']:
+                    elif etype == EType.left:
                         result = self.do_extend_0_left(i, j, _options)
-                    elif etype == self.etypes['right']:
+                    elif etype == EType.right:
                         result = self.do_extend_0_right(i, j, _options)
 
                 elif sid == 1:
-                    if etype == self.etypes['standard']:
+                    if etype == EType.standard:
                         result = self.do_extend_1_standard(i, j, _options)
-                    elif etype == self.etypes['left']:
+                    elif etype == EType.left:
                         result = self.do_extend_1_left(i, j, _options)
-                    elif etype == self.etypes['right']:
+                    elif etype == EType.right:
                         result = self.do_extend_1_right(i, j, _options)
 
                 elif sid == 2:
-                    if etype == self.etypes['standard']:
+                    if etype == EType.standard:
                         result = self.do_extend_2_standard(i, j, _options)
-                    elif etype == self.etypes['left']:
+                    elif etype == EType.left:
                         result = self.do_extend_2_left(i, j, _options)
-                    elif etype == self.etypes['right']:
+                    elif etype == EType.right:
                         result = self.do_extend_2_right(i, j, _options)
 
                 result['setype'] = (sid, etype)

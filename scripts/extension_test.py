@@ -12,6 +12,7 @@ import argparse
 import itertools as it
 
 import ps.ps
+from ps.extend import EType
 
 import matplotlib.pyplot as plt
 
@@ -20,15 +21,15 @@ import io_util
 
 setypes = None
 
-def set_setypes(solver):
+def set_setypes():
     if args.s is None:
         return
 
     global setypes
     etype_dict = {
-        'l': solver.etypes['left'],
-        's': solver.etypes['standard'],
-        'r': solver.etypes['right'],
+        'l': EType.left,
+        's': EType.standard,
+        'r': EType.right,
     }
 
     setypes = set()
@@ -44,7 +45,7 @@ def run_test(N):
     solver = ps.ps.PizzaSolver(options)
 
     if setypes is None:
-        set_setypes(solver)
+        set_setypes()
 
     solver.calc_c0()
     solver.calc_c1_exact()
@@ -57,10 +58,6 @@ def run_test(N):
     for node in solver.union_gamma:
         r, th = solver.get_polar(*node)
 
-        # FIXME remove
-        if th > 1.75*np.pi or th < np.pi/3:
-            continue
-
         for data in mv_ext[node]:
             if setypes is None or data['setype'] in setypes:
                 exp = problem.eval_expected_polar(r, th)
@@ -68,6 +65,10 @@ def run_test(N):
                 diff = abs(exp - data['value'])
                 error.append(diff)
                 th_list.append(th)
+
+                #if diff > 1e-1:
+                #    print('r={}  th={}  diff={}'.format(r, th, diff))
+                #    print('exp={}   act={}'.format(exp, data['value']))
 
     #plt.plot(th_list, np.log10(error), 'o')
     #plt.show()
