@@ -63,6 +63,7 @@ class SmoothH_Sine(SmoothProblem):
 
 class SmoothH_E(SmoothProblem):
 
+    k = 1.75
     homogeneous = True
 
     def eval_expected(self, x, y):
@@ -81,6 +82,7 @@ class SmoothH_E(SmoothProblem):
         return (1j*kx*u, 1j*ky*u)
 
 # FIXME k=1 only
+# FIXME for debugging.... delete
 class SmoothH_Bessel(SmoothProblem):
 
     homogeneous = True

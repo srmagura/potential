@@ -6,42 +6,57 @@ class SolverExtend:
     Extension procedures available to all Solvers.
     """
 
-    def extend_polar(self, values):
+    def extend_polar(self, **kwargs):
         """
         Homogeneous extension from an arbitrary boundary curve that
         is parameterized by the polar angle th.
         """
-        d_th_s = values['d_th_s']
-        d2_th_s = values['d2_th_s']
+        curv = kwargs['curv']
+        d_curv_th = kwargs['d_curv_th']
 
-        d_xi0_th = values['d_xi0_arg']
-        d2_xi0_th = values['d2_xi0_arg']
+        d_th_s = kwargs['d_th_s']
+        d2_th_s = kwargs['d2_th_s']
 
-        new_values = {
-            'n': values['n'],
-            'xi0': values['xi0'],
-            'xi1': values['xi1'],
-            'd2_xi0_s': d2_xi0_th * d_th_s**2 + d_xi0_th * d2_th_s,
-            'curv': values['curv']
-        }
+        d_xi0_th = kwargs['d_xi0_th']
+        d_xi1_th = kwargs['d_xi1_th']
+        d2_xi0_th = kwargs['d2_xi0_th']
+        d2_xi1_th = kwargs['d2_xi1_th']
 
-        return self.extend_arbitrary(new_values)
+        def convert_d(d):
+            return d * d_th_s
+
+        def convert_d2(d, d2):
+            return d2 * d_th_s**2 + d * d2_th_s
+
+        return self.extend_arbitrary(
+            n=kwargs['n'],
+            xi0=kwargs['xi0'],
+            xi1=kwargs['xi1'],
+            d_xi0_s=convert_d(d_xi0_th),
+            d2_xi0_s=convert_d2(d_xi0_th, d2_xi0_th),
+            d2_xi1_s=convert_d2(d_xi1_th, d2_xi1_th),
+            curv=curv,
+            d_curv_s=convert_d(d_curv_th),
+        )
 
 
-    def extend_arbitrary(self, values):
+    def extend_arbitrary(self, **kwargs):
         """
         Homogeneous extension from an arbitrary boundary curve.
 
         Computes a Taylor expansion with five derivatives.
         """
-        n = values['n']
-        curv = values['curv']
+        n = kwargs['n']
+        curv = kwargs['curv']
+        d_curv_s = kwargs['d_curv_s']
+        #d2_curv_s = kwargs['d2_curv_s']
 
-        xi0 = values['xi0']
-        xi1 = values['xi1']
-        d2_xi0_s = values['d2_xi0_s']
-        #d2_xi1_th = values['d2_xi1_arg']
-        #d4_xi0_th = values['d4_xi0_arg']
+        xi0 = kwargs['xi0']
+        xi1 = kwargs['xi1']
+        d_xi0_s = kwargs['d_xi0_s']
+        d2_xi0_s = kwargs['d2_xi0_s']
+        d2_xi1_s = kwargs['d2_xi1_s']
+        #d4_xi0_th = kwargs['d4_xi0_arg']
 
         k = self.k
 
@@ -51,16 +66,10 @@ class SolverExtend:
 
         derivs.append(-k**2 * xi0 + curv * xi1 - d2_xi0_s)
 
-        '''if self.extension_order > 3:
-            derivs.append(2 * xi1 / R**2 + 3 * d2_xi0_th / R**3 -
-                d2_xi1_th / R**2 + k**2 / R * xi0 - k**2 * xi1)
-
-            derivs.append(-6 * xi1 / R**3 +
-                (2*k**2 / R**2 - 11 / R**4) * d2_xi0_th +
-                6 * d2_xi1_th / R**3 + d4_xi0_th / R**4 -
-                (3*k**2 / R**2 - k**4) * xi0 +
-                2 * k**2 / R * xi1)
-        '''
+        derivs.append((curv**2 - k**2) * xi1 +
+            curv*derivs[2] - d_curv_s * d_xi0_s -
+            2*curv*d2_xi0_s - d2_xi1_s
+        )
 
         v = 0
         for l in range(len(derivs)):
@@ -83,14 +92,9 @@ class SolverExtend:
 
         f = p.eval_f(x, y)
 
-        if self.extension_order > 3:
-            d_f_r = p.eval_d_f_r(R, th)
-            d2_f_r = p.eval_d2_f_r(R, th)
-            d2_f_th = p.eval_d2_f_th(R, th)
-        else:
-            d_f_r = 0
-            d2_f_r = 0
-            d2_f_th = 0
+        d_f_r = p.eval_d_f_r(R, th)
+        d2_f_r = p.eval_d2_f_r(R, th)
+        d2_f_th = p.eval_d2_f_th(R, th)
 
         return self.extend_inhomo_circle(
             r, f, d_f_r, d2_f_r, d2_f_th)
@@ -100,14 +104,10 @@ class SolverExtend:
         R = self.R
         k = self.k
 
-        derivs = [0, 0, f]
-
-        # Don't need any more derivatives if using second order scheme
-        if self.extension_order > 3:
-            derivs.extend([
-                d_f_r - f / R,
-                d2_f_r - d2_f_th / R**2 - d_f_r / R + (3/R**2 - k**2) * f
-            ])
+        derivs = [0, 0, f,
+            d_f_r - f / R,
+            d2_f_r - d2_f_th / R**2 - d_f_r / R + (3/R**2 - k**2) * f
+        ]
 
         v = 0
         for l in range(len(derivs)):

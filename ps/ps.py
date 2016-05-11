@@ -34,7 +34,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.boundary = options['boundary']
 
         self.scheme_order = options['scheme_order']
-        self.extension_order = self.scheme_order + 1
 
         self.M = get_M(self.scheme_order)
         self.problem.M = self.M

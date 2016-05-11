@@ -12,6 +12,7 @@ ETYPE_NAMES = ('standard', 'left', 'right')
 class PsExtend:
 
     etypes = dict(zip(ETYPE_NAMES, range(len(ETYPE_NAMES))))
+    taylor_n_derivs = 5
 
     def get_etype(self, sid, i, j):
         a = self.a
@@ -47,16 +48,17 @@ class PsExtend:
                 return self.etypes['standard']
 
     def extend_radius(self, values):
-        new_values = {
-            'n': values['n'],
-            'curv': 0,
-            'xi0': values['xi0'],
-            'xi1': values['xi1'],
-            'd2_xi0_s': values['d2_xi0_arg'],
-
-        }
-
-        return self.extend_arbitrary(new_values)
+        return self.extend_arbitrary(
+            n=values['n'],
+            curv=0,
+            d_curv_s=0,
+            d2_curv_s=0,
+            xi0=values['xi0'],
+            xi1=values['xi1'],
+            d_xi0_s=values['d_xi0_arg'],
+            d2_xi0_s=values['d2_xi0_arg'],
+            d2_xi1_s=values['d2_xi1_arg'],
+        )
 
     def ext_calc_xi_derivs(self, deriv_types, arg, options):
         """
@@ -161,12 +163,10 @@ class PsExtend:
             if ll >= 0:
                 fac = delta_arg**ll / math.factorial(ll)
                 d2_xi0_arg += derivs0[l] * fac
-
-                if self.extension_order > 3:
-                    d2_xi1_arg += derivs1[l] * fac
+                d2_xi1_arg += derivs1[l] * fac
 
             ll = l - 4
-            if ll >= 0 and self.extension_order > 3:
+            if ll >= 0:
                 fac = delta_arg**ll / math.factorial(ll)
                 d4_xi0_arg += derivs0[l] * fac
 
@@ -207,17 +207,26 @@ class PsExtend:
         n, th = self.boundary_coord_cache[(i, j)]
 
         deriv_types = (
-            (0, 0), (0, 1), (1, 0), (2, 0),# (2, 1), (4, 0),
+            (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1),
         )
 
-        values = self.ext_calc_xi_derivs(deriv_types, th, options)
+        derivs = self.ext_calc_xi_derivs(deriv_types, th, options)
 
-        values['n'] = n
-        values['curv'] = self.boundary.eval_curv(th)
-        values['d_th_s'] = self.boundary.eval_d_th_s(th)
-        values['d2_th_s'] = self.boundary.eval_d2_th_s(th)
+        value = self.extend_polar(
+            n=n,
+            curv=self.boundary.eval_curv(th),
+            d_curv_th=self.boundary.eval_d_curv_th(th),
+            d_th_s=self.boundary.eval_d_th_s(th),
+            d2_th_s=self.boundary.eval_d2_th_s(th),
+            xi0=derivs['xi0'],
+            xi1=derivs['xi1'],
+            d_xi0_th=derivs['d_xi0_arg'],
+            d_xi1_th=derivs['d_xi1_arg'],
+            d2_xi0_th=derivs['d2_xi0_arg'],
+            d2_xi1_th=derivs['d2_xi1_arg'],
+        )
 
-        return {'elen': abs(n), 'value': self.extend_polar(values)}
+        return {'elen': abs(n), 'value': value}
 
     def do_extend_0_left(self, i, j, options):
         x, y = self.get_coord(i, j)
@@ -329,8 +338,6 @@ class PsExtend:
         """
         R = self.R
         k = self.problem.k
-
-        self.taylor_n_derivs = self.extension_order + 1
 
         mv_ext = Multivalue(self.union_gamma)
 

@@ -36,20 +36,25 @@ class Boundary:
         """
         # Get expression for r
         R, th, a, nu, bet = sympy.symbols('R th a nu bet')
+        subs_dict = self.subs_dict
+
         self.r_expr = r = sympy.sympify(self.r_expr_str)
 
-        self.eval_r = sympy.lambdify(th, r.subs(self.subs_dict))
+        self.eval_r = sympy.lambdify(th, r.subs(subs_dict))
 
         ## Setup expressions for finding tangent vector
         # Calculate d_x_th, d_y_th using the formula from:
         # http://tutorial.math.lamar.edu/Classes/CalcII/PolarTangents.aspx
         d_r_th = sympy.diff(r, th)
-        d_x_th = d_r_th * sympy.cos(th) - r * sympy.sin(th)
-        d_y_th = d_r_th * sympy.sin(th) + r * sympy.cos(th)
 
-        self.eval_d_r_th = sympy.lambdify(th, d_r_th.subs(self.subs_dict))
-        self.eval_d_x_th = sympy.lambdify(th, d_x_th.subs(self.subs_dict))
-        self.eval_d_y_th = sympy.lambdify(th, d_y_th.subs(self.subs_dict))
+        x = r * sympy.cos(th)
+        y = r * sympy.sin(th)
+        d_x_th = sympy.diff(x, th)
+        d_y_th = sympy.diff(y, th)
+
+        self.eval_d_r_th = sympy.lambdify(th, d_r_th.subs(subs_dict))
+        self.eval_d_x_th = sympy.lambdify(th, d_x_th.subs(subs_dict))
+        self.eval_d_y_th = sympy.lambdify(th, d_y_th.subs(subs_dict))
 
         ## Derivative of polar angle th wrt arclength s
         # Arclength in polar coordinates:
@@ -60,13 +65,23 @@ class Boundary:
         d_th_s = 1 / d_s_th
         d2_th_s = -d2_s_th * (d_th_s)**3
 
-        self.eval_d_th_s = sympy.lambdify(th, d_th_s.subs(self.subs_dict))
-        self.eval_d2_th_s = sympy.lambdify(th, d2_th_s.subs(self.subs_dict))
+        self.eval_d_th_s = sympy.lambdify(th, d_th_s.subs(subs_dict))
+        self.eval_d2_th_s = sympy.lambdify(th, d2_th_s.subs(subs_dict))
 
         ## Curvature
         d2_r_th = sympy.diff(r, th, 2)
-        curv = - abs(r**2 + 2*d_r_th**2 - r*d2_r_th) / (r**2 + d_r_th**2)**(3/2)
-        self.eval_curv = sympy.lambdify(th, curv.subs(self.subs_dict))
+
+        # Polar form of curvature. Wikipedia has the numerator inside an
+        # absolute value, but I took it out since our curvature is always
+        # negative
+        curv = - (r**2 + 2*d_r_th**2 - r*d2_r_th) / (r**2 + d_r_th**2)**(3/2)
+
+        d_curv_th = sympy.diff(curv, th)
+        d2_curv_th = sympy.diff(d_curv_th, th)
+
+        self.eval_curv = sympy.lambdify(th, curv.subs(subs_dict))
+        self.eval_d_curv_th = sympy.lambdify(th, d_curv_th.subs(subs_dict))
+        self.eval_d2_curv_th = sympy.lambdify(th, d2_curv_th.subs(subs_dict))
 
     def eval_tangent(self, th):
         tangent = np.array((self.eval_d_x_th(th), self.eval_d_y_th(th)))
