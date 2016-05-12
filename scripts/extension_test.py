@@ -103,7 +103,6 @@ if __name__ == '__main__':
 
     options = {
         'problem': problem,
-        'boundary': boundary,
         'scheme_order': 4
     }
 

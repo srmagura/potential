@@ -41,10 +41,11 @@ def add_arguments(parser, args):
 
 def print_options(options, meta_options={}):
     problem = options['problem']
+    boundary = problem.boundary
 
     heading_items = [
         problem.name,
-        options['boundary'].name,
+        boundary.name,
         str(datetime.date.today())
     ]
 
@@ -59,11 +60,13 @@ def print_options(options, meta_options={}):
     print('k = ' + prec_str.format(float(problem.k)))
     print('R = ' + prec_str.format(problem.R))
     print('a = ' + prec_str.format(problem.a))
+    print('bet = ' + prec_str.format(boundary.bet))
     print('AD_len = ' + prec_str.format(problem.AD_len))
     print()
 
     if hasattr(problem, 'get_n_basis') and 'N_list' in meta_options:
         print('[Basis sets]')
+        N_list = meta_options['N_list']
         for N in N_list:
             print('{}: {}'.format(N, problem.get_n_basis(N)))
         print()

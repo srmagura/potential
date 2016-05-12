@@ -1,10 +1,14 @@
+import sys
+
 import argparse
 import numpy as np
 
 import problems
-import ps.coordinator
 
-from io_util import add_arguments, prec_str
+import ps.ps
+
+import io_util
+from io_util import prec_str
 
 def get_N_list(N0, c):
     if c is None:
@@ -26,23 +30,31 @@ Create an ArgumentParser for handling command-line arguments.
 parser = argparse.ArgumentParser()
 parser = parser
 
-arg_list = ['problem', 'N', 'c', 'o', 'r', 'a']
-add_arguments(parser, arg_list)
+arg_list = ['problem', 'boundary', 'N', 'c', 'o', 'r', 'a']
+io_util.add_arguments(parser, arg_list)
 args = parser.parse_args()
 
-problem_name = args.problem
-problem = problems.problem_dict[problem_name](scheme_order=args.o)
+problem = problems.problem_dict[args.problem]()
+boundary = problems.boundary.boundaries[args.boundary](problem.R)
+problem.boundary = boundary
+
+N_list = get_N_list(args.N, args.c)
 
 # Options to pass to the solver
 options = {
+    'problem': problem,
     'scheme_order': args.o,
 }
+
+meta_options = {
+    'N_list': N_list
+}
+
+io_util.print_options(options, meta_options)
 
 """
 Perform the convergence test.
 """
-N_list = get_N_list(args.N, args.c)
-
 do_rel_conv = args.r or not problem.expected_known
 
 u2 = None
@@ -52,13 +64,12 @@ u0 = None
 prev_error = None
 
 for N in N_list:
-    coord = ps.coordinator.Coordinator(problem, N, options)
+    options['N'] = N
 
-    if N == N_list[0]:
-        coord.print_info(N_list)
+    solver = ps.ps.PizzaSolver(options)
 
     print('---- {0} x {0} ----'.format(N))
-    result = coord.run()
+    result = solver.run()
     if result is None:
         continue
 
@@ -75,9 +86,10 @@ for N in N_list:
         print('Convergence: ' + prec_str.format(convergence))
 
     if do_rel_conv and u2 is not None:
-        convergence = coord.calc_rel_convergence(u0, u1, u2)
+        convergence = solver.calc_rel_convergence(u0, u1, u2)
         print('Rel convergence: ' + prec_str.format(convergence))
 
     print()
+    sys.stdout.flush()
 
     prev_error = result.error

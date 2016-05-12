@@ -31,7 +31,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.nu = self.problem.nu
         self.R = self.problem.R
 
-        self.boundary = options['boundary']
+        self.boundary = self.problem.boundary
 
         self.scheme_order = options['scheme_order']
 
@@ -204,8 +204,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Q1, rhs = self.get_var()
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
-
     def get_singular_part(self):
+        singular_part = np.zeros((self.N-1, self.N-1), dtype=complex)
+
+        if not self.problem.regularize:
+            return singular_part
+
         k = self.k
         R = self.R
         a = self.a
@@ -213,7 +217,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         a_coef = singular_util.b_to_a(self.b_coef, k, R, nu)
 
-        singular_part = np.zeros((self.N-1, self.N-1), dtype=complex)
         for i, j in self.global_Mplus:
             r, th = self.get_polar(i, j)
             for m in range(1, self.M+1):

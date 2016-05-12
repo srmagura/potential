@@ -158,7 +158,7 @@ class Boundary:
 class Arc(Boundary):
     name = 'arc'
     r_expr_str = 'R'
-    bet0 = 0
+    bet0 = 0.0
 
 class OuterSine(Boundary):
     name = 'outer-sine'
@@ -185,14 +185,7 @@ class Cubic(Boundary):
     bet0 = 0.025*cubic_C
     additional_params = {'C': cubic_C}
 
-# For tests only
-class Ellipse(Boundary):
-    name = 'ellipse'
-    r_expr_str = '_a*_b/(sqrt((_b*cos(th))**2 + (_a*sin(th))**2))'
-    bet0 = 0.05
-    additional_params = {'_a': 2.5, '_b': 2}
-
-_boundary_cls = (Arc, OuterSine, InnerSine, Sine7, Cubic, Ellipse)
+_boundary_cls = (Arc, OuterSine, InnerSine, Sine7, Cubic)
 
 boundaries = {}
 for boundary in _boundary_cls:
