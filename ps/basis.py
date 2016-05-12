@@ -143,4 +143,4 @@ class PsBasis:
         """
         Extend a basis function to the discrete boundary.
         """
-        return self.extend_boundary({'JJ': JJ, 'index': index})
+        return self.extend_boundary(JJ=JJ, basis_index=index)

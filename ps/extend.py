@@ -73,8 +73,8 @@ class PsExtend:
             d4_xi0_s=kwargs['d4_xi0_arg'],
         )
 
-    def _ext_calc_xi_derivs(self, deriv_types, arg, sid, JJ,
-        human_readable_keys=True):
+    def _ext_calc_xi_derivs(self, deriv_types, arg, sid,
+        human_readable_keys=True, **kwargs):
         """
         Calculate derivatives of xi0, xi1, or a basis function.
 
@@ -91,10 +91,22 @@ class PsExtend:
 
         Returns a dictionary containing all of the requested derivatives.
         """
-        if JJ is not None:
+        if kwargs['JJ'] is not None:
+            JJ = kwargs['JJ']
+            basis_index = kwargs['basis_index']
+
             JJ_list = [JJ]
-            _c ={JJ: 1}
-            c = [_c, _c]
+
+            c = [{}, {}]
+            c[basis_index][JJ] = 1
+
+            if basis_index == 0:
+                other_basis_index = 1
+            elif basis_index == 1:
+                other_basis_index = 0
+
+            c[other_basis_index][JJ] = 0
+
         else:
             JJ_list = range(len(self.B_desc))
             c = [self.c0, self.c1]
@@ -117,7 +129,7 @@ class PsExtend:
         return derivs
 
     def ext_calc_xi_derivs(self, deriv_types, arg, sid,
-        human_readable_keys=True):
+        human_readable_keys=True, **kwargs):
         """
         Calculate derivatives of xi0 and xi1.
 
@@ -132,51 +144,32 @@ class PsExtend:
 
         Returns a dictionary containing all of the requested derivatives.
         """
-        return self._ext_calc_xi_derivs(deriv_types, arg, sid, JJ=None,
-            human_readable_keys=human_readable_keys)
-
-    def ext_calc_basis_derivs(self, JJ, deriv_types, arg, sid):
-        """
-        Calculate derivatives of a basis function.
-
-        JJ -- ID of the basis function
-        deriv_types -- iterable of 2-tuples of the form
-            (order, index) where order is an integer >= 0 that
-            indicates which derivative to take, and index=0,1
-            specifies xi0 or xi1
-        arg -- location on the boundary where derivative is evaluated
-
-        Returns a dictionary containing all of the requested derivatives.
-        """
-        return self._ext_calc_xi_derivs(deriv_types, arg, sid, JJ=JJ,
-            human_readable_keys=False)
+        return self._ext_calc_xi_derivs(deriv_types, arg, sid,
+            human_readable_keys=human_readable_keys, **kwargs)
 
     def do_extend_taylor(self, i, j, arg, taylor_sid, delta_arg, n=None,
-        JJ=None):
+        **kwargs):
         """
         Use a Taylor expansion to extend the boundary data from the
         physical boundary to the "extended boundary". Then extend to
         the grid node (i, j) using the equation-based extension.
 
-        # FIXME
-        If 'JJ' is in options, then the single basis function with ID
-        JJ is extended. Otherwise, the full Dirichlet/Neumann data is
-        extended.
+        **kwargs:
+            JJ: if extending a single basis function, contains
+                the ID of that basis function. If extending the full
+                boundary data, JJ should be None.
+            basis_index: indicates whether this is a Dirichlet
+                or Neumann basis function. Value does not matter if
+                JJ is None.
         """
         # Build the dictionary xi_derivs0, which will hold the
         # tangential derivatives at the "starting point" of the
         # Taylor expansion. Keys of the dictionary are of the
         # form (order, index)
 
-        if JJ is None:
-            # For extension of entire Dirichlet/Neumann data
-            deriv_types = list(it.product(range(self.taylor_n_terms), (0, 1)))
-            xi_derivs0 = self.ext_calc_xi_derivs(deriv_types, arg, taylor_sid,
-                human_readable_keys=False)
-        else:
-            # TODO
-            pass
-
+        deriv_types = list(it.product(range(self.taylor_n_terms), (0, 1)))
+        xi_derivs0 = self.ext_calc_xi_derivs(deriv_types, arg, taylor_sid,
+            human_readable_keys=False, **kwargs)
 
         # To hold the results of the Taylor expansion. Tangential
         # derivatives, with respect to the argument (r or th) for
@@ -242,53 +235,67 @@ class PsExtend:
 
         return value
 
-    def do_extend_0_standard(self, i, j, options):
+    """
+    Documentation for the functions:
+    do_extend_[SID]_[left/right/standard]
+
+    Args:
+        i, j: grid node, "destination" of the extension
+        **kwargs:
+            JJ: if extending a single basis function, contains
+                the ID of that basis function. If extending the full
+                boundary data, JJ should be None.
+            basis_index: indicates whether this is a Dirichlet
+                or Neumann basis function. Value does not matter if
+                JJ is None.
+    """
+
+    def do_extend_0_standard(self, i, j, **kwargs):
         n, th = self.boundary_coord_cache[(i, j)]
 
         deriv_types = (
             (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (3, 0), (4, 0)
         )
 
-        derivs = self.ext_calc_xi_derivs(deriv_types, th, 0)
+        derivs = self.ext_calc_xi_derivs(deriv_types, th, 0, **kwargs)
         return {'elen': abs(n), 'value': self.do_extend_0(i, j, derivs)}
 
-    def do_extend_0_left(self, i, j, options):
+    def do_extend_0_left(self, i, j, **kwargs):
         n, th0 = self.boundary_coord_cache[(i, j)]
 
         return self.do_extend_taylor(i, j, arg=self.a,
-            taylor_sid=0, delta_arg=th0-self.a)
+            taylor_sid=0, delta_arg=th0-self.a, **kwargs)
 
-    def do_extend_0_right(self, i, j, options):
+    def do_extend_0_right(self, i, j, **kwargs):
         n, th0 = self.boundary_coord_cache[(i, j)]
 
         return self.do_extend_taylor(i, j, arg=2*np.pi,
-            taylor_sid=0, delta_arg=th0-2*np.pi)
+            taylor_sid=0, delta_arg=th0-2*np.pi, **kwargs)
 
-    def do_extend_1_standard(self, i, j, options):
+    def do_extend_1_standard(self, i, j, **kwargs):
         x, y = self.get_coord(i, j)
 
         deriv_types = (
             (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (4, 0),
         )
 
-        # FIXME won't work for basis extension
-        derivs = self.ext_calc_xi_derivs(deriv_types, x, 1)
+        derivs = self.ext_calc_xi_derivs(deriv_types, x, 1, **kwargs)
         value = self.extend_radius(n=y, **derivs)
 
         return {'elen': abs(y), 'value': value}
 
-    def do_extend_1_left(self, i, j, options):
+    def do_extend_1_left(self, i, j, **kwargs):
         x, y = self.get_coord(i, j)
         return self.do_extend_taylor(i, j, arg=0, taylor_sid=1,
-            delta_arg=x, n=y)
+            delta_arg=x, n=y, **kwargs)
 
-    def do_extend_1_right(self, i, j, options):
+    def do_extend_1_right(self, i, j, **kwargs):
         x, y = self.get_coord(i, j)
         R = self.R
         return self.do_extend_taylor(i, j, arg=R, taylor_sid=1,
-            delta_arg=x-R, n=y)
+            delta_arg=x-R, n=y, **kwargs)
 
-    def do_extend_2_standard(self, i, j, options):
+    def do_extend_2_standard(self, i, j, **kwargs):
         x, y = self.get_coord(i, j)
         x0, y0 = self.get_radius_point(2, x, y)
 
@@ -297,23 +304,24 @@ class PsExtend:
         deriv_types = (
             (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (4, 0),
         )
-        derivs = self.ext_calc_xi_derivs(deriv_types, param_r, 2)
+        derivs = self.ext_calc_xi_derivs(deriv_types, param_r, 2, **kwargs)
         n = self.signed_dist_to_radius(2, x, y)
 
         value = self.extend_radius(n=n, **derivs)
 
         return {'elen': n, 'value': value}
 
-    def do_extend_2_left(self, i, j, options):
+    def do_extend_2_left(self, i, j, **kwargs):
         x, y = self.get_coord(i, j)
         x1, y1 = self.get_radius_point(2, x, y)
 
         return self.do_extend_taylor(i, j, arg=0, taylor_sid=2,
             delta_arg=-np.sqrt(x1**2 + y1**2),
-            n=self.signed_dist_to_radius(2, x, y)
+            n=self.signed_dist_to_radius(2, x, y),
+            **kwargs
         )
 
-    def do_extend_2_right(self, i, j, options):
+    def do_extend_2_right(self, i, j, **kwargs):
         R = self.R
         a = self.a
 
@@ -325,10 +333,12 @@ class PsExtend:
 
         return self.do_extend_taylor(i, j, arg=R, taylor_sid=2,
             delta_arg=np.sqrt((x1 - x0)**2 + (y1 - y0)**2),
-            n=self.signed_dist_to_radius(2, x, y)
+            n=self.signed_dist_to_radius(2, x, y),
+            **kwargs
         )
 
-    def mv_extend_boundary(self, options={}):
+    def mv_extend_boundary(self, JJ=None, basis_index=None,
+        homogeneous_only=False):
         """
         Extend the boundary data to the discrete boundary. Returns a
         Multivalue object (multiple-valued grid function).
@@ -342,9 +352,7 @@ class PsExtend:
             gamma = self.all_gamma[sid]
 
             for l in range(len(gamma)):
-                # Subroutines may modify options, so create a new copy
-                # of the original each time
-                _options = copy.copy(options)
+                kwargs = {'JJ': JJ, 'basis_index': basis_index}
 
                 i, j = gamma[l]
                 etype = self.get_etype(sid, i, j)
@@ -353,27 +361,27 @@ class PsExtend:
 
                 if sid == 0:
                     if etype == EType.standard:
-                        result = self.do_extend_0_standard(i, j, _options)
+                        result = self.do_extend_0_standard(i, j, **kwargs)
                     elif etype == EType.left:
-                        result = self.do_extend_0_left(i, j, _options)
+                        result = self.do_extend_0_left(i, j, **kwargs)
                     elif etype == EType.right:
-                        result = self.do_extend_0_right(i, j, _options)
+                        result = self.do_extend_0_right(i, j, **kwargs)
 
                 elif sid == 1:
                     if etype == EType.standard:
-                        result = self.do_extend_1_standard(i, j, _options)
+                        result = self.do_extend_1_standard(i, j, **kwargs)
                     elif etype == EType.left:
-                        result = self.do_extend_1_left(i, j, _options)
+                        result = self.do_extend_1_left(i, j, **kwargs)
                     elif etype == EType.right:
-                        result = self.do_extend_1_right(i, j, _options)
+                        result = self.do_extend_1_right(i, j, **kwargs)
 
                 elif sid == 2:
                     if etype == EType.standard:
-                        result = self.do_extend_2_standard(i, j, _options)
+                        result = self.do_extend_2_standard(i, j, **kwargs)
                     elif etype == EType.left:
-                        result = self.do_extend_2_left(i, j, _options)
+                        result = self.do_extend_2_left(i, j, **kwargs)
                     elif etype == EType.right:
-                        result = self.do_extend_2_right(i, j, _options)
+                        result = self.do_extend_2_right(i, j, **kwargs)
 
                 result['setype'] = (sid, etype)
                 mv_ext[(i, j)].append(result)
@@ -384,16 +392,15 @@ class PsExtend:
         # - this function received the 'homogeneous_only' option, which is
         #   used for debugging
 
-        if('JJ' in options or self.problem.homogeneous or
-            'homogeneous_only' in options):
+        if(JJ is not None or self.problem.homogeneous or homogeneous_only):
             return mv_ext
         else:
             return mv_ext + self.mv_extend_inhomo_f()
 
-    def extend_boundary(self, options={}):
+    def extend_boundary(self, **kwargs):
         """
         Extend the boundary data to the discrete boundary. Returns
         a single-valued function defined on the discrete boundary.
         """
-        mv_ext = self.mv_extend_boundary(options)
+        mv_ext = self.mv_extend_boundary(**kwargs)
         return mv_ext.reduce()

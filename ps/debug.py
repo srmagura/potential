@@ -108,31 +108,6 @@ class PsDebug:
 
         return result
 
-    def test_extend_basis(self):
-        error = []
-        for index in (0, 1):
-            for JJ in range(len(self.B_desc)):
-                ext1_array = self.extend_basis(JJ, index)
-
-                self.c0 = np.zeros(len(self.B_desc))
-                self.c1 = np.zeros(len(self.B_desc))
-
-                if index == 0:
-                    self.c0[JJ] = 1
-                elif index == 1:
-                    self.c1[JJ] = 1
-
-                ext2_array = self.extend_boundary({'homogeneous_only': True})
-                diff = np.abs(ext1_array - ext2_array)
-                error.append(np.max(diff))
-                print('index={}  JJ={}  error={}'.format(index, JJ, error[-1]))
-
-        error = np.array(error)
-
-        result = Result()
-        result.error = np.max(np.abs(error))
-        return result
-
     def c0_test(self, plot=True):
         """
         Plot the Dirichlet data along with its Chebyshev expansion. If there
