@@ -253,17 +253,16 @@ class PsExtend:
         return {'elen': abs(n), 'value': self.do_extend_0(i, j, derivs)}
 
     def do_extend_0_left(self, i, j, options):
-        x, y = self.get_coord(i, j)
-        r, th = self.get_polar(i, j)
+        n, th0 = self.boundary_coord_cache[(i, j)]
 
         return self.do_extend_taylor(i, j, arg=self.a,
-            taylor_sid=0, delta_arg=th-self.a)
+            taylor_sid=0, delta_arg=th0-self.a)
 
     def do_extend_0_right(self, i, j, options):
-        r, th = self.get_polar(i, j)
+        n, th0 = self.boundary_coord_cache[(i, j)]
 
         return self.do_extend_taylor(i, j, arg=2*np.pi,
-            taylor_sid=0, delta_arg=th)
+            taylor_sid=0, delta_arg=th0-2*np.pi)
 
     def do_extend_1_standard(self, i, j, options):
         x, y = self.get_coord(i, j)
