@@ -5,7 +5,7 @@ from scipy.special import jv
 
 import domain_util
 import fourier
-import singular_util
+import abcoef
 
 from .problem import PizzaProblem
 
@@ -15,7 +15,7 @@ class SingularProblem(PizzaProblem):
     """
 
     regularize = True
-    m_max = 100
+    m_max = 200
 
     def __init__(self, **kwargs):
         if 'eval_u_asympt' in kwargs:
@@ -24,12 +24,12 @@ class SingularProblem(PizzaProblem):
             self.eval_u_asympt = lambda r, th: 0
 
         if 'to_dst' in kwargs:
-            self.outside_bdata = kwargs.pop('to_dst')
+            to_dst = kwargs.pop('to_dst')
         else:
-            self.outside_bdata = lambda th: 0
+            to_dst = lambda th: 0
 
-        self.fft_b_coef = fourier.arc_dst(self.a, self.outside_bdata)[:self.m_max]
-        self.fft_a_coef = singular_util.b_to_a(self.fft_b_coef, self.k,
+        self.fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
+        self.fft_a_coef = abcoef.b_to_a(self.fft_b_coef, self.k,
             self.R, self.nu)
 
     # deprecate?
@@ -49,7 +49,8 @@ class SingularProblem(PizzaProblem):
         nu = self.nu
         R = self.R
 
-        u = self.eval_expected_polar__no_reg(r, th)
+        #u = self.eval_expected_polar__no_reg(r, th)
+        u = 0
         for m in range(1, self.m_max+1):
             ac = self.fft_a_coef[m-1]
             u += ac * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
@@ -66,7 +67,7 @@ class SingularProblem(PizzaProblem):
         R = self.R
 
         bc = self.eval_bc__no_reg(arg, sid)
-        r, th = domain_util.arg_to_polar(R, a, arg, sid)
+        r, th = domain_util.arg_to_polar(self.boundary, a, arg, sid)
 
         if sid == 0:
             return bc - self.eval_u_asympt(r, th)

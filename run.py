@@ -32,6 +32,11 @@ parser = parser
 
 arg_list = ['problem', 'boundary', 'N', 'c', 'o', 'r', 'a']
 io_util.add_arguments(parser, arg_list)
+
+parser.add_argument('--cheat-fft', action='store_true',
+    help='for testing purposes. Uses the true values of the a/b '
+    'coefficients, which really should not be known')
+
 args = parser.parse_args()
 
 problem = problems.problem_dict[args.problem]()
@@ -44,6 +49,7 @@ N_list = get_N_list(args.N, args.c)
 options = {
     'problem': problem,
     'scheme_order': args.o,
+    'cheat_fft': args.cheat_fft
 }
 
 meta_options = {

@@ -25,10 +25,8 @@ class SingH(SingularProblem):
     }
 
 
-
-    '''
     # 2nd order
-    k = 1.75
+    '''k = 1.75
 
     n_basis_dict = {
         16: (16, 5),
@@ -39,15 +37,15 @@ class SingH(SingularProblem):
         512: (80, 30),
         1024: (100, 40),
         2048: (120, 45)
-    }
-    '''
+    }'''
+
 
     def __init__(self, **kwargs):
         kwargs['to_dst'] = self.eval_phi0
         super().__init__(**kwargs)
 
-    def eval_expected_polar__no_reg(self, r, th):
-        return 0
+    #def eval_expected_polar__no_reg(self, r, th):
+    #    return 0
 
     def eval_bc__no_reg(self, arg, sid):
         if sid == 0:
@@ -56,16 +54,17 @@ class SingH(SingularProblem):
             return 0
 
     def eval_d_u_outwards(self, arg, sid):
+        # Only for true arc. At least at the moment
         k = self.k
         R = self.R
         a = self.a
         nu = self.nu
 
-        r, th = domain_util.arg_to_polar(R, a, arg, sid)
+        r, th = domain_util.arg_to_polar(self.boundary, a, arg, sid)
 
         d_u = 0
 
-        for m in range(8, self.m_max+1):
+        for m in range(1, self.m_max+1):
             ac = self.fft_a_coef[m-1]
             if sid == 0:
                 d_u += ac * k * jvp(m*nu, k*r, 1) * np.sin(m*nu*(th-a))
@@ -84,7 +83,6 @@ class H_Sine(SingH):
 
     def __init__(self, **kwargs):
         self.m = kwargs.pop('m')
-        self.m_max = self.m
 
         super().__init__(**kwargs)
 
@@ -92,12 +90,11 @@ class H_Sine(SingH):
         a = self.a
         nu = self.nu
         m = self.m
+
         return np.sin(m*nu*(th-a))
 
 
 class H_Sine8(H_Sine):
-
-    m_max = 9
 
     def __init__(self, **kwargs):
         super().__init__(m=8)
@@ -108,14 +105,14 @@ class H_SineRange(SingH):
     expected_known = True
     silent = True
 
-    m_max = 9
+    m_range_max = 9
 
     def eval_phi0(self, th):
         a = self.a
         nu = self.nu
 
         phi0 = 0
-        for m in range(1, self.m_max+1):
+        for m in range(1, self.m_range_max+1):
             phi0 += np.sin(m*nu*(th-a))
 
         return phi0
@@ -124,7 +121,12 @@ class H_SineRange(SingH):
 class H_Hat(SingH):
 
     expected_known = True
-    m_max = 200
+
+    # TODO
+    m1_dict = {
+        'outer-sine': 132,
+        'inner-sine': 190,
+    }
 
     def eval_phi0(self, th):
         return functions.eval_hat_th(th)
@@ -133,7 +135,6 @@ class H_Hat(SingH):
 class H_Parabola(SingH):
 
     expected_known = True
-    m_max = 200
 
     def eval_phi0(self, th):
         a = self.a
@@ -143,7 +144,6 @@ class H_Parabola(SingH):
 class H_LineSine(SingH):
 
     expected_known = False
-    m_max = 200
 
     def eval_phi0(self, th):
         k = self.k

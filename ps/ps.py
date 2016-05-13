@@ -7,7 +7,7 @@ from scipy.special import jv
 from solver import Solver, Result
 from linop import apply_B
 import fourier
-import singular_util
+import abcoef
 
 from ps.basis import PsBasis
 from ps.grid import PsGrid
@@ -37,6 +37,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.M = get_M(self.scheme_order)
         self.problem.M = self.M
+        self.cheat_fft = options.get('cheat_fft', False)
 
         # Get basis set sizes from the Problem
         n_basis_tuple = self.problem.get_n_basis(self.N,
@@ -215,12 +216,10 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         a = self.a
         nu = self.nu
 
-        a_coef = singular_util.b_to_a(self.b_coef, k, R, nu)
-
         for i, j in self.global_Mplus:
             r, th = self.get_polar(i, j)
             for m in range(1, self.M+1):
-                singular_part[i-1, j-1] += (a_coef[m-1] * jv(m*nu, k*r) *
+                singular_part[i-1, j-1] += (self.a_coef[m-1] * jv(m*nu, k*r) *
                     np.sin(m*nu*(th-a)))
 
         return singular_part

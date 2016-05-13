@@ -84,3 +84,11 @@ class PizzaProblem(Problem):
             256: (45, 29),
             None: (53, 34)
         }
+
+    def get_m1(self):
+        bname = self.boundary.name
+        if hasattr(self, 'm1_dict') and bname in self.m1_dict:
+            return self.m1_dict[bname]
+        else:
+            # Default value 0 m1.  TODO?
+            return 140

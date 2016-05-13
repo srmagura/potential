@@ -48,7 +48,9 @@ def run_test(N):
         set_setypes()
 
     solver.calc_c0()
+    solver.c0_test()
     solver.calc_c1_exact()
+    solver.c1_test()
 
     mv_ext = solver.mv_extend_boundary()
 
@@ -59,7 +61,15 @@ def run_test(N):
         r, th = solver.get_polar(*node)
 
         for data in mv_ext[node]:
-            if setypes is None or data['setype'] in setypes:
+            setype = data['setype']
+            sid, etype = setype
+
+            if setypes is None or setype in setypes:
+                # Need correction for non-2pi-periodic solutions
+                #if(sid == 1 and (etype == EType.standard or
+                #    etype == EType.right) and th < np.pi):
+                #    th += 2*np.pi
+
                 exp = problem.eval_expected_polar(r, th)
 
                 diff = abs(exp - data['value'])

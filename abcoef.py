@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.special import jv
 
-def calc_a_coef(problem, boundary, eval_phi0, M, m1):
+def calc_a_coef(problem, boundary, eval_bc0, M, m1):
     k = problem.k
     R = problem.R
     a = problem.a
@@ -17,7 +17,7 @@ def calc_a_coef(problem, boundary, eval_phi0, M, m1):
         th = th_data[i]
         r = boundary.eval_r(th)
 
-        phi0_data[i] = eval_phi0(r, th)
+        phi0_data[i] = eval_bc0(th)
         for m in range(1, m1+1):
             W[i, m-1] = jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
@@ -27,6 +27,26 @@ def calc_a_coef(problem, boundary, eval_phi0, M, m1):
     a_coef, residuals, rank, s = np.linalg.lstsq(W, phi0_data)
 
     if rank != m1:
-        print('\n!!!! Rank deficient !!!!\n')
+        raise Exception('Rank deficient')
 
     return a_coef[:M], s
+
+def a_to_b(a_coef, k, R, nu):
+    return _convert_ab(a_coef, 'a', k, R, nu)
+
+def b_to_a(b_coef, k, R, nu):
+    return _convert_ab(b_coef, 'b', k, R, nu)
+
+def _convert_ab(coef, coef_type, k, R, nu):
+    assert coef_type in ('a', 'b')
+
+    other_coef = np.zeros(len(coef), dtype=complex)
+
+    for m in range(1, len(coef)+1):
+        factor = jv(m*nu, k*R)
+        if coef_type == 'b':
+            factor = 1/factor
+
+        other_coef[m-1] = coef[m-1] * factor
+
+    return other_coef

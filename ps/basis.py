@@ -2,7 +2,7 @@ import numpy as np
 from scipy.fftpack import dst
 
 from chebyshev import eval_dn_T_t, get_chebyshev_roots
-import fourier
+import abcoef
 import domain_util
 
 class PsBasis:
@@ -113,25 +113,36 @@ class PsBasis:
         """
         self.c0 = []
 
+        k = self.problem.k
+        R = self.problem.R
         a = self.a
         nu = self.nu
 
-        # Way to get b_coef, even if the problem doesn't have fft_b_coef
-        # defined
-        self.b_coef = fourier.arc_dst(a,
-            lambda th: self.problem.eval_bc(th, 0)
-        )[:self.M]
+        def eval_bc0(th):
+            return self.problem.eval_bc(th, 0)
 
-        def eval_phi0_reg(th):
-            phi0 = self.problem.eval_bc(th, 0)
+        if self.problem.regularize:
+            if self.cheat_fft:
+                self.a_coef = self.problem.fft_a_coef[:self.M]
+            else:
+                m1 = self.problem.get_m1()
+                self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
+                    eval_bc0, self.M, m1)[0]
+        else:
+            self.a_coef = np.zeros(self.M)
+
+        self.b_coef = abcoef.a_to_b(self.a_coef, k, R, nu)
+
+        def eval_bc0_reg(th):
+            bc0 = eval_bc0(th)
 
             if self.problem.regularize:
                 for m in range(1, self.M+1):
-                    phi0 -= self.b_coef[m-1] * np.sin(m*nu*(th-a))
+                    bc0 -= self.b_coef[m-1] * np.sin(m*nu*(th-a))
 
-            return phi0
+            return bc0
 
-        self.c0.extend(self.get_chebyshev_coef(0, eval_phi0_reg))
+        self.c0.extend(self.get_chebyshev_coef(0, eval_bc0_reg))
 
         for sid in (1, 2):
             def func(arg):
