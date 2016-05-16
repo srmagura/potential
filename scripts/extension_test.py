@@ -21,6 +21,8 @@ import io_util
 
 setypes = None
 
+# Needs multiple modifications to work with singular problems
+
 def set_setypes():
     if args.s is None:
         return
@@ -48,9 +50,7 @@ def run_test(N):
         set_setypes()
 
     solver.calc_c0()
-    solver.c0_test()
     solver.calc_c1_exact()
-    solver.c1_test()
 
     mv_ext = solver.mv_extend_boundary()
 
@@ -65,10 +65,11 @@ def run_test(N):
             sid, etype = setype
 
             if setypes is None or setype in setypes:
-                # Need correction for non-2pi-periodic solutions
-                #if(sid == 1 and (etype == EType.standard or
-                #    etype == EType.right) and th < np.pi):
-                #    th += 2*np.pi
+                # Filters to handle solutions that are not 2pi-periodic
+                if sid == 1 and (th > 2*np.pi+solver.a/2 or th < np.pi):
+                    continue
+                if sid == 2 and (th <= solver.a or th > np.pi):
+                    continue
 
                 exp = problem.eval_expected_polar(r, th)
 
@@ -76,9 +77,14 @@ def run_test(N):
                 error.append(diff)
                 th_list.append(th)
 
-                #if diff > 1e-1:
-                #    print('r={}  th={}  diff={}'.format(r, th, diff))
-                #    print('exp={}   act={}'.format(exp, data['value']))
+                x, y = solver.get_coord(*node)
+
+                '''if diff > 1e-1:
+                    print('r={}  th={}  diff={}'.format(r, th, diff))
+                    print('x={}  y={}'.format(x, y))
+                    print('exp={}   act={}'.format(exp, data['value']))
+                    print()'''
+
 
     #plt.plot(th_list, np.log10(error), 'o')
     #plt.show()

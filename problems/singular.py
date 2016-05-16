@@ -48,7 +48,7 @@ class SingularProblem(PizzaProblem):
         a = self.a
         nu = self.nu
         R = self.R
-
+        
         #u = self.eval_expected_polar__no_reg(r, th)
         u = 0
         for m in range(1, self.m_max+1):

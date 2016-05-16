@@ -97,6 +97,7 @@ args = parser.parse_args()
 # Dummy problem just to get the solver to run
 problem = SmoothH_Sine()
 boundary = problems.boundary.boundaries[args.boundary](problem.R)
+problem.boundary = boundary
 
 options = {'problem': problem, 'boundary': boundary, 'N': args.N,
     'scheme_order': 4}

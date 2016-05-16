@@ -91,6 +91,8 @@ class PsDebug:
         """
         Do Chebyshev fits on the Neumann data of each segment to get
         the coefficients c1.
+
+        WILL NOT WORK for singular problems
         """
         self.c1 = []
 
