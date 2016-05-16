@@ -49,7 +49,8 @@ class SingH(SingularProblem):
 
     def eval_bc__no_reg(self, arg, sid):
         if sid == 0:
-            return self.eval_phi0(arg)
+            r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
+            return self.eval_expected_polar(r, th)
         else:
             return 0
 
@@ -95,6 +96,9 @@ class H_Sine(SingH):
 
 
 class H_Sine8(H_Sine):
+
+    # FIXME
+    k=1
 
     def __init__(self, **kwargs):
         super().__init__(m=8)

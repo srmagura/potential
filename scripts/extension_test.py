@@ -65,25 +65,17 @@ def run_test(N):
             sid, etype = setype
 
             if setypes is None or setype in setypes:
-                # Filters to handle solutions that are not 2pi-periodic
-                if sid == 1 and (th > 2*np.pi+solver.a/2 or th < np.pi):
-                    continue
-                if sid == 2 and (th <= solver.a or th > np.pi):
-                    continue
-
                 exp = problem.eval_expected_polar(r, th)
 
                 diff = abs(exp - data['value'])
                 error.append(diff)
                 th_list.append(th)
 
-                x, y = solver.get_coord(*node)
-
-                '''if diff > 1e-1:
-                    print('r={}  th={}  diff={}'.format(r, th, diff))
-                    print('x={}  y={}'.format(x, y))
-                    print('exp={}   act={}'.format(exp, data['value']))
-                    print()'''
+                #if diff > 1e-1:
+                #    print('r={}  th={}  diff={}'.format(r, th, diff))
+                #    print('x={}  y={}'.format(solver.get_coord(*node)))
+                #    print('exp={}   act={}'.format(exp, data['value']))
+                #    print()
 
 
     #plt.plot(th_list, np.log10(error), 'o')
