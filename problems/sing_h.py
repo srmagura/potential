@@ -110,6 +110,7 @@ class H_SineRange(SingH):
     silent = True
 
     m_range_max = 9
+    m1 = 9
 
     def eval_phi0(self, th):
         a = self.a
@@ -126,10 +127,12 @@ class H_Hat(SingH):
 
     expected_known = True
 
-    # TODO
     m1_dict = {
-        'outer-sine': 132,
-        'inner-sine': 190,
+        'arc': 128,
+        'outer-sine': 134,
+        'inner-sine': 220,
+        'cubic': 210,
+        'sine7': 200,
     }
 
     def eval_phi0(self, th):
@@ -140,6 +143,14 @@ class H_Parabola(SingH):
 
     expected_known = True
 
+    m1_dict = {
+        'arc': 48,
+        'outer-sine': 200,
+        'inner-sine': 220,
+        'cubic': 210,
+        'sine7': 218,
+    }
+
     def eval_phi0(self, th):
         a = self.a
         return -(th - a) * (th - 2*np.pi)
@@ -148,6 +159,14 @@ class H_Parabola(SingH):
 class H_LineSine(SingH):
 
     expected_known = False
+
+    m1_dict = {
+        'arc': 8,
+        'outer-sine': 210,
+        'inner-sine': 236,
+        'cubic': 200,
+        'sine7': 204,
+    }
 
     def eval_phi0(self, th):
         k = self.k
