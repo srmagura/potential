@@ -86,9 +86,11 @@ class PizzaProblem(Problem):
         }
 
     def get_m1(self):
+        if hasattr(self, 'm1'):
+            return self.m1
+
         bname = self.boundary.name
         if hasattr(self, 'm1_dict') and bname in self.m1_dict:
             return self.m1_dict[bname]
-        else:
-            # Default value 0 m1.  TODO?
-            return 140
+
+        raise Exception('m1 not set')

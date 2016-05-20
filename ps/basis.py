@@ -136,10 +136,9 @@ class PsBasis:
         def eval_bc0_reg(th):
             bc0 = eval_bc0(th)
 
-            # MEGA FIXME
-            #if self.problem.regularize:
-            #    for m in range(1, self.M+1):
-            #        bc0 -= self.b_coef[m-1] * np.sin(m*nu*(th-a))
+            if self.problem.regularize:
+                for m in range(1, self.M+1):
+                    bc0 -= self.b_coef[m-1] * np.sin(m*nu*(th-a))
 
             return bc0
 

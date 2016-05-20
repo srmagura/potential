@@ -84,6 +84,7 @@ class H_Sine(SingH):
 
     def __init__(self, **kwargs):
         self.m = kwargs.pop('m')
+        self.m1 = self.m
 
         super().__init__(**kwargs)
 
@@ -97,8 +98,7 @@ class H_Sine(SingH):
 
 class H_Sine8(H_Sine):
 
-    # FIXME
-    k=1
+    k = 5.5
 
     def __init__(self, **kwargs):
         super().__init__(m=8)
