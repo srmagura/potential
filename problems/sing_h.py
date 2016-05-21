@@ -14,7 +14,8 @@ class SingH(SingularProblem):
     # 4th order
     k = 5.5
 
-    n_basis_dict = {
+    # before 5/21/2016
+    ''' n_basis_dict = {
         16: (24, 6),
         32: (33, 8),
         64: (42, 12),
@@ -22,8 +23,7 @@ class SingH(SingularProblem):
         256: (80, 30),
         512: (100, 40),
         1024: (120, 45),
-    }
-
+    }'''
 
     # 2nd order
     '''k = 1.75
@@ -49,8 +49,10 @@ class SingH(SingularProblem):
 
     def eval_bc__no_reg(self, arg, sid):
         if sid == 0:
-            r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-            return self.eval_expected_polar(r, th)
+            #r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
+            #return self.eval_expected_polar(r, th)
+
+            return self.eval_phi0(arg)
         else:
             return 0
 
@@ -140,6 +142,19 @@ class H_Hat(SingH):
 
 
 class H_Parabola(SingH):
+
+    # Needs to be False for finer grids
+    expected_known = True
+
+    n_basis_dict = {
+        16: (16, 3),
+        32: (34, 9),
+        64: (34, 17),
+        128: (40, 25),
+        256: (43, 31),
+        512: (55, 35),
+        1024: (65, 40),
+    }
 
     m1_dict = {
         'arc': 48,

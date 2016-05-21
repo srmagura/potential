@@ -11,52 +11,70 @@ There may be a way to improve on this brute force method.
 import sys
 sys.path.append(sys.path[0] + '/..')
 
-import os
 import argparse
 
 import numpy as np
 
-import interface
+import ps.ps
+
+import io_util
 import problems
-import ps.dual
+import problems.boundary
+
+import copy
+from multiprocessing import Pool
 
 parser = argparse.ArgumentParser()
 
-interface.add_arguments(parser, ('problem', 'N', 'o', 'a'))
+io_util.add_arguments(parser, ('problem', 'N'))
 args = parser.parse_args()
 
-problem = problems.problem_dict[args.problem]\
-    (scheme_order=args.o, var_compute_a=args.a)
+problem = problems.problem_dict[args.problem]()
+boundary = problems.boundary.Arc(problem.R)
+problem.boundary = boundary
 
 # Options to pass to the solver
 options = {
-    'scheme_order': args.o,
-    'var_compute_a': args.a,
-    'do_dual': args.a# and not self.args.no_dual,
+    'problem': problem,
+    'N': args.N,
+    'scheme_order': 4,
 }
 
-min_error = float('inf')
-first_time = True
+meta_options = {
+    'procedure_name': 'optimize_basis',
+}
 
+io_util.print_options(options, meta_options)
+
+def my_print(t):
+    print('n_circle={}    n_radius={}    error={}'.format(*t))
+
+def worker(t):
+    options['n_circle'] = t[0]
+    options['n_radius'] = t[1]
+    my_solver = ps.ps.PizzaSolver(options)
+
+    result = my_solver.run()
+    t = (t[0], t[1], result.error)
+    my_print(t)
+
+    return t
+
+all_options = []
 # Tweak the following ranges as needed
-for n_circle in range(41, 85, 3):
-    for n_radius in range(9, int(.8*n_circle), 2):
-        options['n_circle'] = n_circle
-        options['n_radius'] = n_radius
+for n_circle in range(43, 60, 3):
+    for n_radius in range(31, int(.87*n_circle), 2):
+        all_options.append((n_circle, n_radius))
 
-        my_solver = ps.dual.DualCoordinator(problem, args.N, options)
-        if first_time:
-            my_solver.print_info()
-            first_time = False
+with Pool(4) as p:
+    results = p.map(worker, all_options)
 
-        result = my_solver.run()
-        error = result.error
+min_error = float('inf')
 
-        s =('n_circle={}    n_radius={}    error={}'
-            .format(n_circle, n_radius, error))
+for t in results:
+    if t[2] < min_error:
+        min_error = t[2]
+        min_t = t
 
-        if error < min_error:
-            min_error = error
-            s = '!!!    ' + s
-
-        print(s)
+print()
+my_print(min_t)

@@ -6,7 +6,7 @@ from multiprocessing import Pool
 C = 1024
 OUT_DIR = '/Users/sam/Google\ Drive/research/output/'
 
-problem_list = ('h-hat', 'h-parabola', 'h-line-sine',)
+problem_list = ['h-sine-range']#('h-hat', 'h-parabola', 'h-line-sine',)
 boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
 
 def worker(inputs):
