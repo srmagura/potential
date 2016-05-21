@@ -65,6 +65,10 @@ def run_test(N):
             sid, etype = setype
 
             if setypes is None or setype in setypes:
+                # FILTER
+                if th > 1.99*np.pi or th < solver.a + 0.01:
+                    continue
+
                 exp = problem.eval_expected_polar(r, th)
 
                 diff = abs(exp - data['value'])

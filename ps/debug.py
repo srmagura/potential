@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import cos, sin
 import scipy
+from scipy.special import jv
 
 import itertools as it
 
@@ -112,6 +113,10 @@ class PsDebug:
         Plot the Dirichlet data along with its Chebyshev expansion. If there
         is more than a minor difference between the two, something is wrong.
         """
+        k = self.k
+        a = self.a
+        nu = self.nu
+
         sample = self.get_boundary_sample()
 
         s_data = np.zeros(len(sample))
@@ -126,6 +131,11 @@ class PsDebug:
             sid = domain_util.get_sid(self.a, th)
 
             exact_data[l] = self.problem.eval_bc(p['arg'], sid).real
+
+            if self.problem.regularize and sid == 0:
+                for m in range(1, self.M+1):
+                    exact_data[l] -= (self.a_coef[m-1] *
+                        jv(m*nu, k*r) * np.sin(m*nu*(th-a))).real
 
             if sid == 0:
                 arg = th

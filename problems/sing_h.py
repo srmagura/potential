@@ -14,8 +14,7 @@ class SingH(SingularProblem):
     # 4th order
     k = 5.5
 
-    # before 5/21/2016
-    ''' n_basis_dict = {
+    n_basis_dict = {
         16: (24, 6),
         32: (33, 8),
         64: (42, 12),
@@ -23,7 +22,7 @@ class SingH(SingularProblem):
         256: (80, 30),
         512: (100, 40),
         1024: (120, 45),
-    }'''
+    }
 
     # 2nd order
     '''k = 1.75
@@ -49,10 +48,10 @@ class SingH(SingularProblem):
 
     def eval_bc__no_reg(self, arg, sid):
         if sid == 0:
-            #r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-            #return self.eval_expected_polar(r, th)
+            r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
+            return self.eval_expected_polar(r, th)
 
-            return self.eval_phi0(arg)
+            #return self.eval_phi0(arg)
         else:
             return 0
 

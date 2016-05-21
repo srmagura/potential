@@ -15,9 +15,10 @@ class SingularProblem(PizzaProblem):
     """
 
     regularize = True
-    m_max = 200
+    m_max = 35
 
     def __init__(self, **kwargs):
+        print('m_max:', self.m_max)
         if 'eval_u_asympt' in kwargs:
             self.eval_u_asympt = kwargs.pop('eval_u_asympt')
         else:
