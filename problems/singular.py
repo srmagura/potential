@@ -28,27 +28,16 @@ class SingularProblem(PizzaProblem):
         else:
             to_dst = lambda th: 0
 
-        self.fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
-        self.fft_a_coef = abcoef.b_to_a(self.fft_b_coef, self.k,
+        fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
+        self.fft_a_coef = abcoef.b_to_a(fft_b_coef, self.k,
             self.R, self.nu)
-
-    # deprecate?
-    def print_b(self):
-        np.set_printoptions(precision=4)
-
-        n = 5
-        print('Last {} of {} b coefficients:'.
-            format(n, len(self.fft_b_coef)))
-
-        print(self.fft_b_coef[-n:])
-        print()
 
     def eval_expected_polar(self, r, th):
         k = self.k
         a = self.a
         nu = self.nu
         R = self.R
-        
+
         #u = self.eval_expected_polar__no_reg(r, th)
         u = 0
         for m in range(1, self.m_max+1):

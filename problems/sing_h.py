@@ -141,8 +141,6 @@ class H_Hat(SingH):
 
 class H_Parabola(SingH):
 
-    expected_known = True
-
     m1_dict = {
         'arc': 48,
         'outer-sine': 200,
@@ -157,8 +155,6 @@ class H_Parabola(SingH):
 
 
 class H_LineSine(SingH):
-
-    expected_known = False
 
     m1_dict = {
         'arc': 8,

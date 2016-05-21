@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.fftpack import dst
+from scipy.special import jv
 
 from chebyshev import eval_dn_T_t, get_chebyshev_roots
 import abcoef
@@ -131,14 +132,13 @@ class PsBasis:
         else:
             self.a_coef = np.zeros(self.M)
 
-        self.b_coef = abcoef.a_to_b(self.a_coef, k, R, nu)
-
         def eval_bc0_reg(th):
             bc0 = eval_bc0(th)
+            r = self.boundary.eval_r(th)
 
             if self.problem.regularize:
                 for m in range(1, self.M+1):
-                    bc0 -= self.b_coef[m-1] * np.sin(m*nu*(th-a))
+                    bc0 -= self.a_coef[m-1] * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
             return bc0
 

@@ -4,9 +4,6 @@ import scipy
 
 import itertools as it
 
-import matplotlib
-import matplotlib.pyplot as plt
-
 from solver import Result
 import domain_util
 from chebyshev import get_chebyshev_roots
@@ -145,6 +142,8 @@ class PsDebug:
         if not plot:
             return
 
+        import matplotlib.pyplot as plt
+
         plt.plot(s_data, exact_data, linewidth=5, color='#BBBBBB', label='Exact')
         plt.plot(s_data, expansion_data, label='Expansion')
 
@@ -207,6 +206,8 @@ class PsDebug:
                     (self.c1[JJ] *
                     self.eval_dn_B_arg(0, JJ, arg, sid)).real
 
+        import matplotlib.pyplot as plt
+
         if do_exact:
             error = np.max(np.abs(exact_data - expansion_data))
             print('c1 error: {}'.format(error))
@@ -243,6 +244,7 @@ class PsDebug:
 
         X, Y = np.meshgrid(x_range, y_range, indexing='ij')
 
+        import matplotlib.pyplot as plt
         fig, ax = plt.subplots()
         p = ax.pcolor(X, Y, Z,
             vmin=np.min(Z),
