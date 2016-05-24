@@ -15,7 +15,7 @@ class SingularProblem(PizzaProblem):
     """
 
     regularize = True
-    m_max = 35
+    m_max = 200
 
     def __init__(self, **kwargs):
         print('m_max:', self.m_max)

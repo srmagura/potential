@@ -65,10 +65,6 @@ def run_test(N):
             sid, etype = setype
 
             if setypes is None or setype in setypes:
-                # FILTER
-                if th > 1.99*np.pi or th < solver.a + 0.01:
-                    continue
-
                 exp = problem.eval_expected_polar(r, th)
 
                 diff = abs(exp - data['value'])
@@ -85,7 +81,7 @@ def run_test(N):
     #plt.plot(th_list, np.log10(error), 'o')
     #plt.show()
 
-    return np.max(np.abs(error))
+    return np.max(np.abs(error)), mv_ext
 
 
 prec_str = '{:.5}'
@@ -124,15 +120,26 @@ if __name__ == '__main__':
     N = args.N
     prev_error = None
 
+    #mv2 = None
+    #mv1 = None
+    #mv0 = None
+
     while N <= args.c:
         print('---- {0} x {0} ----'.format(N))
 
-        error = run_test(N)
+        #mv2 = mv1
+        #mv1 = mv0
+        error, mv0 = run_test(N)
         print('Error: ' + prec_str.format(error))
 
         if prev_error is not None:
             convergence = np.log2(prev_error / error)
             print('Convergence: ' + prec_str.format(convergence))
+
+        #do_rel_conv = True
+        #if do_rel_conv and mv2 is not None:
+        #    convergence = mv0.calc_rel_convergence(mv1, mv2)
+        #    print('Rel convergence: ' + prec_str.format(convergence))
 
         print()
 

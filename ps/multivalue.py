@@ -137,4 +137,6 @@ class Multivalue:
                     if dict0:
                         diff01.append(abs(dict0['value'] - dict1['value']))
 
+        print('diff12:', max(diff12))
+        print('diff01:', max(diff01))
         return np.log2(max(diff12) / max(diff01))

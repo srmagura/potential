@@ -48,10 +48,10 @@ class SingH(SingularProblem):
 
     def eval_bc__no_reg(self, arg, sid):
         if sid == 0:
-            r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-            return self.eval_expected_polar(r, th)
+            #r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
+            #return self.eval_expected_polar(r, th)
 
-            #return self.eval_phi0(arg)
+            return self.eval_phi0(arg)
         else:
             return 0
 
@@ -144,6 +144,8 @@ class H_Parabola(SingH):
 
     # Needs to be False for finer grids
     expected_known = True
+
+    k = 5.5
 
     n_basis_dict = {
         16: (16, 3),
