@@ -80,17 +80,3 @@ class SmoothH_E(SmoothProblem):
 
         u = np.exp(1j*(kx*x + ky*y))
         return (1j*kx*u, 1j*ky*u)
-
-# FIXME k=1 only
-# FIXME for debugging.... delete
-class SmoothH_Bessel(SmoothProblem):
-
-    homogeneous = True
-
-    def eval_expected_polar(self, r, th):
-        return jv(0, r)
-
-    def get_grad(self, x, y):
-        r, th = domain_util.cart_to_polar(x, y)
-        d_u_r = jvp(0, r)
-        return (d_u_r * np.cos(th), d_u_r * np.sin(th))

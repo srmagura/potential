@@ -4,7 +4,7 @@ from .problem import PizzaProblem
 
 def eval_hat_x(x):
     """
-    The so-called ``hat'' function that has something to do with 
+    The so-called ``hat'' function that has something to do with
     distributions. Defined for x in the interval [-1, 1].
     """
     if abs(abs(x)-1) < 1e-15 or abs(x) > 1:
@@ -22,3 +22,8 @@ def eval_hat_th(th):
     x = (2*th-(2*np.pi+a))/(2*np.pi-a)
     return eval_hat_x(x)
 
+def eval_parabola(th, a):
+    return -(th - a) * (th - 2*np.pi)
+
+def eval_linesine(th, a, nu):
+    return (th - a)/(2*np.pi - a) - np.sin(nu/2*(th-a))

@@ -5,11 +5,11 @@ import domain_util
 
 from .problem import PizzaProblem
 import problems.functions as functions
-from .singular import SingularProblem
+from .singular import SingularKnown
 
-class SingH(SingularProblem):
+class SingH_Trace(SingularKnown):
+
     homogeneous = True
-
 
     # 4th order
     k = 5.5
@@ -43,19 +43,15 @@ class SingH(SingularProblem):
         kwargs['to_dst'] = self.eval_phi0
         super().__init__(**kwargs)
 
-    #def eval_expected_polar__no_reg(self, r, th):
-    #    return 0
-
-    def eval_bc__no_reg(self, arg, sid):
+    def eval_bc(self, arg, sid):
         if sid == 0:
-            #r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-            #return self.eval_expected_polar(r, th)
-
-            return self.eval_phi0(arg)
+            r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
+            return self.eval_expected_polar(r, th)
         else:
             return 0
 
     def eval_d_u_outwards(self, arg, sid):
+        # Debug function
         # Only for true arc. At least at the moment
         k = self.k
         R = self.R
@@ -78,10 +74,9 @@ class SingH(SingularProblem):
         return d_u
 
 
-class H_Sine(SingH):
+class Trace_Sine(SingH_Trace):
 
     expected_known = True
-    silent = True
 
     def __init__(self, **kwargs):
         self.m = kwargs.pop('m')
@@ -97,18 +92,15 @@ class H_Sine(SingH):
         return np.sin(m*nu*(th-a))
 
 
-class H_Sine8(H_Sine):
-
-    k = 5.5
+class Trace_Sine8(Trace_Sine):
 
     def __init__(self, **kwargs):
         super().__init__(m=8)
 
 
-class H_SineRange(SingH):
+class Trace_SineRange(SingH_Trace):
 
     expected_known = True
-    silent = True
 
     m_range_max = 9
     m1 = 9
@@ -124,7 +116,7 @@ class H_SineRange(SingH):
         return phi0
 
 
-class H_Hat(SingH):
+class Trace_Hat(SingH_Trace):
 
     expected_known = True
 
@@ -140,22 +132,7 @@ class H_Hat(SingH):
         return functions.eval_hat_th(th)
 
 
-class H_Parabola(SingH):
-
-    # Needs to be False for finer grids
-    expected_known = True
-
-    #k = 5.5
-
-    '''n_basis_dict = {
-        16: (16, 3),
-        32: (34, 9),
-        64: (34, 17),
-        128: (40, 25),
-        256: (43, 31),
-        512: (55, 35),
-        1024: (65, 40),
-    }'''
+class Trace_Parabola(SingH_Trace):
 
     m1_dict = {
         'arc': 48,
@@ -166,11 +143,10 @@ class H_Parabola(SingH):
     }
 
     def eval_phi0(self, th):
-        a = self.a
-        return -(th - a) * (th - 2*np.pi)
+        return functions.eval_parabola(th, self.a)
 
 
-class H_LineSine(SingH):
+class Trace_LineSine(SingH_Trace):
 
     m1_dict = {
         'arc': 8,
@@ -181,9 +157,4 @@ class H_LineSine(SingH):
     }
 
     def eval_phi0(self, th):
-        k = self.k
-        R = self.R
-        a = self.a
-        nu = self.nu
-
-        return (th - a)/(2*np.pi - a) - np.sin(nu/2*(th-a))
+        return functions.eval_linesine(th, self.a, self.nu)

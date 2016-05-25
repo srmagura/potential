@@ -15,15 +15,16 @@ class SingularProblem(PizzaProblem):
     """
 
     regularize = True
+
+
+class SingularKnown(SingularProblem):
+    """
+    Singular problem with known solution.
+    """
+
     m_max = 200
 
     def __init__(self, **kwargs):
-        print('m_max:', self.m_max)
-        if 'eval_u_asympt' in kwargs:
-            self.eval_u_asympt = kwargs.pop('eval_u_asympt')
-        else:
-            self.eval_u_asympt = lambda r, th: 0
-
         if 'to_dst' in kwargs:
             to_dst = kwargs.pop('to_dst')
         else:
@@ -39,34 +40,9 @@ class SingularProblem(PizzaProblem):
         nu = self.nu
         R = self.R
 
-        #u = self.eval_expected_polar__no_reg(r, th)
         u = 0
         for m in range(1, self.m_max+1):
             ac = self.fft_a_coef[m-1]
             u += ac * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
-        return u - self.eval_u_asympt(r, th)
-
-    def eval_bc(self, arg, sid):
-        """
-        Evaluate extended boundary condition.
-        """
-        a = self.a
-        nu = self.nu
-        k = self.k
-        R = self.R
-
-        bc = self.eval_bc__no_reg(arg, sid)
-        r, th = domain_util.arg_to_polar(self.boundary, a, arg, sid)
-
-        if sid == 0:
-            return bc - self.eval_u_asympt(r, th)
-
-        if sid == 1:
-            if th < 1.5*np.pi:
-                return 0
-            else:
-                return bc - self.eval_u_asympt(r, th)
-
-        elif sid == 2:
-            return 0
+        return u

@@ -5,7 +5,7 @@ import sys
 M = 7
 prec_str = '{:.5}'
 
-problem_list = ('h-hat', 'h-parabola', 'h-line-sine',)
+problem_list = ('trace-hat', 'trace-parabola', 'trace-line-sine',)
 boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
 
 def create_header(max_error):
@@ -66,7 +66,9 @@ out += title
 for problem in problem_list:
     problem_data = all_data[problem]
     out += '<br><span class="problem">{}</span> '.format(problem)
-    out += 'k={}'.format(problem_data.pop('k'))
+    out += 'k={} &nbsp;&nbsp;&nbsp;&nbsp;'.format(problem_data.pop('k'))
+    out += ('error due to finite series, on arc = {}'.
+        format(prec_str.format(problem_data['series_error'])))
     out += '<table>'
     create_header(False)
     create_row('expected', problem_data['arc']['fft_a_coef'])
@@ -75,8 +77,8 @@ for problem in problem_list:
     for boundary in boundary_list:
         data = problem_data[boundary]
         out += '<br><span class="boundary">{}</span> '.format(boundary)
-        out += 'beta={} '.format(prec_str.format(data['bet']))
-        out += 'best m1={}'.format(data['m1'])
+        out += 'beta={} &nbsp;&nbsp; '.format(prec_str.format(data['bet']))
+        out += 'best_m1={}'.format(data['m1'])
 
         out += '<table>'
         create_header(True)

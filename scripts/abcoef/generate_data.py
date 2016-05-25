@@ -17,7 +17,7 @@ M = 7
 
 output = {}
 
-problem_list = ('h-hat', 'h-parabola', 'h-line-sine',)
+problem_list = ('trace-hat', 'trace-parabola', 'trace-line-sine',)
 boundary_list = problems.boundary.boundaries.keys()
 
 m1_list = range(8, 250, 2)
@@ -39,11 +39,22 @@ for problem_name in problem_list:
 
     for boundary_name in boundary_list:
         boundary = problems.boundary.boundaries[boundary_name](problem.R)
+        problem.boundary = boundary
 
         boundary_results = {
             'bet': boundary.bet,
         }
         problem_results[boundary_name] = boundary_results
+
+        if boundary.name == 'arc':
+            max_series_error = 0
+            for th in np.linspace(problem.a, 2*np.pi, 512):
+                series_error = abs(problem.eval_bc(th, 0) - problem.eval_phi0(th))
+
+                if series_error > max_series_error:
+                    max_series_error = series_error
+
+            problem_results['series_error'] = max_series_error
 
         min_error7 = float('inf')
 
