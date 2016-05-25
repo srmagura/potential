@@ -132,7 +132,7 @@ class PsBasis:
         else:
             self.a_coef = np.zeros(self.M)
 
-        print('a coef:', self.a_coef)
+        #print('a coef:', self.a_coef)
 
         def eval_bc0_reg(th):
             bc0 = eval_bc0(th)

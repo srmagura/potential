@@ -23,7 +23,7 @@ def get_deriv_name(order, index):
 
 class PsExtend:
 
-    taylor_n_terms = 5
+    taylor_n_terms = 6
 
     def get_etype(self, sid, i, j):
         a = self.a
@@ -198,8 +198,21 @@ class PsExtend:
         if taylor_sid == 0:
             v = self.do_extend_0(i, j, xi_derivs)
 
-            r, th = self.get_polar(i, j)
-            elen = abs(delta_arg)*self.R + abs(r - self.R)
+            # This is only an approximation for perturbed boundaries,
+            # but it shouldn't really matter.
+            n, th = self.boundary_coord_cache[(i, j)]
+            elen = abs(delta_arg)*self.R + abs(n)
+
+            '''if kwargs.get('JJ', None) == 6 and kwargs['basis_index'] == 0 and (i,j) == (14, 9):
+                print('derivs0=', xi_derivs0[(0,0)], xi_derivs0[(1,0)], xi_derivs0[(2,0)], xi_derivs0[(3,0)], xi_derivs0[(4,0)])
+                print()
+                print('n=', n)
+                print('xi0=',xi_derivs['xi0'])
+                print('xi1=',xi_derivs['xi1'])
+                print('d2_xi0_th=',xi_derivs['d2_xi0_arg'])
+                print('d2_xi1_th=',xi_derivs['d2_xi1_arg'])
+                print('d4_xi0_th=', xi_derivs['d4_xi0_arg'])
+                print('v={}'.format(v))'''
 
         elif taylor_sid in {1, 2}:
             v = self.extend_radius(
@@ -309,7 +322,7 @@ class PsExtend:
 
         value = self.extend_radius(n=n, **derivs)
 
-        return {'elen': n, 'value': value}
+        return {'elen': abs(n), 'value': value}
 
     def do_extend_2_left(self, i, j, **kwargs):
         x, y = self.get_coord(i, j)

@@ -145,9 +145,9 @@ class H_Parabola(SingH):
     # Needs to be False for finer grids
     expected_known = True
 
-    k = 5.5
+    #k = 5.5
 
-    n_basis_dict = {
+    '''n_basis_dict = {
         16: (16, 3),
         32: (34, 9),
         64: (34, 17),
@@ -155,7 +155,7 @@ class H_Parabola(SingH):
         256: (43, 31),
         512: (55, 35),
         1024: (65, 40),
-    }
+    }'''
 
     m1_dict = {
         'arc': 48,
