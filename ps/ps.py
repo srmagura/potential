@@ -169,26 +169,10 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         for JJ in range(len(self.B_desc)):
             ext = self.extend_basis(JJ, index)
 
-            #if index == 0 and JJ == 6:
-            #    print(list(ext))
-            #    print('\n'*2)
-
             potential = self.get_potential(ext)
             projection = self.get_trace(potential)
 
             columns.append(projection - ext)
-
-
-        '''if index == 0:
-            ext6 = self.extend_basis(6, 0)
-            for l in [13, 94, 104]:
-                i, j = self.union_gamma[l]
-                print(l)
-                print('i,j={}'.format((i, j)))
-                x, y = self.get_coord(i, j)
-                print('x={}   y={}'.format(x, y))
-                print(ext6[l])
-                print('\n')'''
 
         return np.column_stack(columns)
 

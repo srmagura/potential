@@ -203,17 +203,6 @@ class PsExtend:
             n, th = self.boundary_coord_cache[(i, j)]
             elen = abs(delta_arg)*self.R + abs(n)
 
-            '''if kwargs.get('JJ', None) == 6 and kwargs['basis_index'] == 0 and (i,j) == (14, 9):
-                print('derivs0=', xi_derivs0[(0,0)], xi_derivs0[(1,0)], xi_derivs0[(2,0)], xi_derivs0[(3,0)], xi_derivs0[(4,0)])
-                print()
-                print('n=', n)
-                print('xi0=',xi_derivs['xi0'])
-                print('xi1=',xi_derivs['xi1'])
-                print('d2_xi0_th=',xi_derivs['d2_xi0_arg'])
-                print('d2_xi1_th=',xi_derivs['d2_xi1_arg'])
-                print('d4_xi0_th=', xi_derivs['d4_xi0_arg'])
-                print('v={}'.format(v))'''
-
         elif taylor_sid in {1, 2}:
             v = self.extend_radius(
                 n=n,
