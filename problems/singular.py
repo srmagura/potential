@@ -30,8 +30,9 @@ class SingularKnown(SingularProblem):
         else:
             to_dst = lambda th: 0
 
-        fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
-        self.fft_a_coef = abcoef.b_to_a(fft_b_coef, self.k,
+        # FIXME for expansion_error.py to work
+        self.fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
+        self.fft_a_coef = abcoef.b_to_a(self.fft_b_coef, self.k,
             self.R, self.nu)
 
     def eval_expected_polar(self, r, th):

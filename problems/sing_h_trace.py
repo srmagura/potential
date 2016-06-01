@@ -7,36 +7,26 @@ from .problem import PizzaProblem
 import problems.functions as functions
 from .singular import SingularKnown
 
+_k = 10.75
+
+_n_basis_dict = {
+    16: (24, 6),
+    32: (33, 8),
+    64: (42, 12),
+    128: (65, 18),
+    256: (80, 30),
+    512: (100, 40),
+    1024: (120, 45),
+}
+
 class SingH_Trace(SingularKnown):
 
     homogeneous = True
+    expected_known = True
+    no_fourier = False
 
-    # 4th order
-    k = 5.5
-
-    n_basis_dict = {
-        16: (24, 6),
-        32: (33, 8),
-        64: (42, 12),
-        128: (65, 18),
-        256: (80, 30),
-        512: (100, 40),
-        1024: (120, 45),
-    }
-
-    # 2nd order
-    '''k = 1.75
-
-    n_basis_dict = {
-        16: (16, 5),
-        32: (27, 7),
-        64: (35, 11),
-        128: (41, 15),
-        256: (60, 22),
-        512: (80, 30),
-        1024: (100, 40),
-        2048: (120, 45)
-    }'''
+    k = _k
+    n_basis_dict = _n_basis_dict
 
 
     def __init__(self, **kwargs):
@@ -45,8 +35,11 @@ class SingH_Trace(SingularKnown):
 
     def eval_bc(self, arg, sid):
         if sid == 0:
-            r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-            return self.eval_expected_polar(r, th)
+            if not self.no_fourier:
+                r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
+                return self.eval_expected_polar(r, th)
+            else:
+                return self.eval_phi0(arg)
         else:
             return 0
 

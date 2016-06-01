@@ -92,7 +92,7 @@ def arc_dst(a, func):
     N = 1024
 
     # The slice at the end removes the endpoints
-    th_data = np.linspace(a, 2*np.pi, N+1)[1:-1]
+    th_data = np.linspace(a, 2*np.pi, N+2)[1:-1]
 
     discrete_func = np.array([func(th) for th in th_data])
-    return dst(discrete_func, type=1) / N
+    return dst(discrete_func, type=1) / (N+1)

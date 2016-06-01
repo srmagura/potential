@@ -62,8 +62,8 @@ def worker(t):
 
 all_options = []
 # Tweak the following ranges as needed
-for n_circle in range(43, 60, 3):
-    for n_radius in range(31, int(.87*n_circle), 2):
+for n_circle in range(28, 40, 3):
+    for n_radius in range(5, int(.87*n_circle), 2):
         all_options.append((n_circle, n_radius))
 
 with Pool(4) as p:

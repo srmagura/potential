@@ -13,9 +13,22 @@ import io_util
 import problems
 from problems.smooth import SmoothH_Sine
 
-def plot_Gamma():
+def plot_aux():
+    """ Plot auxiliary domain. """
+    s = solver.AD_len/2
+    x_data = [-s, s, s, -s, -s]
+    y_data = [s, s, -s, -s, s]
+    plt.plot(x_data, y_data, color='gray', linestyle='--')
+
+def plot_arc(color, linestyle):
+    th_data = np.linspace(solver.a, 2*np.pi, 512)
+    x_data = solver.R * np.cos(th_data)
+    y_data = solver.R * np.sin(th_data)
+
+    plt.plot(x_data, y_data, linestyle, color=color)
+
+def plot_Gamma(color='black', extended=True):
     linestyle = '-'
-    color = 'black'
 
     for sample in solver.get_boundary_sample(extended=True):
         n = len(sample)
@@ -28,14 +41,9 @@ def plot_Gamma():
             Gamma_y_data[l] = p['y']
 
         plt.plot(Gamma_x_data, Gamma_y_data, linestyle, color=color)
-        linestyle = '-'
-        color = '#d580ff'
 
-    # Plot auxiliary domain
-    s = solver.AD_len/2
-    x_data = [-s, s, s, -s, -s]
-    y_data = [s, s, -s, -s, s]
-    plt.plot(x_data, y_data, color='gray', linestyle='--')
+        if not extended:
+            break
 
 def nodes_to_plottable(nodes):
     x_data = np.zeros(len(nodes))
@@ -91,6 +99,7 @@ def plot_gamma():
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument('method', choices=('gamma', 'pert'))
 io_util.add_arguments(parser, ('boundary', 'N'))
 args = parser.parse_args()
 
@@ -103,5 +112,13 @@ options = {'problem': problem, 'boundary': boundary, 'N': args.N,
     'scheme_order': 4}
 solver = ps.ps.PizzaSolver(options)
 
-#plot_Mplus()
-plot_gamma()
+
+if args.method == 'gamma':
+    plot_aux()
+    plot_gamma()
+    plt.show()
+elif args.method == 'pert':
+    plot_arc(color='gray', linestyle='--')
+    plot_Gamma(color='black', extended=False)
+    plt.axes().set_aspect('equal', 'datalim')
+    plt.show()
