@@ -40,7 +40,7 @@ parser.add_argument('--cheat-fft', action='store_true',
 args = parser.parse_args()
 
 problem = problems.problem_dict[args.problem]()
-boundary = problems.boundary.boundaries[args.boundary](problem.R)
+boundary = problems.boundary.boundaries[args.boundary](problem.R, k=problem.k)
 problem.boundary = boundary
 
 N_list = get_N_list(args.N, args.c)

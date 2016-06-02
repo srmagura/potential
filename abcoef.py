@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from scipy.special import jv
 
@@ -27,7 +29,7 @@ def calc_a_coef(problem, boundary, eval_bc0, M, m1):
     a_coef, residuals, rank, s = np.linalg.lstsq(W, phi0_data)
 
     if rank != m1:
-        raise Exception('Rank deficient')
+        warnings.warn('Rank deficient')
 
     return a_coef[:M], s
 

@@ -10,7 +10,8 @@ OUT_DIR_noescape = r'/Users/sam/Google Drive/research/output/'
 
 problem_list = ('trace-sine-range', 'shift-hat', 'shift-parabola',
     'shift-line-sine',)
-boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
+#boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
+boundary_list = ('cubic',)
 
 def worker(inputs):
     problem, boundary = inputs

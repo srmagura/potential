@@ -58,6 +58,9 @@ for problem_name in problem_list:
 
         min_error7 = float('inf')
 
+        # FIXME
+        m1_list = [problem.get_m1()]
+
         for m1 in m1_list:
             a_coef, singular_vals = calc_a_coef(problem, boundary,
                 eval_phi0, M, m1)

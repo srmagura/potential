@@ -9,12 +9,12 @@ class Boundary:
 
     additional_params = {}
 
-    def __init__(self, R, bet=None):
+    def __init__(self, R, bet=None, k=None):
         self.a = PizzaProblem.a
         self.R = R
 
         if bet is None:
-            self.bet = self.bet0
+            self.set_bet(k)
         else:
             self.bet = bet
 
@@ -28,6 +28,9 @@ class Boundary:
         self.subs_dict.update(self.additional_params)
 
         self.do_algebra()
+
+    def set_bet(self, k):
+        self.bet = self.bet0
 
     def do_algebra(self):
         """
@@ -182,8 +185,14 @@ class Cubic(Boundary):
     name = 'cubic'
     r_expr_str = 'R + bet/C*(th-a)*(th-pi)*(th-2*pi)'
 
-    bet0 = 0.025*cubic_C
+    bet0 = 0.2
     additional_params = {'C': cubic_C}
+
+    def set_bet(self, k):
+        if k == 10.75:
+            self.bet = .015
+        else:
+            self.bet = self.bet0
 
 _boundary_cls = (Arc, OuterSine, InnerSine, Sine7, Cubic)
 

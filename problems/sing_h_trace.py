@@ -7,6 +7,7 @@ from .problem import PizzaProblem
 import problems.functions as functions
 from .singular import SingularKnown
 
+#_k = 5.5
 _k = 10.75
 
 _n_basis_dict = {

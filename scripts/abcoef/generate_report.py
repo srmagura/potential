@@ -27,7 +27,13 @@ def create_row(label, array):
 
     out += '</tr>'
 
-all_data = json.load(open('acoef.dat'))
+
+if len(sys.argv) > 1:
+    filename = sys.argv[1]
+else:
+    filename = 'acoef.dat'
+
+all_data = json.load(open(filename))
 
 title = 'calc_a_coef results ' + str(datetime.date.today())
 
