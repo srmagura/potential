@@ -68,7 +68,7 @@ class PizzaProblem(Problem):
             else:
                 N //= 2
 
-    def get_n_basis_dict(self):
+    def get_n_basis_dict(self, **kwargs):
         """
         Override this function to make the number of basis functions
         dependent on a parameter other than N (e.g. the order of the

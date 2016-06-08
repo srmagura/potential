@@ -1,5 +1,6 @@
 from sympy import *
 import numpy as np
+import scipy
 
 from domain_util import cart_to_polar
 
@@ -11,27 +12,41 @@ class SympyProblem:
     polar derivatives.
     """
 
+    lambdify_modules = ('numpy', {
+        'gamma': scipy.special.gamma,
+        'besselj': scipy.special.jv
+    })
+
     def __init__(self, **kwargs):
         """
         Requires a keyword argument f which is a SymPy expression
         in k, R, r, and th.
         """
         f = kwargs.pop('f_expr')
+        super().__init__(**kwargs)
 
         r, th = symbols('r th')
         args = r, th
 
         # lambdify keyword arguments
-        self.lkw = {}
+        self.lkw = {
+            'modules': self.lambdify_modules
+        }
 
-        self.subs_dict = {'k': self.k}
-
-        self.eval_f_polar = lambdify(args, f.subs(self.subs_dict),
+        self.build_sympy_subs_dict()
+        self.eval_f_polar = lambdify(args, f.subs(self.sympy_subs_dict),
             **self.lkw)
 
         # If using 2nd order scheme, don't need derivatives of f (TODO?)
 
         self.do_diff(f)
+
+    def build_sympy_subs_dict(self):
+        self.sympy_subs_dict = {
+            'k': self.k,
+            'a': self.a,
+            'nu': self.nu,
+        }
 
     def do_diff(self, f):
         """
@@ -40,20 +55,22 @@ class SympyProblem:
         r, th = symbols('r th')
         args = r, th
 
+        subs_dict = self.sympy_subs_dict
+
         d_f_r = diff(f, r)
-        self.eval_d_f_r = lambdify(args, d_f_r.subs(self.subs_dict), **self.lkw)
+        self.eval_d_f_r = lambdify(args, d_f_r.subs(subs_dict), **self.lkw)
 
         d2_f_r = diff(f, r, 2)
-        self.eval_d2_f_r = lambdify(args, d2_f_r.subs(self.subs_dict), **self.lkw)
+        self.eval_d2_f_r = lambdify(args, d2_f_r.subs(subs_dict), **self.lkw)
 
         d_f_th = diff(f, th)
-        self.eval_d_f_th = lambdify(args, d_f_th.subs(self.subs_dict), **self.lkw)
+        self.eval_d_f_th = lambdify(args, d_f_th.subs(subs_dict), **self.lkw)
 
         d2_f_th = diff(f, th, 2)
-        self.eval_d2_f_th = lambdify(args, d2_f_th.subs(self.subs_dict), **self.lkw)
+        self.eval_d2_f_th = lambdify(args, d2_f_th.subs(subs_dict), **self.lkw)
 
         d2_f_r_th = diff(f, r, th)
-        self.eval_d2_f_r_th = lambdify(args, d2_f_r_th.subs(self.subs_dict), **self.lkw)
+        self.eval_d2_f_r_th = lambdify(args, d2_f_r_th.subs(subs_dict), **self.lkw)
 
     def eval_grad_f(self, x, y):
         """

@@ -12,10 +12,12 @@ from .problem import PizzaProblem
 class SingularProblem(PizzaProblem):
     """
     A problem that should be treated as if it has a singularity.
+
+    Homogeneous regularization is done by the solver. inhomogeneous
+    regularization is done by the problem.
     """
 
     regularize = True
-
 
 class SingularKnown(SingularProblem):
     """
@@ -40,10 +42,16 @@ class SingularKnown(SingularProblem):
         nu = self.nu
         R = self.R
 
-        # FIXME for inhomogeneous problems
-        u = 0
+        u = self.eval_expected__no_w(r, th)
         for m in range(1, self.m_max+1):
             ac = self.fft_a_coef[m-1]
             u += ac * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
         return u
+
+    def eval_expected__no_w(self, r, th):
+        """
+        Expected solution to the regularized problem, not counting
+        the Fourier-Bessel series.
+        """
+        return 0

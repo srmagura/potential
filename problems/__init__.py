@@ -10,6 +10,7 @@ from .smooth import Smooth_Sine, Smooth_E, Smooth_YCos
 from .sing_h_trace import Trace_Hat, Trace_Parabola,\
     Trace_Sine8, Trace_SineRange, Trace_LineSine
 from .sing_h_shift import Shift_Hat, Shift_Parabola, Shift_LineSine
+from .sing_ih import IH_Bessel
 
 problem_dict = OrderedDict((
     ('smooth-sine', Smooth_Sine),
@@ -23,6 +24,7 @@ problem_dict = OrderedDict((
     ('shift-hat', Shift_Hat),
     ('shift-parabola', Shift_Parabola),
     ('shift-line-sine', Shift_LineSine),
+    ('ih-bessel', IH_Bessel),
 ))
 
 for _name, _problem in problem_dict.items():
