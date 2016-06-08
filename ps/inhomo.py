@@ -104,7 +104,7 @@ class PsInhomo:
 
         return dir_X, dir_Y
 
-    def _extend_inhomo_12_outer(self, i, j, radius_sid):
+    def _extend_inhomo_12_lr(self, i, j, radius_sid):
         p = self.problem
         R = self.R
         a = self.a
@@ -160,26 +160,6 @@ class PsInhomo:
                 Y, f, d_f_Y, d2_f_X, d2_f_Y)
         }
 
-    def extend_inhomo_outer(self, x, y, radius_sid):
-        if self.problem.homogeneous:
-            return 0
-
-        r, th = cart_to_polar(x, y)
-
-        dist0 = r - self.R
-
-        if radius_sid == 1:
-            dist1 = y
-        elif radius_sid == 2:
-            dist1 = self.dist_to_radius(radius_sid, x, y)
-
-        if dist0 < dist1:
-            return self._extend_inhomo_outer_taylor0(
-                x, y, radius_sid)
-        else:
-            return self._extend_inhomo_outer_taylor12(
-                x, y, radius_sid)
-
     def do_extend_inhomo_0_standard(self, i, j):
         r, th = self.get_polar(i, j)
         return {
@@ -187,7 +167,7 @@ class PsInhomo:
             'value': self.calc_inhomo_circle(r, th),
         }
 
-    def _extend_inhomo_0_outer(self, i, j, radius_sid):
+    def _extend_inhomo_0_lr(self, i, j, radius_sid):
         p = self.problem
         R = self.R
         a = self.a
@@ -196,11 +176,11 @@ class PsInhomo:
         r, th = self.get_polar(i, j)
 
         if radius_sid == 1:
-            delta = th
             th0 = 2*np.pi
         elif radius_sid == 2:
             th0 = a
-            delta = th - th0
+    
+        delta = th - th0
 
         f0 = p.eval_f_polar(R, th0)
         f_derivs = [f0]
@@ -232,10 +212,10 @@ class PsInhomo:
         }
 
     def do_extend_inhomo_0_left(self, i, j):
-        return self._extend_inhomo_0_outer(i, j, 2)
+        return self._extend_inhomo_0_lr(i, j, 2)
 
     def do_extend_inhomo_0_right(self, i, j):
-        return self._extend_inhomo_0_outer(i, j, 1)
+        return self._extend_inhomo_0_lr(i, j, 1)
 
     def _calc_inhomo_radius(self, x0, y0, dir_X, dir_Y, Y):
         p = self.problem
@@ -296,7 +276,7 @@ class PsInhomo:
         return self._extend_inhomo_radius(i, j, 1)
 
     def do_extend_inhomo_1_right(self, i, j):
-        return self._extend_inhomo_12_outer(i, j, 1)
+        return self._extend_inhomo_12_lr(i, j, 1)
 
     def do_extend_inhomo_2_standard(self, i, j):
         return self._extend_inhomo_radius(i, j, 2)
@@ -305,7 +285,7 @@ class PsInhomo:
         return self._extend_inhomo_radius(i, j, 2)
 
     def do_extend_inhomo_2_right(self, i, j):
-        return self._extend_inhomo_12_outer(i, j, 2)
+        return self._extend_inhomo_12_lr(i, j, 2)
 
     def mv_extend_inhomo_f(self):
         R = self.R
