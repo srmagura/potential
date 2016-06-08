@@ -6,14 +6,15 @@ This module defines choices for the problem command-line argument.
 """
 from collections import OrderedDict
 
-from .smooth import SmoothH_Sine, SmoothH_E
+from .smooth import Smooth_Sine, Smooth_E, Smooth_YCos
 from .sing_h_trace import Trace_Hat, Trace_Parabola,\
     Trace_Sine8, Trace_SineRange, Trace_LineSine
 from .sing_h_shift import Shift_Hat, Shift_Parabola, Shift_LineSine
 
 problem_dict = OrderedDict((
-    ('smooth-h-sine', SmoothH_Sine),
-    ('smooth-h-e', SmoothH_E),
+    ('smooth-sine', Smooth_Sine),
+    ('smooth-e', Smooth_E),
+    ('smooth-ycos', Smooth_YCos),
     ('trace-sine8', Trace_Sine8),
     ('trace-sine-range', Trace_SineRange),
     ('trace-hat', Trace_Hat),

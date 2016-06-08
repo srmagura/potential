@@ -1,9 +1,11 @@
 import numpy as np
 from scipy.special import jv, jvp
+import sympy
 
 import domain_util
 
 from .problem import PizzaProblem
+from .sympy_problem import SympyProblem
 
 class SmoothProblem(PizzaProblem):
 
@@ -30,6 +32,9 @@ class SmoothProblem(PizzaProblem):
         return self.eval_expected_polar(r, th)
 
     def eval_d_u_outwards(self, arg, sid):
+        """
+        Only for extension test.
+        """
         k = self.k
         a = self.a
 
@@ -49,7 +54,7 @@ class SmoothProblem(PizzaProblem):
 
 
 
-class SmoothH_Sine(SmoothProblem):
+class Smooth_Sine(SmoothProblem):
 
     homogeneous = True
 
@@ -61,7 +66,7 @@ class SmoothH_Sine(SmoothProblem):
         return (k*np.cos(k*x), 0)
 
 
-class SmoothH_E(SmoothProblem):
+class Smooth_E(SmoothProblem):
 
     k = 1.75
     homogeneous = True
@@ -80,3 +85,25 @@ class SmoothH_E(SmoothProblem):
 
         u = np.exp(1j*(kx*x + ky*y))
         return (1j*kx*u, 1j*ky*u)
+
+
+class Smooth_YCos(SympyProblem, SmoothProblem):
+    """
+    Inhomogeneous problem.
+    """
+
+    # WARNING: homogeneous if k=1
+    k = 1.75
+
+    def __init__(self, **kwargs):
+        k, r, th = sympy.symbols('k r th')
+        sin = sympy.sin
+        cos = sympy.cos
+        kwargs['f_expr'] = (k**2 - 1) * r * sin(th) * cos(r * cos(th))
+        super().__init__(**kwargs)
+
+    def eval_expected(self, x, y):
+        return y*np.cos(x)
+
+    def get_grad(self, x, y):
+        return (-y*np.sin(x), np.cos(x))

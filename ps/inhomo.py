@@ -3,8 +3,12 @@ import math
 
 from domain_util import cart_to_polar
 from .multivalue import Multivalue
+from .extend import EType
 
 class PsInhomo:
+
+    # TODO this class is for the arc only.
+    # Need to add arbitrary curve extension
 
     def _extend_f_get_sid(self, i, j):
         R = self.R
@@ -12,10 +16,11 @@ class PsInhomo:
 
         r, th = self.get_polar(i, j)
 
-        if self.get_etype(0, i, j) == self.etypes['standard']:
+        if ((i, j) in self.all_gamma[0] and
+            self.get_etype(0, i, j) == EType.standard):
             return 0
         elif r < self.R:
-            if th < a/2:
+            if th >= 2*np.pi:
                 return 1
             else:
                 return 2
@@ -23,6 +28,10 @@ class PsInhomo:
             return 0
 
     def extend_f(self):
+        """
+        Extend the source term f to grid nodes slightly outside the
+        domain.
+        """
         R = self.R
         a = self.a
 
@@ -43,13 +52,13 @@ class PsInhomo:
             elif sid == 2:
                 x0, y0 = self.get_radius_point(2, x, y)
             elif sid == 0:
-                if etype == self.etypes['standard']:
+                if etype == EType.standard:
                     x0 = R * np.cos(th)
                     y0 = R * np.sin(th)
-                elif etype == self.etypes['left']:
+                elif etype == EType.left:
                     x0 = R * np.cos(a)
                     y0 = R * np.sin(a)
-                elif etype == self.etypes['right']:
+                elif etype == EType.right:
                     x0 = R
                     y0 = 0
 
@@ -76,8 +85,7 @@ class PsInhomo:
 
         derivs = [0, 0, f]
 
-        if self.extension_order > 2:
-            derivs.extend([d_f_Y, -d2_f_X - k**2 * f + d2_f_Y])
+        derivs.extend([d_f_Y, -d2_f_X - k**2 * f + d2_f_Y])
 
         v = 0
         for l in range(len(derivs)):
@@ -121,12 +129,8 @@ class PsInhomo:
 
         f0 = p.eval_f(x0, y0)
 
-        if self.extension_order > 2:
-            grad_f0 = p.eval_grad_f(x0, y0)
-            hessian_f0 = p.eval_hessian_f(x0, y0)
-        else:
-            grad_f0 = np.zeros(2)
-            hessian_f0 = np.zeros((2, 2))
+        grad_f0 = p.eval_grad_f(x0, y0)
+        hessian_f0 = p.eval_hessian_f(x0, y0)
 
         f_derivs = (
             f0,
@@ -201,32 +205,26 @@ class PsInhomo:
         f0 = p.eval_f_polar(R, th0)
         f_derivs = [f0]
 
-        if self.extension_order > 3:
-            d_f_th0 = p.eval_d_f_th(R, th0)
-            d2_f_th0 = p.eval_d2_f_th(R, th0)
+        d_f_th0 = p.eval_d_f_th(R, th0)
+        d2_f_th0 = p.eval_d2_f_th(R, th0)
 
-            f_derivs.extend([d_f_th0, d2_f_th0])
+        f_derivs.extend([d_f_th0, d2_f_th0])
 
         f = 0
         for l in range(len(f_derivs)):
             f += f_derivs[l] * delta**l / math.factorial(l)
 
         d_f_r = 0
-        if self.extension_order > 3:
-            d_f_r0 = p.eval_d_f_r(R, th0)
-            d2_f_r_th0 = p.eval_d2_f_r_th(R, th0)
+        d_f_r0 = p.eval_d_f_r(R, th0)
+        d2_f_r_th0 = p.eval_d2_f_r_th(R, th0)
 
-            d_f_r_derivs = (d_f_r0, d2_f_r_th0)
+        d_f_r_derivs = (d_f_r0, d2_f_r_th0)
 
-            for l in range(len(d_f_r_derivs)):
-                d_f_r += d_f_r_derivs[l] * delta**l / math.factorial(l)
+        for l in range(len(d_f_r_derivs)):
+            d_f_r += d_f_r_derivs[l] * delta**l / math.factorial(l)
 
-            d2_f_r = p.eval_d2_f_r(R, th0)
-            d2_f_th = p.eval_d2_f_th(R, th0)
-
-        else:
-            d2_f_r = 0
-            d2_f_th = 0
+        d2_f_r = p.eval_d2_f_r(R, th0)
+        d2_f_th = p.eval_d2_f_th(R, th0)
 
         return {
             'elen': self.R*abs(delta) + abs(self.R - r),
@@ -243,26 +241,22 @@ class PsInhomo:
         p = self.problem
         f = p.eval_f(x0, y0)
 
-        if self.extension_order > 3 and Y != 0:
-            if x0 == 0 and y0 == 0:
-                '''
-                Use Taylor's theorem to construct a smooth extension of
-                f (?), grad_f, and hessian_f at the origin, since they may
-                be undefined or annoying to calculate at this point.
-                '''
-                h = self.AD_len / (10*self.N)
+        if x0 == 0 and y0 == 0:
+            '''
+            Use Taylor's theorem to construct a smooth extension of
+            f (?), grad_f, and hessian_f at the origin, since they may
+            be undefined or annoying to calculate at this point.
+            '''
+            h = self.AD_len / (10*self.N)
 
-                hessian_f = p.eval_hessian_f(-h, 0)
+            hessian_f = p.eval_hessian_f(-h, 0)
 
-                _grad_f = p.eval_grad_f(-h, 0)
-                grad_f = _grad_f + h * hessian_f.dot((1, 0))
+            _grad_f = p.eval_grad_f(-h, 0)
+            grad_f = _grad_f + h * hessian_f.dot((1, 0))
 
-            else:
-                grad_f = p.eval_grad_f(x0, y0)
-                hessian_f = p.eval_hessian_f(x0, y0)
         else:
-            grad_f = np.zeros(2)
-            hessian_f = np.zeros((2, 2))
+            grad_f = p.eval_grad_f(x0, y0)
+            hessian_f = p.eval_hessian_f(x0, y0)
 
         d_f_Y = grad_f.dot(dir_Y)
 
@@ -330,27 +324,27 @@ class PsInhomo:
                     result = {'elen': 0, 'value': 0}
 
                 elif sid == 0:
-                    if etype == self.etypes['standard']:
+                    if etype == EType.standard:
                         result = self.do_extend_inhomo_0_standard(i, j)
-                    elif etype == self.etypes['left']:
+                    elif etype == EType.left:
                         result = self.do_extend_inhomo_0_left(i, j)
-                    elif etype == self.etypes['right']:
+                    elif etype == EType.right:
                         result = self.do_extend_inhomo_0_right(i, j)
 
                 elif sid == 1:
-                    if etype == self.etypes['standard']:
+                    if etype == EType.standard:
                         result = self.do_extend_inhomo_1_standard(i, j)
-                    elif etype == self.etypes['left']:
+                    elif etype == EType.left:
                         result = self.do_extend_inhomo_1_left(i, j)
-                    elif etype == self.etypes['right']:
+                    elif etype == EType.right:
                         result = self.do_extend_inhomo_1_right(i, j)
 
                 elif sid == 2:
-                    if etype == self.etypes['standard']:
+                    if etype == EType.standard:
                         result = self.do_extend_inhomo_2_standard(i, j)
-                    elif etype == self.etypes['left']:
+                    elif etype == EType.left:
                         result = self.do_extend_inhomo_2_left(i, j)
-                    elif etype == self.etypes['right']:
+                    elif etype == EType.right:
                         result = self.do_extend_inhomo_2_right(i, j)
 
                 result['setype'] = (sid, etype)

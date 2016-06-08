@@ -12,7 +12,7 @@ class Problem:
     AD_len = 2*np.pi
 
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
 
     def eval_expected(self, x, y, **kwargs):
         r, th = cart_to_polar(x, y)

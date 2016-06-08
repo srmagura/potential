@@ -30,7 +30,6 @@ class SingularKnown(SingularProblem):
         else:
             to_dst = lambda th: 0
 
-        # FIXME for expansion_error.py to work
         self.fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
         self.fft_a_coef = abcoef.b_to_a(self.fft_b_coef, self.k,
             self.R, self.nu)
@@ -41,6 +40,7 @@ class SingularKnown(SingularProblem):
         nu = self.nu
         R = self.R
 
+        # FIXME for inhomogeneous problems
         u = 0
         for m in range(1, self.m_max+1):
             ac = self.fft_a_coef[m-1]
