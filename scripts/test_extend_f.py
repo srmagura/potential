@@ -5,6 +5,7 @@ outside the domain.
 # To allow __main__ in subdirectory
 import sys
 sys.path.append(sys.path[0] + '/..')
+import argparse
 
 import numpy as np
 
@@ -42,24 +43,20 @@ def run_test(N):
     options['N'] = N
     solver = ps.ps.PizzaSolver(options)
 
-    #if setypes is None:
-    #    set_setypes()
-
-    th_list = []
     error = []
 
-    for node in solver.union_gamma:
-        r, th = solver.get_polar(*node)
+    for node in solver.Kplus:
+        if solver._extend_f_get_sid(*node) in allowed_sid:
+            r, th = solver.get_polar(*node)
+            diff = abs(problem.eval_f_polar(r, th) - solver.f[node])
 
-        #for data in mv_ext[node]:
-        #    setype = data['setype']
-        #    sid, etype = setype
+            error.append(diff)
 
-        #    if setypes is None or setype in setypes:
-        exp = problem.eval_f_polar(r, th)
-
-        diff = abs(exp - solver.f[node])
-        error.append(diff)
+            #if diff > 1e-1:
+            #    x, y = solver.get_coord(*node)
+            #    print('x={}  y={}   diff={}'.format(x, y, diff))
+            #    print(problem.eval_f_polar(r, th), solver.f[node])
+            #    print()
 
     return np.max(np.abs(error))
 
@@ -67,18 +64,19 @@ def run_test(N):
 prec_str = '{:.5}'
 
 if __name__ == '__main__':
-    #parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
 
-    #setype_choices = []
-    #for s, e in it.product('012', 'lsr'):
-    #    setype_choices.append(s + e)
+    sid_choices = list(map(str, range(3)))
 
-    #parser.add_argument('-s', nargs='+',
-    #    choices=setype_choices,
-    #    help='setypes to check when computing the error'
-    #)
+    parser.add_argument('-s', nargs='+',
+        choices=sid_choices,
+        help='setypes to check when computing the error',
+        default=sid_choices
+    )
 
-    #args = parser.parse_args()
+    args = parser.parse_args()
+    allowed_sid = list(map(int, args.s))
+
     problem = Smooth_YCos()
     boundary = Arc(problem.R)
     problem.boundary = boundary
@@ -92,7 +90,7 @@ if __name__ == '__main__':
     io_util.print_options(options, meta_options)
 
     N = 16
-    c = 128
+    c = 256
     prev_error = None
 
     while N <= c:

@@ -18,63 +18,42 @@ class SympyProblem:
         """
         f = kwargs.pop('f_expr')
 
-        args = symbols('k R r th')
-        k, R, r, th = args
+        r, th = symbols('r th')
+        args = r, th
 
         # lambdify keyword arguments
         self.lkw = {}
 
-        self.f_polar_lambda = lambdify(args, f, **self.lkw)
+        self.subs_dict = {'k': self.k}
+
+        self.eval_f_polar = lambdify(args, f.subs(self.subs_dict),
+            **self.lkw)
 
         # If using 2nd order scheme, don't need derivatives of f (TODO?)
-        
+
         self.do_diff(f)
 
     def do_diff(self, f):
         """
         Find polar derivatives symbolically.
         """
-        args = symbols('k R r th')
-        k, R, r, th = args
+        r, th = symbols('r th')
+        args = r, th
 
         d_f_r = diff(f, r)
-        self.d_f_r_lambda = lambdify(args, d_f_r, **self.lkw)
+        self.eval_d_f_r = lambdify(args, d_f_r.subs(self.subs_dict), **self.lkw)
 
         d2_f_r = diff(f, r, 2)
-        self.d2_f_r_lambda = lambdify(args, d2_f_r, **self.lkw)
+        self.eval_d2_f_r = lambdify(args, d2_f_r.subs(self.subs_dict), **self.lkw)
 
         d_f_th = diff(f, th)
-        self.d_f_th_lambda = lambdify(args, d_f_th, **self.lkw)
+        self.eval_d_f_th = lambdify(args, d_f_th.subs(self.subs_dict), **self.lkw)
 
         d2_f_th = diff(f, th, 2)
-        self.d2_f_th_lambda = lambdify(args, d2_f_th, **self.lkw)
+        self.eval_d2_f_th = lambdify(args, d2_f_th.subs(self.subs_dict), **self.lkw)
 
         d2_f_r_th = diff(f, r, th)
-        self.d2_f_r_th_lambda = lambdify(args, d2_f_r_th, **self.lkw)
-
-    def eval_f_polar(self, r, th):
-        """Evaluate f at (r, th)"""
-        return self.f_polar_lambda(self.k, self.R, r, th)
-
-    def eval_d_f_r(self, r, th):
-        """Partial of f WRT r"""
-        return self.d_f_r_lambda(self.k, self.R, r, th)
-
-    def eval_d2_f_r(self, r, th):
-        """2nd partial of f WRT to r"""
-        return self.d2_f_r_lambda(self.k, self.R, r, th)
-
-    def eval_d_f_th(self, r, th):
-        """Partial of f WRT to th"""
-        return self.d_f_th_lambda(self.k, self.R, r, th)
-
-    def eval_d2_f_th(self, r, th):
-        """2nd partial of f WRT to th"""
-        return self.d2_f_th_lambda(self.k, self.R, r, th)
-
-    def eval_d2_f_r_th(self, r, th):
-        """Partial of f WRT r and th"""
-        return self.d2_f_r_th_lambda(self.k, self.R, r, th)
+        self.eval_d2_f_r_th = lambdify(args, d2_f_r_th.subs(self.subs_dict), **self.lkw)
 
     def eval_grad_f(self, x, y):
         """

@@ -11,7 +11,7 @@ import ps.ps
 import io_util
 
 import problems
-from problems.smooth import SmoothH_Sine
+from problems.smooth import Smooth_Sine
 
 def plot_aux():
     """ Plot auxiliary domain. """
@@ -104,7 +104,7 @@ io_util.add_arguments(parser, ('boundary', 'N'))
 args = parser.parse_args()
 
 # Dummy problem just to get the solver to run
-problem = SmoothH_Sine()
+problem = Smooth_Sine()
 boundary = problems.boundary.boundaries[args.boundary](problem.R)
 problem.boundary = boundary
 
