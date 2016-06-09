@@ -4,6 +4,7 @@ from scipy.special import jv
 from chebyshev import eval_dn_T_t, get_chebyshev_roots
 import abcoef
 import domain_util
+import ps.ode as ode
 
 from problems.singular import HReg
 
@@ -102,6 +103,13 @@ class PsBasis:
             m1 = self.problem.get_m1()
             self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
                 eval_bc0, self.M, m1)[0]
+
+        elif hreg == HReg.ode:
+            if hasattr(self.problem, 'a_coef'):
+                # This is just to save time
+                self.a_coef = problem.a_coef
+            else:
+                self.a_coef = ode.calc_a_coef(self.problem, self.M)
         else:
             assert hreg == HReg.none
             self.a_coef = np.zeros(self.M)

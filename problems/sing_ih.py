@@ -1,15 +1,17 @@
 import numpy as np
-from scipy.special import jv
+from math import factorial
+from scipy.special import jv, gamma
 import scipy
 import sympy
 
 import domain_util
 
-from .singular import SingularKnown
+from .singular import SingularKnown, HReg
 from .sympy_problem import SympyProblem
 
-
 class SingIH_Problem(SympyProblem, SingularKnown):
+
+    hreg = HReg.ode
 
     k = 5.5
 
@@ -61,6 +63,9 @@ class IH_Bessel(SingIH_Problem):
     expected_known = False
 
     def __init__(self, **kwargs):
+        a = self.a
+        nu = self.nu
+        k = self.k
         R = self.R
 
         def to_dst(th):
@@ -68,21 +73,20 @@ class IH_Bessel(SingIH_Problem):
 
         kwargs['to_dst'] = to_dst
 
-        gamma = sympy.gamma
-        sympify = sympy.sympify
         sin = sympy.sin
         besselj = sympy.besselj
         pi = sympy.pi
 
-        k, r, th, a, nu = sympy.symbols('k r th a nu')
+        r, th = sympy.symbols('r th')
         kr2 = k*r/2
 
-        v_asympt0 = 1/gamma(sympify('14/11'))
-        v_asympt0 += -1/gamma(sympify('25/11'))*kr2**2
-        v_asympt0 += 1/(2*gamma(sympify('36/11')))*kr2**4
-        #v_asympt0 += -1/(6*gamma(sympify('47/11')))*kr2**6
-        #v_asympt0 += 1/(24*gamma(sympify('58/11')))*kr2**8
-        v_asympt0 *= kr2**(sympify('3/11'))
+        v_asympt0 = 0
+
+        for l in range(4):
+            x = 3/11 + l + 1
+            v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
+
+        v_asympt0 *= kr2**(3/11)
 
         v_asympt = v_asympt0 * sin(nu/2*(th-a))
 
