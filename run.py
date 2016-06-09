@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 
 import problems
+from problems.singular import HReg
 
 import ps.ps
 
@@ -42,6 +43,9 @@ args = parser.parse_args()
 problem = problems.problem_dict[args.problem]()
 boundary = problems.boundary.boundaries[args.boundary](problem.R, k=problem.k)
 problem.boundary = boundary
+
+if args.cheat_fft:
+    problem.hreg = HReg.cheat_fft
 
 N_list = get_N_list(args.N, args.c)
 

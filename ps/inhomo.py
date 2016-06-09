@@ -179,7 +179,7 @@ class PsInhomo:
             th0 = 2*np.pi
         elif radius_sid == 2:
             th0 = a
-    
+
         delta = th - th0
 
         f0 = p.eval_f_polar(R, th0)
@@ -224,16 +224,15 @@ class PsInhomo:
         if x0 == 0 and y0 == 0:
             '''
             Use Taylor's theorem to construct a smooth extension of
-            f (?), grad_f, and hessian_f at the origin, since they may
+            grad_f, and hessian_f at the origin, since they may
             be undefined or annoying to calculate at this point.
             '''
             h = self.AD_len / (10*self.N)
 
             hessian_f = p.eval_hessian_f(-h, 0)
 
-            _grad_f = p.eval_grad_f(-h, 0)
-            grad_f = _grad_f + h * hessian_f.dot((1, 0))
-
+            grad_f = p.eval_grad_f(-h, 0)
+            grad_f += h * hessian_f.dot((1, 0))
         else:
             grad_f = p.eval_grad_f(x0, y0)
             hessian_f = p.eval_hessian_f(x0, y0)

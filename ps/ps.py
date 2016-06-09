@@ -8,6 +8,7 @@ from solver import Solver, Result
 from linop import apply_B
 import fourier
 import abcoef
+from problems.singular import HReg
 
 from ps.basis import PsBasis
 from ps.grid import PsGrid
@@ -37,7 +38,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.M = get_M(self.scheme_order)
         self.problem.M = self.M
-        self.cheat_fft = options.get('cheat_fft', False)
 
         # Get basis set sizes from the Problem
         n_basis_tuple = self.problem.get_n_basis(self.N,
@@ -209,7 +209,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
     def get_singular_part(self):
         singular_part = np.zeros((self.N-1, self.N-1), dtype=complex)
 
-        if not self.problem.regularize:
+        if self.problem.hreg == HReg.none:
             return singular_part
 
         k = self.k

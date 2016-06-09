@@ -11,7 +11,7 @@ from .sympy_problem import SympyProblem
 
 class SingIH_Problem(SympyProblem, SingularKnown):
 
-    k = 1
+    k = 5.5
 
     n_basis_dict = {
         16: (24, 6),
@@ -41,7 +41,8 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
         self.eval_v_asympt = sympy.lambdify((r, th), v_asympt.subs(subs_dict),
             modules=lambdify_modules)
-        self.eval_g = sympy.lambdify((r, th), g.subs(subs_dict))
+        self.eval_g = sympy.lambdify((r, th), g.subs(subs_dict),
+            modules=lambdify_modules)
 
         super().__init__(**kwargs)
 
@@ -49,7 +50,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         if sid == 0:
             r = self.R
             th = arg
-            return (self.eval_bc__reg(arg, sid) - self.eval_g(r, th) -
+            return (self.eval_bc__noreg(arg, sid) - self.eval_g(r, th) -
                 self.eval_v_asympt(r, th))
         else:
             return 0
@@ -57,13 +58,13 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
 class IH_Bessel(SingIH_Problem):
 
-    expected_known = True
+    expected_known = False
 
     def __init__(self, **kwargs):
         R = self.R
 
         def to_dst(th):
-            return self.eval_bc(th, 0) - self.eval_v(R, th)
+            return self.eval_bc__noreg(th, 0) - self.eval_v(R, th)
 
         kwargs['to_dst'] = to_dst
 
@@ -79,7 +80,7 @@ class IH_Bessel(SingIH_Problem):
         v_asympt0 = 1/gamma(sympify('14/11'))
         v_asympt0 += -1/gamma(sympify('25/11'))*kr2**2
         v_asympt0 += 1/(2*gamma(sympify('36/11')))*kr2**4
-        v_asympt0 += -1/(6*gamma(sympify('47/11')))*kr2**6
+        #v_asympt0 += -1/(6*gamma(sympify('47/11')))*kr2**6
         #v_asympt0 += 1/(24*gamma(sympify('58/11')))*kr2**8
         v_asympt0 *= kr2**(sympify('3/11'))
 
@@ -105,7 +106,7 @@ class IH_Bessel(SingIH_Problem):
         return (self.eval_v(r, th) - self.eval_g(r, th) -
             self.eval_v_asympt(r, th))
 
-    def eval_bc__reg(self, arg, sid):
+    def eval_bc__noreg(self, arg, sid):
         a = self.a
         nu = self.nu
         k = self.k

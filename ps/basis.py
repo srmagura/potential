@@ -1,10 +1,11 @@
 import numpy as np
-from scipy.fftpack import dst
 from scipy.special import jv
 
 from chebyshev import eval_dn_T_t, get_chebyshev_roots
 import abcoef
 import domain_util
+
+from problems.singular import HReg
 
 class PsBasis:
     """
@@ -84,6 +85,28 @@ class PsBasis:
         else:
             return 0
 
+    def calc_a_coef(self):
+        """
+        Calculate the coefficients necessary to remove the homogeneous
+        part of the singularity, using one of several metods.
+        """
+        hreg = self.problem.hreg
+
+        if hreg == HReg.cheat_fft:
+            self.a_coef = self.problem.fft_a_coef[:self.M]
+
+        elif hreg == HReg.linsys:
+            def eval_bc0(th):
+                return self.problem.eval_bc(th, 0)
+
+            m1 = self.problem.get_m1()
+            self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
+                eval_bc0, self.M, m1)[0]
+        else:
+            assert hreg == HReg.none
+            self.a_coef = np.zeros(self.M)
+
+
     def get_chebyshev_coef(self, sid, func):
         """
         Compute the Chebyshev expansion of a function defined on one of
@@ -119,26 +142,13 @@ class PsBasis:
         a = self.a
         nu = self.nu
 
-        def eval_bc0(th):
-            return self.problem.eval_bc(th, 0)
-
-        if self.problem.regularize:
-            if self.cheat_fft:
-                self.a_coef = self.problem.fft_a_coef[:self.M]
-            else:
-                m1 = self.problem.get_m1()
-                self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
-                    eval_bc0, self.M, m1)[0]
-        else:
-            self.a_coef = np.zeros(self.M)
-
-        #print('a coef:', self.a_coef)
+        self.calc_a_coef()
 
         def eval_bc0_reg(th):
-            bc0 = eval_bc0(th)
+            bc0 = self.problem.eval_bc(th, 0)
             r = self.boundary.eval_r(th)
 
-            if self.problem.regularize:
+            if self.problem.hreg != HReg.none:
                 for m in range(1, self.M+1):
                     bc0 -= self.a_coef[m-1] * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 

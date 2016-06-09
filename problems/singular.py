@@ -1,3 +1,4 @@
+import enum
 import numpy as np
 
 from scipy.fftpack import dst
@@ -9,6 +10,8 @@ import abcoef
 
 from .problem import PizzaProblem
 
+HReg = enum.Enum('EType', 'none cheat_fft linsys ode')
+
 class SingularProblem(PizzaProblem):
     """
     A problem that should be treated as if it has a singularity.
@@ -17,7 +20,6 @@ class SingularProblem(PizzaProblem):
     regularization is done by the problem.
     """
 
-    regularize = True
 
 class SingularKnown(SingularProblem):
     """

@@ -6,11 +6,12 @@ import domain_util
 
 from .problem import PizzaProblem
 from .sympy_problem import SympyProblem
+from .singular import HReg
 
 class SmoothProblem(PizzaProblem):
 
     expected_known = True
-    regularize = False
+    hreg = HReg.none
 
     k = 1
 

@@ -1,6 +1,7 @@
 from sympy import *
 import numpy as np
-import scipy
+import scipy.special
+
 
 from domain_util import cart_to_polar
 
@@ -34,7 +35,7 @@ class SympyProblem:
         }
 
         self.build_sympy_subs_dict()
-        self.eval_f_polar = lambdify(args, f.subs(self.sympy_subs_dict),
+        self.f_polar_lambda = lambdify(args, f.subs(self.sympy_subs_dict),
             **self.lkw)
 
         # If using 2nd order scheme, don't need derivatives of f (TODO?)
@@ -71,6 +72,27 @@ class SympyProblem:
 
         d2_f_r_th = diff(f, r, th)
         self.eval_d2_f_r_th = lambdify(args, d2_f_r_th.subs(subs_dict), **self.lkw)
+
+    def eval_f_polar(self, r, th):
+        """
+        Evaluate f.
+
+        Uses a Taylor approximation for f at the origin.
+        """
+        if r == 0:
+            h = self.AD_len / 10000
+
+            hessian_f = self.eval_hessian_f(-h, 0)
+
+            grad_f = self.eval_grad_f(-h, 0)
+            grad_f += h * hessian_f.dot((1, 0))
+
+            f = self.eval_f(-h, 0)
+            f += h * grad_f.dot((1, 0))
+            f += 1/2 * h**2 * hessian_f.dot((1, 0)).dot((1, 0))
+            return f
+        else:
+            return self.f_polar_lambda(r, th)
 
     def eval_grad_f(self, x, y):
         """

@@ -1,12 +1,13 @@
 import problems.functions as functions
 
-from .singular import SingularProblem
+from .singular import SingularProblem, HReg
 
 from .sing_h_trace import _k, _n_basis_dict
 
 class SingH_Shift(SingularProblem):
 
     homogeneous = True
+    hreg = HReg.linsys
 
     k = _k
 
