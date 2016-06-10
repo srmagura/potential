@@ -5,7 +5,7 @@ import fourier
 
 def calc_a_coef(problem, M):
     fourier_N = 256  # best: 8192
-    adams_N = 64 # best: 64 for k=1; 256 for k=5.5
+    adams_N = 10000 # best: 64 for k=1; 256 for k=5.5
 
     a = problem.a
     nu = problem.nu
@@ -44,10 +44,10 @@ def calc_a_coef(problem, M):
             # FIXME
             r = x/k
             f_fourier = {}
-            f_fourier[n, m-1] = arc_dst(lambda th: problem.eval_f_polar(r, th))[m-1]
+            f_fourier[n, m-1] = x**5 #arc_dst(lambda th: problem.eval_f_polar(r, th))[m-1]
 
             d_z1_x = z2
-            d_z2_x = (-x * z2 - (x**2 - (m*nu)**2) * z1) / x**2
+            d_z2_x = 0#(-x * z2 - (x**2 - (m*nu)**2) * z1) / x**2
             d_z2_x += f_fourier[n, m-1] / k**2
             return np.array([d_z1_x, d_z2_x])
 
@@ -103,20 +103,6 @@ def calc_a_coef(problem, M):
 
             sol2[:, n+1] = sol2[:, n] + h*ksum
 
-        '''def eval_deriv3(x, Y):
-            print(x, Y)
-            return eval_deriv(Y, x)
-
-
-        from scipy.integrate import ode as scipy_ode
-        od = scipy_ode(eval_deriv3).set_integrator('dopri5')
-        od.set_initial_value([0,0], 0)
-        xspan3 = []
-        sol3 = []
-        while od.successful() and od.t <= xspan[-1]:
-            xspan3.append(od.t)
-            sol3.append(od.integrate(od.t+h)[0])'''
-
 
         #print('m=', m)
         #print('bm_exp=', problem.fft_b_coef[m-1])
@@ -131,7 +117,7 @@ def calc_a_coef(problem, M):
         z_data = []
         j_data = []
 
-        for x in xspan3:
+        for x in xspan:
             r = x/k
             z_data.append(arc_dst(lambda th: eval_v(r, th) - problem.eval_g(r, th) - problem.eval_v_asympt(r, th))[m-1])
             j_data.append(jv(m*nu, r))
@@ -140,17 +126,12 @@ def calc_a_coef(problem, M):
         #plt.plot(xspan, j_data, label='bessel')
         #plt.plot(xspan, sol[0, :], label='numerical, adams')
         #plt.plot(xspan, sol2[0, :], label='numerical, rk')
-        sol3 = np.array(sol3)
-        plt.plot(xspan3, sol3-z_data, label='numerical, scipy')
         #plt.plot(xspan, sol[0,:]-sol2[0,:], label='diff')
 
-        print('diff between solutions:', np.max(np.abs(sol[0,:]-sol2[0,:])))
+        #print('diff between solutions:', np.max(np.abs(sol[0,:]-sol2[0,:])))
 
-        print(xspan3[-1])
-        print('diff(1-3):', np.max(np.abs(sol[0,-1]-sol3[-1])))
-
-        plt.legend(loc='upper left')
-        plt.show()
+        #plt.legend(loc='upper left')
+        #plt.show()
 
 
     #print('b error:', np.max(np.abs(b_coef - problem.fft_b_coef[:M])))
