@@ -73,24 +73,19 @@ class IH_Bessel(SingIH_Problem):
 
         kwargs['to_dst'] = to_dst
 
-        sin = sympy.sin
-        besselj = sympy.besselj
-        pi = sympy.pi
-
         r, th = sympy.symbols('r th')
         kr2 = k*r/2
 
         v_asympt0 = 0
-
         for l in range(4):
             x = 3/11 + l + 1
             v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
 
         v_asympt0 *= kr2**(3/11)
 
-        v_asympt = v_asympt0 * sin(nu/2*(th-a))
+        v_asympt = v_asympt0 * sympy.sin(nu/2*(th-a))
 
-        g = (th - a) / (2*pi - a) * (besselj(nu/2, k*r) - v_asympt0)
+        g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt0)
 
         kwargs['g'] = g
         kwargs['v_asympt'] = v_asympt
@@ -118,3 +113,75 @@ class IH_Bessel(SingIH_Problem):
 
         th = arg
         return jv(nu/2, k*R) * (th - a) / (2*np.pi - a)
+
+
+class IH_Bessel(SingIH_Problem):
+
+    expected_known = False
+
+    def __init__(self, **kwargs):
+        a = self.a
+        nu = self.nu
+        k = self.k
+        R = self.R
+
+        def to_dst(th):
+            return self.eval_bc__noreg(th, 0) - self.eval_v(R, th)
+
+        kwargs['to_dst'] = to_dst
+
+        r, th = sympy.symbols('r th')
+        kr2 = k*r/2
+
+        v_asympt0 = 0
+        for l in range(4):
+            x = 3/11 + l + 1
+            v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
+
+        v_asympt0 *= kr2**(3/11)
+
+        v_asympt = v_asympt0 * sympy.sin(nu/2*(th-a))
+
+        g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt0)
+
+        kwargs['g'] = g
+        kwargs['v_asympt'] = v_asympt
+        super().__init__(**kwargs)
+
+    def eval_v(self, r, th):
+        """
+        Using this function is "cheating".
+        """
+        a = self.a
+        nu = self.nu
+        k = self.k
+
+        return jv(nu/2, k*r) * np.sin(nu/2 * (th-a))
+
+    def eval_expected__no_w(self, r, th):
+        return (self.eval_v(r, th) - self.eval_g(r, th) -
+            self.eval_v_asympt(r, th))
+
+
+class IH_Bessel_Line(IH_Bessel):
+
+    def eval_bc__noreg(self, arg, sid):
+        a = self.a
+        nu = self.nu
+        k = self.k
+        R = self.R
+
+        th = arg
+        return jv(nu/2, k*R) * (th - a) / (2*np.pi - a)
+
+
+class IH_Bessel_Quadratic(IH_Bessel):
+
+    def eval_bc__noreg(self, arg, sid):
+        a = self.a
+        nu = self.nu
+        k = self.k
+        R = self.R
+
+        th = arg
+        return jv(nu/2, k*R) * (th - a)**2 / (2*np.pi - a)**2
