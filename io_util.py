@@ -3,6 +3,8 @@ import datetime
 import problems
 import problems.boundary
 
+import ps.ode
+
 prec_str = '{:.5}'
 
 def add_arguments(parser, args):
@@ -66,6 +68,8 @@ def print_options(options, meta_options={}):
         print('!! cheat_fft = True !!')
     else:
         print('m1 = {}'.format(problem.get_m1()))
+    print('fourier_N = {}'.format(ps.ode.fourier_N))
+    print('ode_N = {}'.format(ps.ode.ode_N))
     print()
 
     if hasattr(problem, 'get_n_basis') and 'N_list' in meta_options:

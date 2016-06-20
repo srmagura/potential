@@ -94,4 +94,4 @@ class PizzaProblem(Problem):
             return self.m1_dict[bname]
 
         print('m1 not set')
-        return 0
+        return 7
