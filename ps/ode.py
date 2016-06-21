@@ -1,5 +1,6 @@
 import numpy as np
 
+from scipy.integrate import odeint
 from scipy.interpolate import interp1d
 
 import abcoef
@@ -88,13 +89,9 @@ def calc_z(problem, M):
             return np.array([d_z1_x, d_z2_x])
 
         sol = np.zeros((2, ode_N))
+        sol[:, 1:] = odeint(eval_deriv, [0, 0], xspan[1:], atol=1e-14).T
 
-        for n in range(1, ab_s-1):
-            sol[:, n+1] = erk4(eval_deriv, sol[:, n], xspan[n], h)
-
-        for n in range(0, ode_N-ab_s):
-            sol[:, n+ab_s] = ab4(eval_deriv, sol, n, h)
-
+        # FIXME OBOE
         eval_z_fourier[m-1] = interp1d(xspan/k, sol[0, :], kind='cubic', assume_sorted=True)
 
     def eval_z(r, th):
