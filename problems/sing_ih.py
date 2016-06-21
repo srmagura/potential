@@ -14,7 +14,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
     hreg = HReg.ode
 
-    k = 5.5
+    k = 1 #FIXME
 
     n_basis_dict = {
         16: (24, 6),
@@ -34,18 +34,17 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         pi = sympy.pi
         k, a, r, th, x = sympy.symbols('k a r th x')
 
-        def do_lapacian(u):
+        def do_laplacian(u):
             return diff(u, r, 2) + diff(u, r) / r + diff(u, th, 2) / r**2 + k**2 * u
 
-        f1 = -do_lapacian(g + v_asympt)
-
+        f1 = -do_laplacian(g + v_asympt)
         logistic = 1 / (1 + sympy.exp(-90*(x-0.5)))
 
         # TODO insert q2
         q1 = (r**2 * 1/2 * (th-2*pi)**2 * f1.subs(th, 2*pi) *
             logistic.subs(x, (th-2*pi)/(2*pi-a)+1))
 
-        f = f1 - do_lapacian(q1)
+        f = f1 - do_laplacian(q1)
 
         kwargs['f_expr'] = f
 
@@ -53,11 +52,28 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         subs_dict = self.sympy_subs_dict
         lambdify_modules = SympyProblem.lambdify_modules
 
-        #r_data = np.arange(.01, 2.3, .01)
-        #_f_lambda = sympy.lambdify([r], f.subs(subs_dict).subs('th', 2*np.pi),
-        #   modules=lambdify_modules)
+        #import matplotlib.pyplot as plt
+        #r_data = np.arange(self.R/256, self.R, .0001)
+
+        #_f1_lambda = sympy.lambdify(r, do_laplacian(v_asympt).subs(subs_dict).subs('th', 2*np.pi),
+        #    modules=lambdify_modules)
+        #f1_data = np.array([_f1_lambda(r) for r in r_data])
+        #plt.plot(r_data, f1_data)
+        #plt.show()
+
+        #_f_lambda = sympy.lambdify(r, f.subs(subs_dict).subs('th', 2*np.pi),
+        #    modules=lambdify_modules)
         #f_data = np.array([_f_lambda(r) for r in r_data])
         #print('fmax: ', np.max(np.abs(f_data)))
+
+        #plt.plot(r_data, f_data)
+
+        #_lambda = sympy.lambdify(r,
+        #    (abs(diff(q1, u, r) + .subs(subs_dict).subs('th', 2*np.pi),
+        #    modules=lambdify_modules)
+        #f_data = np.array([_f_lambda(r) for r in r_data])
+
+        #plt.show()
         #import sys; sys.exit(0)
 
         self.eval_regfunc = sympy.lambdify((r, th),
