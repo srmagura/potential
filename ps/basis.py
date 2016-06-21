@@ -92,44 +92,42 @@ class PsBasis:
         part of the singularity, using one of several metods.
         """
         hreg = self.problem.hreg
-        eval_bc0 = None
+        do_linsys = False
+        z_data = None
 
         if hreg == HReg.cheat_fft:
             self.a_coef = self.problem.fft_a_coef[:self.M]
 
         elif hreg == HReg.linsys:
-            def eval_bc0(th):
-                return self.problem.eval_bc(th, 0)
+            do_linsys = True
 
         elif hreg == HReg.ode:
             if hasattr(self.problem, 'a_coef'):
                 # This is just to save time
                 self.a_coef = problem.a_coef
             else:
-                eval_z = ode.calc_z(self.problem, self.M)
-                def eval_bc0(th):
-                    r = self.problem.boundary.eval_r(th)
-                    return self.problem.eval_bc(th, 0) - eval_z(r, th)
+                z_data = ode.calc_z(self.problem, abcoef.th_data, self.M)
+                do_linsys = True
 
         else:
             assert hreg == HReg.none
             self.a_coef = np.zeros(self.M)
 
-        if eval_bc0 is not None:
+
+        if do_linsys:
+            def eval_bc0(th):
+                return self.problem.eval_bc(th, 0)
+
             m1 = self.problem.get_m1()
             self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
-                eval_bc0, self.M, m1)[0]
-
-            #import fourier
-            #b_coef = fourier.arc_dst(self.a, eval_bc0)[:self.M]
-            #self.a_coef = abcoef.b_to_a(b_coef, self.k, self.R, self.nu)
+                eval_bc0, self.M, m1, to_subtract=z_data)[0]
 
             error = np.max(np.abs(self.a_coef - self.problem.fft_a_coef[:self.M]))
             print('a_coef error:', error)
 
-            b_coef = abcoef.a_to_b(self.a_coef, self.k, self.R, self.nu)
-            error = np.max(np.abs(b_coef - self.problem.fft_b_coef[:self.M]))
-            print('b_coef error:', error)
+            #b_coef = abcoef.a_to_b(self.a_coef, self.k, self.R, self.nu)
+            #error = np.max(np.abs(b_coef - self.problem.fft_b_coef[:self.M]))
+            #print('b_coef error:', error)
 
     def get_chebyshev_coef(self, sid, func):
         """

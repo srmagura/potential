@@ -93,5 +93,5 @@ class PizzaProblem(Problem):
         if hasattr(self, 'm1_dict') and bname in self.m1_dict:
             return self.m1_dict[bname]
 
-        print('m1 not set')
+        # TODO?
         return 7

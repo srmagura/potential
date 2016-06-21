@@ -6,51 +6,9 @@ from scipy.interpolate import interp1d
 import abcoef
 import fourier
 
-rk_s = 4
-rk_a = ((1/2,), (0, 1/2), (0, 0, 1))
-rk_b = (1/6, 1/3, 1/3, 1/6)
-rk_c = (0, 1/2, 1/2, 1)
-
-def erk4(eval_deriv, Y, x, h):
-    """ Explicit Runge-Kutta method of order 4 """
-    ksum = np.zeros(2)
-    kk = np.zeros((2, rk_s))
-    for l in range(rk_s):
-        _y = np.zeros(2)
-        _y[:] = Y
-        for ll in range(l):
-            _y += h * rk_a[l-1][ll] * kk[:, ll]
-
-        kk[:, l] = eval_deriv(_y, x + rk_c[l]*h)
-        ksum += rk_b[l] * kk[:, l]
-
-    return Y + h*ksum
-
-ab_s = 4
-ab_coef = (-3/8, 37/24, -59/24, 55/24)
-
-def ab4(eval_deriv, sol, n, h):
-    """ Adams-Bashforth method of order 4 """
-    derivs = np.zeros(2)
-    for l in range(ab_s):
-        x = (n+l)*h
-        if n+l < 0:
-            _sol = np.zeros((2,))
-        else:
-            _sol = sol[:, n+l]
-
-        derivs += ab_coef[l] * eval_deriv(_sol, x)
-
-    return sol[:, n+ab_s-1] + h*derivs
-
-
 fourier_N = 128  # Fourier error will be approx 1e-15
-ode_N = 128
 
-def calc_z(problem, M):
-    # MEGA FIXME
-    #return problem.eval_expected__no_w
-
+def calc_z(problem, th_data, M):
     a = problem.a
     nu = problem.nu
     k = problem.k
@@ -64,45 +22,61 @@ def calc_z(problem, M):
     #d2 = fourier.arc_dst(a, lambda th: problem.eval_f_polar(r, th), N=2048)[:M]
     #print('Fourier error:', np.max(np.abs(d1-d2)))
 
-    xspan = np.linspace(0, k*R, ode_N)
-    h = k*R/(ode_N-1)
+    h = R / 2048
+    r_data = [0, h] + [problem.boundary.eval_r(th) for th in th_data]
+    r_data += list(np.linspace(h, R, 256)[1:])
+    r_data.sort()
+    r_data = np.array(r_data)
 
     f_fourier_cache = {}
+    z_fourier = {}
 
-    eval_z_fourier = [None]*M
+    rth_map = {}
+    for th in th_data:
+        z_fourier[th] = np.zeros(M)
+
+        for i in range(r_data):
+            if boundary.eval_r(th) == r_data[i]:
+                rth_map[th] = r_data[i]
 
     for m in range(1, M+1):
-        def eval_deriv(Y, x):
-            if x == 0:
-                return np.array([0, 0])
+        def eval_deriv(Y, r):
+            assert r != 0
 
             z1 = Y[0]
             z2 = Y[1]
 
-            if x not in f_fourier_cache:
-                r = x/k
-                f_fourier_cache[x] = arc_dst(lambda th: problem.eval_f_polar(r, th))[:M]
+            if r not in f_fourier_cache:
+                f_fourier_cache[r] = arc_dst(lambda th: problem.eval_f_polar(r, th))[:M]
 
-            d_z1_x = z2
-            d_z2_x = (-x * z2 - (x**2 - (m*nu)**2) * z1) / x**2
-            d_z2_x += f_fourier_cache[x][m-1] / k**2
-            return np.array([d_z1_x, d_z2_x])
+            d_z1_r = z2
+            d_z2_r = -z2/r - (k**2 - (m*nu/r)**2) * z1 + f_fourier_cache[r][m-1]
+            return np.array([d_z1_r, d_z2_r])
 
-        sol = np.zeros((2, ode_N))
-        sol[:, 1:] = odeint(eval_deriv, [0, 0], xspan[1:], atol=1e-14).T
+        odeint_options = {'atol': 1e-14}
+        sol = odeint(eval_deriv, [0, 0], r_data[1:], **odeint_options).T
 
-        # FIXME OBOE
-        eval_z_fourier[m-1] = interp1d(xspan/k, sol[0, :], kind='cubic', assume_sorted=True)
+        for th in th_data:
+            z_fourier[th][m-1] = sol[rth_map[th]-1]
 
-    def eval_z(r, th):
+    z_data = np.zeros(len(th_data))
+
+    def eval_z(i, th):
         z = 0
         for m in range(1, M+1):
-            z += eval_z_fourier[m-1](r) * np.sin(m*nu*(th-a))
+            z += z_fourier[i, m-1] * np.sin(m*nu*(th-a))
 
         return z
 
-    q = lambda th: problem.eval_expected__no_w(R, th) - eval_z(R, th)
-    q_f = arc_dst(q)
-    print(q_f[:M])
+    for i in range(len(th_data)):
+        for j in range(len(r_data)):
+            z_data[i] = eval_z(i)
 
-    return eval_z
+    # Calculate error incurred by ODE solver, for the last th value
+    i = len(th_data)-1
+    r = problem.boundary.eval_r(th_data[i])
+    expected = lambda th: problem.eval_expected__no_w(r, th) - eval_z(i, th)
+    expected_fourier = fourier.arc_dst(a, expected)
+    print(np.abs(expected_fourier[:M]))
+
+    return z_data

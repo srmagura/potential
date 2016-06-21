@@ -14,7 +14,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
     hreg = HReg.ode
 
-    k = 1
+    k = 5.5
 
     n_basis_dict = {
         16: (24, 6),
