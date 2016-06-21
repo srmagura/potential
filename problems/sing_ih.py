@@ -9,11 +9,12 @@ import domain_util
 from .singular import SingularKnown, HReg
 from .sympy_problem import SympyProblem
 
+
 class SingIH_Problem(SympyProblem, SingularKnown):
 
     hreg = HReg.ode
 
-    k = 5.5
+    k = 1
 
     n_basis_dict = {
         16: (24, 6),
@@ -29,11 +30,22 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         g = kwargs.pop('g')
         v_asympt = kwargs.pop('v_asympt')
 
-        k, r, th = sympy.symbols('k r th')
-
         diff = sympy.diff
-        gv = -(g + v_asympt)
-        f = diff(gv, r, 2) + diff(gv, r) / r + diff(gv, th, 2) / r**2 + k**2 * gv
+        pi = sympy.pi
+        k, a, r, th, x = sympy.symbols('k a r th x')
+
+        def do_lapacian(u):
+            return diff(u, r, 2) + diff(u, r) / r + diff(u, th, 2) / r**2 + k**2 * u
+
+        f1 = -do_lapacian(g + v_asympt)
+
+        logistic = 1 / (1 + sympy.exp(-90*(x-0.5)))
+
+        # TODO insert q2
+        q1 = (r**2 * 1/2 * (th-2*pi)**2 * f1.subs(th, 2*pi) *
+            logistic.subs(x, (th-2*pi)/(2*pi-a)+1))
+
+        f = f1 - do_lapacian(q1)
 
         kwargs['f_expr'] = f
 
@@ -41,9 +53,15 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         subs_dict = self.sympy_subs_dict
         lambdify_modules = SympyProblem.lambdify_modules
 
-        self.eval_v_asympt = sympy.lambdify((r, th), v_asympt.subs(subs_dict),
-            modules=lambdify_modules)
-        self.eval_g = sympy.lambdify((r, th), g.subs(subs_dict),
+        #r_data = np.arange(.01, 2.3, .01)
+        #_f_lambda = sympy.lambdify([r], f.subs(subs_dict).subs('th', 2*np.pi),
+        #   modules=lambdify_modules)
+        #f_data = np.array([_f_lambda(r) for r in r_data])
+        #print('fmax: ', np.max(np.abs(f_data)))
+        #import sys; sys.exit(0)
+
+        self.eval_regfunc = sympy.lambdify((r, th),
+            (v_asympt + g + q1).subs(subs_dict),
             modules=lambdify_modules)
 
         super().__init__(**kwargs)
@@ -52,8 +70,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         if sid == 0:
             r = self.R
             th = arg
-            return (self.eval_bc__noreg(arg, sid) - self.eval_g(r, th) -
-                self.eval_v_asympt(r, th))
+            return self.eval_bc__noreg(arg, sid) - self.eval_regfunc(r, th)
         else:
             return 0
 
@@ -77,7 +94,7 @@ class IH_Bessel(SingIH_Problem):
         kr2 = k*r/2
 
         v_asympt0 = 0
-        for l in range(4):
+        for l in range(3):
             x = 3/11 + l + 1
             v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
 
@@ -102,8 +119,7 @@ class IH_Bessel(SingIH_Problem):
         return jv(nu/2, k*r) * np.sin(nu/2 * (th-a))
 
     def eval_expected__no_w(self, r, th):
-        return (self.eval_v(r, th) - self.eval_g(r, th) -
-            self.eval_v_asympt(r, th))
+        return self.eval_v(r, th) - self.eval_regfunc(r, th)
 
     def eval_bc__noreg(self, arg, sid):
         a = self.a
@@ -159,8 +175,7 @@ class IH_Bessel(SingIH_Problem):
         return jv(nu/2, k*r) * np.sin(nu/2 * (th-a))
 
     def eval_expected__no_w(self, r, th):
-        return (self.eval_v(r, th) - self.eval_g(r, th) -
-            self.eval_v_asympt(r, th))
+        return self.eval_v(r, th) - self.eval_regfunc(r, th)
 
 
 class IH_Bessel_Line(IH_Bessel):
@@ -175,6 +190,7 @@ class IH_Bessel_Line(IH_Bessel):
         return jv(nu/2, k*R) * (th - a) / (2*np.pi - a)
 
 
+# TODO change data on wedge
 class IH_Bessel_Quadratic(IH_Bessel):
 
     def eval_bc__noreg(self, arg, sid):

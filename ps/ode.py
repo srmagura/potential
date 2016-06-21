@@ -43,8 +43,8 @@ def ab4(eval_deriv, sol, n, h):
     return sol[:, n+ab_s-1] + h*derivs
 
 
-fourier_N = 8192
-ode_N = 512
+fourier_N = 128  # Fourier error will be approx 1e-15
+ode_N = 128
 
 def calc_z(problem, M):
     # MEGA FIXME
@@ -57,11 +57,16 @@ def calc_z(problem, M):
 
     arc_dst = lambda func: fourier.arc_dst(a, func, N=fourier_N)
 
+    # Estimate the accuracy of the DFT
+    #r = 1
+    #d1 = arc_dst(lambda th: problem.eval_f_polar(r, th))[:M]
+    #d2 = fourier.arc_dst(a, lambda th: problem.eval_f_polar(r, th), N=2048)[:M]
+    #print('Fourier error:', np.max(np.abs(d1-d2)))
+
     xspan = np.linspace(0, k*R, ode_N)
     h = k*R/(ode_N-1)
 
     f_fourier_cache = {}
-    #phi_fourier = arc_dst(lambda th: problem.eval_bc(th, 0))
 
     eval_z_fourier = [None]*M
 
@@ -101,7 +106,6 @@ def calc_z(problem, M):
 
     q = lambda th: problem.eval_expected__no_w(R, th) - eval_z(R, th)
     q_f = arc_dst(q)
-    print(q_f[:10])
+    print(q_f[:M])
 
     return eval_z
-    #return problem.eval_expected__no_w
