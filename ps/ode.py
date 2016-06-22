@@ -7,13 +7,13 @@ import abcoef
 import fourier
 
 # For best accuracy, would less than 1024 work?
-fourier_N = 16#1024
+fourier_N = 1024
 
 # Recommended: 1e-14
-atol = rtol = 1e-5
+atol = rtol = 1e-10
 
 def calc_z(problem, th_data, M):
-    print('Cheating!')
+    '''print('Cheating!')
     z_data = np.zeros(len(th_data))
     for i in range(len(th_data)):
         th = th_data[i]
@@ -21,7 +21,9 @@ def calc_z(problem, th_data, M):
 
         z_data[i] = problem.eval_expected__no_w(r, th)
 
-    return z_data
+    return z_data'''
+
+    eval_f1 = problem.eval_f1
 
     a = problem.a
     nu = problem.nu
@@ -32,8 +34,8 @@ def calc_z(problem, th_data, M):
 
     # Estimate the accuracy of the DFT
     r = R
-    d1 = arc_dst(lambda th: problem.eval_f_polar(r, th))[:M]
-    d2 = fourier.arc_dst(a, lambda th: problem.eval_f_polar(r, th), N=8192)[:M]
+    d1 = arc_dst(lambda th: problem.eval_f1(r, th))[:M]
+    d2 = fourier.arc_dst(a, lambda th: problem.eval_f1(r, th), N=8192)[:M]
     print('Fourier error:', np.max(np.abs(d1-d2)))
 
     h = R / 256
@@ -48,7 +50,8 @@ def calc_z(problem, th_data, M):
         assert r != 0
 
         n_dst += 1
-        f_fourier = arc_dst(lambda th: problem.eval_f_polar(r, th))[:M]
+
+        f_fourier = arc_dst(lambda th: problem.eval_f1(r, th))[:M]
 
         derivs = np.zeros(2*M)
         for i in range(0, 2*M, 2):
@@ -78,16 +81,19 @@ def calc_z(problem, th_data, M):
         for m in range(1, M+1):
             z += z_fourier[i, m-1] * np.sin(m*nu*(th-a))
 
+        r = problem.boundary.eval_r(th)
+        z += problem.eval_q(r, th)
         return z
 
     for i in range(len(th_data)):
         z_data[i] = eval_z(i)
 
     # Estimate error incurred by ODE solver
-    i = (len(th_data)-1)//2
+    i = (len(th_data)-1)#//2
     r = problem.boundary.eval_r(th_data[i])
     expected = lambda th: problem.eval_expected__no_w(r, th) - eval_z(i, th)
     expected_fourier = fourier.arc_dst(a, expected)
+    print('ODE error:')
     print(np.abs(expected_fourier[:M]))
 
     return z_data

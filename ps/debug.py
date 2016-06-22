@@ -122,6 +122,7 @@ class PsDebug:
         s_data = np.zeros(len(sample))
         exact_data = np.zeros(len(sample))
         expansion_data = np.zeros(len(sample))
+        print('c0_test: fixme for regularized problems')
 
         for l in range(len(sample)):
             p = sample[l]
@@ -132,10 +133,11 @@ class PsDebug:
 
             exact_data[l] = self.problem.eval_bc(p['arg'], sid).real
 
-            if self.problem.regularize and sid == 0:
+
+            '''if self.problem.hreg  and sid == 0:
                 for m in range(1, self.M+1):
                     exact_data[l] -= (self.a_coef[m-1] *
-                        jv(m*nu, k*r) * np.sin(m*nu*(th-a))).real
+                        jv(m*nu, k*r) * np.sin(m*nu*(th-a))).real'''
 
             if sid == 0:
                 arg = th

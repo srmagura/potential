@@ -104,7 +104,7 @@ class PsBasis:
         elif hreg == HReg.ode:
             if hasattr(self.problem, 'a_coef'):
                 # This is just to save time
-                self.a_coef = problem.a_coef
+                self.a_coef = self.problem.a_coef
             else:
                 z_data = ode.calc_z(self.problem, abcoef.th_data, self.M)
                 do_linsys = True
@@ -115,37 +115,44 @@ class PsBasis:
 
 
         if do_linsys:
-            '''def way1(th):
+            def eval_bc0(th):
+                return self.problem.eval_bc(th, 0)
+            '''def eval_bc0(th):
                 r = self.boundary.eval_r(th)
-                return self.problem.eval_bc__noreg(th, 0) - self.problem.eval_v(r, th)
-            '''
-            def way2(th):
-                r = self.boundary.eval_r(th)
-                return self.problem.eval_bc(th, 0) - self.problem.eval_expected__no_w(r, th)
-            eval_bc0 = way2
-
-            #def eval_bc0(th):
-            #    return self.problem.eval_bc(th, 0)
+                return (self.problem.eval_bc(th, 0) -
+                    #self.problem.eval_q(r, th) -
+                    self.problem.eval_expected__no_w(r, th))'''
 
             m1 = self.problem.get_m1()
-            #self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
-            #    eval_bc0, self.M, m1, to_subtract=z_data)[0]
             self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
-                eval_bc0, self.M, m1)[0]
-
-
-            '''th_data = np.linspace(self.a, 2*np.pi, 1024)
-            way1_data = np.array([way1(th) for th in th_data])
-            way2_data = np.array([way2(th) for th in th_data])
-            diff12 = np.max(np.abs(way1_data-way2_data))
-            print('diff12:', diff12)'''
+                eval_bc0, self.M, m1, to_subtract=z_data)[0]
+            self.problem.a_coef = self.a_coef
+            #self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
+            #    eval_bc0, self.M, m1)[0]
 
             error = np.max(np.abs(self.a_coef - self.problem.fft_a_coef[:self.M]))
             print('a_coef error:', error)
 
-            #b_coef = abcoef.a_to_b(self.a_coef, self.k, self.R, self.nu)
-            #error = np.max(np.abs(b_coef - self.problem.fft_b_coef[:self.M]))
-            #print('b_coef error:', error)
+            # This is all a test to see if the a coefficients were
+            # computed accurately
+            a = self.a
+            nu = self.nu
+            k = self.k
+            R = self.R
+
+            def bc(th):
+                r = self.boundary.eval_r(th)
+                v = self.problem.eval_bc(th, 0)
+                v -= self.problem.eval_expected__no_w(r, th)
+
+                for m in range(1, self.M+1):
+                    v -= self.a_coef[m-1] * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
+
+                return v
+
+            result_coef = abcoef.calc_a_coef(self.problem, self.boundary,
+                bc, self.M, m1)[0]
+            print(result_coef)
 
     def get_chebyshev_coef(self, sid, func):
         """

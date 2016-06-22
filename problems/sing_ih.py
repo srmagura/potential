@@ -43,29 +43,25 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         k, a, r, th, x = sympy.symbols('k a r th x')
 
         def do_laplacian(u):
-            return diff(u, r, 2) + diff(u, r) / r + diff(u, th, 2) / r**2 + k**2 * u
+            d_u_r = diff(u, r)
+            return diff(d_u_r, r) + d_u_r / r + diff(u, th, 2) / r**2 + k**2 * u
 
-        f1 = -do_laplacian(g + v_asympt)
+        f = -do_laplacian(g + v_asympt)
+        kwargs['f_expr'] = f
+
         logistic = 1 / (1 + sympy.exp(-90*(x-0.5)))
 
         # TODO insert q2
-        q1 = (r**2 * 1/2 * (th-2*pi)**2 * f1.subs(th, 2*pi) *
+        q1 = (r**2 * 1/2 * (th-2*pi)**2 * f.subs(th, 2*pi) *
             logistic.subs(x, (th-2*pi)/(2*pi-a)+1))
 
-        f = f1 - do_laplacian(q1)
-
-        kwargs['f_expr'] = f
+        f1 = f - do_laplacian(q1)
 
         self.build_sympy_subs_dict()
         subs_dict = self.sympy_subs_dict
         lambdify_modules = SympyProblem.lambdify_modules
 
-        #import matplotlib.pyplot as plt
-        #r_data = np.arange(self.R/256, self.R, .0001)
 
-        #_f1_lambda = sympy.lambdify(r, do_laplacian(v_asympt).subs(subs_dict).subs('th', 2*np.pi),
-        #    modules=lambdify_modules)
-        #f1_data = np.array([_f1_lambda(r) for r in r_data])
         #plt.plot(r_data, f1_data)
         #plt.show()
 
@@ -76,6 +72,14 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
         #plt.plot(r_data, f_data)
 
+        #q1_lambda = sympy.lambdify(r, q1.subs(subs_dict).subs('th', np.pi),
+        #    modules=lambdify_modules)
+        #q1_data = np.array([q1_lambda(r) for r in r_data])
+        #print('qmax: ', np.max(np.abs(q1_data)))
+
+        #plt.plot(r_data, q1_data)
+        #plt.show()
+
         #_lambda = sympy.lambdify(r,
         #    (abs(diff(q1, u, r) + .subs(subs_dict).subs('th', 2*np.pi),
         #    modules=lambdify_modules)
@@ -84,9 +88,19 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         #plt.show()
         #import sys; sys.exit(0)
 
-        self.eval_regfunc = sympy.lambdify((r, th),
-            (v_asympt + g + q1).subs(subs_dict),
-            modules=lambdify_modules)
+        def my_lambdify(expr):
+            return sympy.lambdify((r, th),
+                expr.subs(subs_dict),
+                modules=lambdify_modules)
+
+        self.eval_regfunc = my_lambdify(g+v_asympt)
+        self.eval_q = my_lambdify(q1)
+        self.eval_f1 = my_lambdify(f1)
+
+        r_data = np.arange(self.R/256, self.R, .0001)
+
+        f1_data = np.array([self.eval_f1(r, 2*np.pi) for r in r_data])
+        print('f1_max:', np.max(np.abs(f1_data)))
 
         super().__init__(**kwargs)
 
@@ -138,10 +152,26 @@ class IH_Bessel(SingIH_Problem):
         return jv(nu/2, k*r) * np.sin(nu/2 * (th-a))
 
     def eval_expected__no_w(self, r, th):
+        if r == 0:
+            return 0
+
         return self.eval_v(r, th) - self.eval_regfunc(r, th)
+
+class I_Bessel(IH_Bessel):
+
+    # Expected is known only for the true arc
+    expected_known=True
+
+    def eval_bc__noreg(self, arg, sid):
+        th = arg
+        r = self.boundary.eval_r(th)
+        return self.eval_v(r, th)
 
 
 class IH_Bessel_Line(IH_Bessel):
+
+    # Expected is known only for the true arc
+    expected_known=True
 
     def __init__(self, **kwargs):
         a = self.a
