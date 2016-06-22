@@ -39,7 +39,6 @@ class SympyProblem:
             **self.lkw)
 
         # If using 2nd order scheme, don't need derivatives of f (TODO?)
-
         self.do_diff(f)
 
     def build_sympy_subs_dict(self):
@@ -61,16 +60,16 @@ class SympyProblem:
         d_f_r = diff(f, r)
         self.eval_d_f_r = lambdify(args, d_f_r.subs(subs_dict), **self.lkw)
 
-        d2_f_r = diff(f, r, 2)
+        d2_f_r = diff(d_f_r, r)
         self.eval_d2_f_r = lambdify(args, d2_f_r.subs(subs_dict), **self.lkw)
 
         d_f_th = diff(f, th)
         self.eval_d_f_th = lambdify(args, d_f_th.subs(subs_dict), **self.lkw)
 
-        d2_f_th = diff(f, th, 2)
+        d2_f_th = diff(d_f_th, th)
         self.eval_d2_f_th = lambdify(args, d2_f_th.subs(subs_dict), **self.lkw)
 
-        d2_f_r_th = diff(f, r, th)
+        d2_f_r_th = diff(d_f_r, th)
         self.eval_d2_f_r_th = lambdify(args, d2_f_r_th.subs(subs_dict), **self.lkw)
 
     def eval_f_polar(self, r, th):

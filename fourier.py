@@ -88,7 +88,7 @@ class APSolver:
         return self._fourier(v, False)
 
 
-def arc_dst(a, func, N=1024):
+def arc_dst(a, func, N=2048):
     # The slice at the end removes the endpoints
     th_data = np.linspace(a, 2*np.pi, N+2)[1:-1]
 

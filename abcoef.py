@@ -5,7 +5,7 @@ from scipy.special import jv
 
 from problems.problem import PizzaProblem
 
-n_nodes = 512
+n_nodes = 2048
 th_data = np.linspace(PizzaProblem.a, 2*np.pi, n_nodes + 2)[1:-1]
 
 def calc_a_coef(problem, boundary, eval_bc0, M, m1, to_subtract=None):

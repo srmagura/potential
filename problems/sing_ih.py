@@ -14,7 +14,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
     hreg = HReg.ode
 
-    k = 1 #FIXME
+    k = 5.5
 
     n_basis_dict = {
         16: (24, 6),
@@ -24,6 +24,14 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         256: (80, 30),
         512: (100, 40),
         1024: (120, 45),
+    }
+
+    m1_dict = {
+        'arc': 8,
+        'outer-sine': 210,
+        'inner-sine': 236,
+        'cubic': 200,
+        'sine7': 204,
     }
 
     def __init__(self, **kwargs):
@@ -84,8 +92,8 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
     def eval_bc(self, arg, sid):
         if sid == 0:
-            r = self.R
             th = arg
+            r = self.boundary.eval_r(th)
             return self.eval_bc__noreg(arg, sid) - self.eval_regfunc(r, th)
         else:
             return 0
@@ -100,11 +108,6 @@ class IH_Bessel(SingIH_Problem):
         nu = self.nu
         k = self.k
         R = self.R
-
-        def to_dst(th):
-            return self.eval_bc__noreg(th, 0) - self.eval_v(R, th)
-
-        kwargs['to_dst'] = to_dst
 
         r, th = sympy.symbols('r th')
         kr2 = k*r/2
@@ -137,19 +140,8 @@ class IH_Bessel(SingIH_Problem):
     def eval_expected__no_w(self, r, th):
         return self.eval_v(r, th) - self.eval_regfunc(r, th)
 
-    def eval_bc__noreg(self, arg, sid):
-        a = self.a
-        nu = self.nu
-        k = self.k
-        R = self.R
 
-        th = arg
-        return jv(nu/2, k*R) * (th - a) / (2*np.pi - a)
-
-
-class IH_Bessel(SingIH_Problem):
-
-    expected_known = False
+class IH_Bessel_Line(IH_Bessel):
 
     def __init__(self, **kwargs):
         a = self.a
@@ -158,52 +150,19 @@ class IH_Bessel(SingIH_Problem):
         R = self.R
 
         def to_dst(th):
-            return self.eval_bc__noreg(th, 0) - self.eval_v(R, th)
+            return jv(nu/2, k*R) * (th - a) / (2*np.pi - a) - self.eval_v(R, th)
 
         kwargs['to_dst'] = to_dst
-
-        r, th = sympy.symbols('r th')
-        kr2 = k*r/2
-
-        v_asympt0 = 0
-        for l in range(4):
-            x = 3/11 + l + 1
-            v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
-
-        v_asympt0 *= kr2**(3/11)
-
-        v_asympt = v_asympt0 * sympy.sin(nu/2*(th-a))
-
-        g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt0)
-
-        kwargs['g'] = g
-        kwargs['v_asympt'] = v_asympt
         super().__init__(**kwargs)
-
-    def eval_v(self, r, th):
-        """
-        Using this function is "cheating".
-        """
-        a = self.a
-        nu = self.nu
-        k = self.k
-
-        return jv(nu/2, k*r) * np.sin(nu/2 * (th-a))
-
-    def eval_expected__no_w(self, r, th):
-        return self.eval_v(r, th) - self.eval_regfunc(r, th)
-
-
-class IH_Bessel_Line(IH_Bessel):
 
     def eval_bc__noreg(self, arg, sid):
         a = self.a
         nu = self.nu
         k = self.k
-        R = self.R
 
         th = arg
-        return jv(nu/2, k*R) * (th - a) / (2*np.pi - a)
+        r = self.boundary.eval_r(th)
+        return jv(nu/2, k*r) * (th - a) / (2*np.pi - a)
 
 
 # TODO change data on wedge
