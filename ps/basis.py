@@ -131,11 +131,13 @@ class PsBasis:
             #    eval_bc0, self.M, m1)[0]
 
             error = np.max(np.abs(self.a_coef - self.problem.fft_a_coef[:self.M]))
+            print('a_coef:')
+            print(self.a_coef)
             print('a_coef error:', error)
 
             # This is all a test to see if the a coefficients were
             # computed accurately
-            a = self.a
+            '''a = self.a
             nu = self.nu
             k = self.k
             R = self.R
@@ -152,7 +154,7 @@ class PsBasis:
 
             result_coef = abcoef.calc_a_coef(self.problem, self.boundary,
                 bc, self.M, m1)[0]
-            print(result_coef)
+            print(result_coef)'''
 
     def get_chebyshev_coef(self, sid, func):
         """
