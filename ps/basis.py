@@ -137,7 +137,7 @@ class PsBasis:
 
             # This is all a test to see if the a coefficients were
             # computed accurately
-            '''a = self.a
+            a = self.a
             nu = self.nu
             k = self.k
             R = self.R
@@ -154,7 +154,8 @@ class PsBasis:
 
             result_coef = abcoef.calc_a_coef(self.problem, self.boundary,
                 bc, self.M, m1)[0]
-            print(result_coef)'''
+            print('matching error:')
+            print(result_coef)
 
     def get_chebyshev_coef(self, sid, func):
         """

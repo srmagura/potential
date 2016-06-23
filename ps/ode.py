@@ -13,8 +13,6 @@ fourier_N = 128
 atol = rtol = 1e-5
 
 def calc_z(problem, th_data, M):
-    # FIXME
-    M = 20
     '''print('Cheating!')
     z_data = np.zeros(len(th_data))
     for i in range(len(th_data)):
@@ -104,10 +102,6 @@ def calc_z(problem, th_data, M):
     for i in range(len(th_data)):
         r = problem.boundary.eval_r(th_data[i])
         z_data[i] = eval_z(r, th_data[i], do_print=True)
-
-    # Estimate error incurred by ODE solver
-    i = (len(th_data)-1)#//2
-    r = problem.boundary.eval_r(th_data[i])
 
     from abcoef import calc_a_coef
     acoef = calc_a_coef(problem, problem.boundary,
