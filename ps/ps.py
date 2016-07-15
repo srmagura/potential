@@ -238,6 +238,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         analogous function c1_test().
         '''
         #self.c0_test(plot=True)
+        print(repr(self.c0))
 
         self.solve_var()
 

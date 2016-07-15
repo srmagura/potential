@@ -14,7 +14,8 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
     hreg = HReg.ode
 
-    k = 5.5
+    # FIXME
+    k = 1 #5.5
 
     n_basis_dict = {
         16: (24, 6),
@@ -196,7 +197,7 @@ class IH_Bessel_Line(IH_Bessel):
 
 
 # TODO change data on wedge
-class IH_Bessel_Quadratic(IH_Bessel):
+"""class IH_Bessel_Quadratic(IH_Bessel):
 
     def eval_bc__noreg(self, arg, sid):
         a = self.a
@@ -205,4 +206,4 @@ class IH_Bessel_Quadratic(IH_Bessel):
         R = self.R
 
         th = arg
-        return jv(nu/2, k*R) * (th - a)**2 / (2*np.pi - a)**2
+        return jv(nu/2, k*R) * (th - a)**2 / (2*np.pi - a)**2"""

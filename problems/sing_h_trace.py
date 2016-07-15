@@ -40,7 +40,12 @@ class SingH_Trace(SingularKnown):
         if sid == 0:
             if not self.no_fourier:
                 r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-                return self.eval_expected_polar(r, th)
+                # MEGA FIXME
+                m = 8
+                a = self.a
+                nu = self.nu
+                k = self.k
+                return self.eval_expected_polar(r, th) + jv(-m*nu, k*r) * np.sin(m*nu*(th-a))
             else:
                 return self.eval_phi0(arg)
         else:
