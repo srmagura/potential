@@ -5,6 +5,7 @@ from chebyshev import eval_dn_T_t, get_chebyshev_roots
 import abcoef
 import domain_util
 import ps.ode as ode
+import ps.polarfd as polarfd
 
 from problems.singular import HReg
 
@@ -92,70 +93,50 @@ class PsBasis:
         part of the singularity, using one of several metods.
         """
         hreg = self.problem.hreg
-        do_linsys = False
-        z_data = None
+        eval_bc0 = None
 
         if hreg == HReg.cheat_fft:
             self.a_coef = self.problem.fft_a_coef[:self.M]
 
         elif hreg == HReg.linsys:
-            do_linsys = True
+
+            def eval_bc0(th):
+                return self.problem.eval_bc(th, 0)
 
         elif hreg == HReg.ode:
+            # TODO rename HReg.ode to HReg.polarfd?
+
             if hasattr(self.problem, 'a_coef'):
                 # This is just to save time
                 self.a_coef = self.problem.a_coef
             else:
-                z_data = ode.calc_z(self.problem, abcoef.th_data, self.M)
-                do_linsys = True
+                #z_data = ode.calc_z(self.problem, abcoef.th_data, self.M)
+                chebyshev_functions = {
+                    'eval_g': lambda th: self.eval_g(0, th),
+                    'eval_g_inv': lambda th: self.eval_g_inv(0, th),
+                    'eval_B': lambda J, th: self.eval_dn_B_arg(0, J, th, 0),
+                }
 
+                z_interp = polarfd.get_z_interp(self.problem,
+                    abcoef.get_R1(self.boundary), chebyshev_functions)
+
+                def eval_bc0(th):
+                    r = self.boundary.eval_r(th)
+                    return self.problem.eval_bc(th, 0) - z_interp(r, th)
         else:
             assert hreg == HReg.none
             self.a_coef = np.zeros(self.M)
 
 
-        if do_linsys:
-            def eval_bc0(th):
-                return self.problem.eval_bc(th, 0)
-            '''def eval_bc0(th):
-                r = self.boundary.eval_r(th)
-                return (self.problem.eval_bc(th, 0) -
-                    #self.problem.eval_q(r, th) -
-                    self.problem.eval_expected__no_w(r, th))'''
-
+        if eval_bc0 is not None:
             m1 = self.problem.get_m1()
             self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
-                eval_bc0, self.M, m1, to_subtract=z_data)[0]
+                eval_bc0, self.M, m1)[0]
             self.problem.a_coef = self.a_coef
-            #self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
-            #    eval_bc0, self.M, m1)[0]
 
             error = np.max(np.abs(self.a_coef - self.problem.fft_a_coef[:self.M]))
-            print('a_coef:')
-            print(self.a_coef)
             print('a_coef error:', error)
 
-            # This is all a test to see if the a coefficients were
-            # computed accurately
-            a = self.a
-            nu = self.nu
-            k = self.k
-            R = self.R
-
-            def bc(th):
-                r = self.boundary.eval_r(th)
-                v = self.problem.eval_bc(th, 0)
-                v -= self.problem.eval_expected__no_w(r, th)
-
-                for m in range(1, self.M+1):
-                    v -= self.a_coef[m-1] * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
-
-                return v
-
-            result_coef = abcoef.calc_a_coef(self.problem, self.boundary,
-                bc, self.M, m1)[0]
-            print('matching error:')
-            print(result_coef)
 
     def get_chebyshev_coef(self, sid, func):
         """

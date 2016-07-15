@@ -8,6 +8,18 @@ from problems.problem import PizzaProblem
 n_nodes = 2048
 th_data = np.linspace(PizzaProblem.a, 2*np.pi, n_nodes + 2)[1:-1]
 
+def get_R1(boundary):
+    """
+    Approximate the greatest r value on the boundary
+    """
+    R1 = 0
+    for th in th_data:
+        r = boundary.eval_r(th)
+        if r > R1:
+            R1 = r
+
+    return R1
+
 def calc_a_coef(problem, boundary, eval_bc0, M, m1, to_subtract=None):
     k = problem.k
     R = problem.R
