@@ -18,7 +18,7 @@ def get_R1(boundary):
         if r > R1:
             R1 = r
 
-    return R1
+    return max(R1, boundary.eval_r(2*np.pi))
 
 def calc_a_coef(problem, boundary, eval_bc0, M, m1, to_subtract=None):
     k = problem.k

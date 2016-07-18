@@ -35,6 +35,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.boundary = self.problem.boundary
 
         self.scheme_order = options['scheme_order']
+        self.polarfd_N = options['polarfd_N']
 
         self.M = get_M(self.scheme_order)
         self.problem.M = self.M
@@ -238,7 +239,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         analogous function c1_test().
         '''
         #self.c0_test(plot=True)
-        print(repr(self.c0))
 
         self.solve_var()
 

@@ -1,16 +1,20 @@
 import numpy as np
 import itertools as it
 from scipy.interpolate import CloughTocher2DInterpolator
+from scipy.sparse import csc_matrix
 
 import matlab
 import matlab.engine
 
-from chebyshev import get_chebyshev_roots
+import abcoef
+from chebyshev import get_chebyshev_roots, eval_T
+
+Nlam = 10
 
 def my_print(x):
     print('(polarfd) ' + str(x))
 
-def get_z_interp(problem, R1, chebyshev_functions):
+def get_z_interp(N, problem, R1, eval_g, eval_g_inv):
     """
     Return an interpolating function that approximates z
 
@@ -22,16 +26,17 @@ def get_z_interp(problem, R1, chebyshev_functions):
     a = problem.a
     nu = problem.nu
 
+    # rec: .05
     R0 = .05
-    match_r = .20
 
-    N = 16
-    Nlam = 10
+    # Default: .2
+    match_r = .20
 
     dim0 = (N+1)**2
     dim = dim0 + Nlam
 
     my_print('N = {}'.format(N))
+    my_print('Nlam = {}'.format(Nlam))
     my_print('R0 = {}'.format(R0))
     my_print('R1 = {}'.format(R1))
     my_print('match_r = {}'.format(match_r))
@@ -51,22 +56,24 @@ def get_z_interp(problem, R1, chebyshev_functions):
     def get_index_b(J):
         return dim0 + J
 
-    eval_g_inv = chebyshev_functions['eval_g_inv']
-    eval_g = chebyshev_functions['eval_g']
-    eval_B = chebyshev_functions['eval_B']
+    def eval_B(J, th):
+        return eval_T(J, eval_g_inv(th))
 
     # Calculate Chebyshev coefficients of true boundary data
-    #t_roots = get_chebyshev_roots(1024)
-    #boundary_data = np.zeros(len(t_roots))
+    # for comparison only
+    t_roots = get_chebyshev_roots(1024)
+    boundary_data = np.zeros(len(t_roots))
 
-    #for i in range(len(t_roots)):
-    #    th = eval_g(t_roots[i])
-    #    boundary_data[i] = eval_u(R1, th)
+    for i in range(len(t_roots)):
+        th = eval_g(t_roots[i])
+        r = problem.boundary.eval_r(th)
+        boundary_data[i] = problem.eval_expected__no_w(r, th)
 
-    #true_lam = np.polynomial.chebyshev.chebfit(t_roots, boundary_data, Nlam)
-    #my_print('First chebyshev coef not included:', true_lam[-1])
+    true_lam = np.polynomial.chebyshev.chebfit(t_roots, boundary_data, Nlam)
+    my_print('First chebyshev coef not included: {}'.format(true_lam[-1]))
 
-    #true_lam = true_lam[:-1]
+    true_lam = true_lam[:-1]
+
 
     rhs = []
 
@@ -240,6 +247,9 @@ def get_z_interp(problem, R1, chebyshev_functions):
 
             row += 1
 
+
+    my_print('System shape: {} x {}'.format(max(row_ind)+1, max(col_ind)+1))
+
     eng = matlab.engine.start_matlab()
 
     eng.workspace['row_ind'] = matlab.double([i+1 for i in row_ind])
@@ -252,7 +262,30 @@ def get_z_interp(problem, R1, chebyshev_functions):
 
     eng.quit()
 
-    my_print('System shape: {} x {}'.format(max(row_ind), max(col_ind)))
+    # Calculate linear system residual
+    M = csc_matrix((data, (row_ind, col_ind)))
+    rhs = np.array(rhs)
+
+    exp_sol = np.zeros(dim)
+    for m in range(N+1):
+        for l in range(N+1):
+            r = get_r(m)
+            th = get_th(l)
+            exp_sol[get_index(m, l)] = problem.eval_expected__no_w(r, th)
+
+    for J in range(Nlam):
+        exp_sol[get_index_b(J)] = true_lam[J]
+
+    residual = M.dot(exp_sol) - rhs
+    my_print('residual(exp): {}'.format(np.max(np.abs(residual))))
+
+    residual = M.dot(u) - rhs
+    my_print('residual(matlab): {}'.format(np.max(np.abs(residual))))
+
+    #for row in range(len(exp_sol)):
+    #    diff = abs(exp_sol[row] - u[row])
+    #    if diff > 1e-6:
+    #        print(row, diff)
 
     # Measure error on arc
     error = []
@@ -263,7 +296,7 @@ def get_z_interp(problem, R1, chebyshev_functions):
 
     my_print('Error on arc: {}'.format(np.max(error)))
 
-    import sys; sys.exit(0)
+    #print(u[-Nlam:])
 
     # Create interpolating function
     points = np.zeros((dim0, 2))
@@ -276,18 +309,23 @@ def get_z_interp(problem, R1, chebyshev_functions):
             points[i, 1] = get_th(l)
             data[i] = u[i]
 
-    interpolater = CloughTocher2DInterpolator(points, data)
+    raw_interpolator = CloughTocher2DInterpolator(points, data)
+    interpolator = lambda r, th: float(raw_interpolator(r, th))
 
     # Measure error on perturbed boundary
-    interpolater_boundary = []
+    interpolator_boundary = []
     u_boundary = []
 
-    for th in np.arange(a, 2*np.pi, .01):
+    for th in abcoef.th_data:
         r = problem.boundary.eval_r(th)
-        interpolater_boundary.append(interpolater(r, th))
-        u_boundary.append(eval_u(r, th))
 
-    error = np.max(np.abs(np.array(interpolater_boundary) - u_boundary))
+        interpolator_boundary.append(interpolator(r, th))
+        u_boundary.append(problem.eval_expected_polar(r, th))
+
+    #print(interpolator_boundary); print('\n'*5)
+    #print(u_boundary)
+
+    error = np.max(np.abs(np.array(interpolator_boundary) - u_boundary))
     my_print('Error on perturbed boundary: {}'.format(error))
 
-    return interpolater
+    return interpolator

@@ -14,8 +14,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
     hreg = HReg.ode
 
-    # FIXME
-    k = 1 #5.5
+    k = 1
 
     n_basis_dict = {
         16: (24, 6),
@@ -127,7 +126,7 @@ class IH_Bessel(SingIH_Problem):
         kr2 = k*r/2
 
         v_asympt0 = 0
-        for l in range(3):
+        for l in range(8):
             x = 3/11 + l + 1
             v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
 

@@ -38,6 +38,9 @@ parser.add_argument('--cheat-fft', action='store_true',
     help='for testing purposes. Uses the true values of the a/b '
     'coefficients, which really should not be known')
 
+parser.add_argument('-polarfd-N', type=int, default=64,
+    help='grid size for polarfd')
+
 args = parser.parse_args()
 
 problem = problems.problem_dict[args.problem]()
@@ -53,7 +56,8 @@ N_list = get_N_list(args.N, args.c)
 options = {
     'problem': problem,
     'scheme_order': args.o,
-    'cheat_fft': args.cheat_fft
+    'cheat_fft': args.cheat_fft,
+    'polarfd_N': args.polarfd_N,
 }
 
 meta_options = {

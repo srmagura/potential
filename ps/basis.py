@@ -111,14 +111,15 @@ class PsBasis:
                 self.a_coef = self.problem.a_coef
             else:
                 #z_data = ode.calc_z(self.problem, abcoef.th_data, self.M)
-                chebyshev_functions = {
-                    'eval_g': lambda th: self.eval_g(0, th),
-                    'eval_g_inv': lambda th: self.eval_g_inv(0, th),
-                    'eval_B': lambda J, th: self.eval_dn_B_arg(0, J, th, 0),
-                }
+                eval_g = lambda t: self.eval_g(0, t)
+                eval_g_inv =lambda th: self.eval_g_inv(0, th)
 
-                z_interp = polarfd.get_z_interp(self.problem,
-                    abcoef.get_R1(self.boundary), chebyshev_functions)
+                z_interp = polarfd.get_z_interp(self.polarfd_N,
+                    self.problem,
+                    abcoef.get_R1(self.boundary),
+                    eval_g,
+                    eval_g_inv,
+                )
 
                 def eval_bc0(th):
                     r = self.boundary.eval_r(th)
