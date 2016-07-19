@@ -115,10 +115,14 @@ class PsBasis:
                 eval_g_inv =lambda th: self.eval_g_inv(0, th)
 
                 my_polarfd = polarfd.PolarFD()
+                R1, R2 = abcoef.get_R1_R2(self.boundary)
+
                 z_interp = my_polarfd.get_z_interp(self.polarfd_N,
+                    self.polarfd_N2,
                     self.polarfd_Nlam,
+                    self.polarfd_nstaple,
                     self.problem,
-                    abcoef.get_R1(self.boundary),
+                    R1, R2,
                     eval_g,
                     eval_g_inv,
                 )

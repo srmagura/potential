@@ -1,7 +1,8 @@
 import numpy as np
 import itertools as it
-from scipy.interpolate import CloughTocher2DInterpolator
+from scipy.interpolate import interp1d, CloughTocher2DInterpolator
 from scipy.sparse import csc_matrix
+from scipy.sparse.linalg import spsolve
 
 import matlab
 import matlab.engine
@@ -11,6 +12,13 @@ from chebyshev import get_chebyshev_roots, eval_T
 
 
 class PolarFD:
+
+    # rec: .05
+    R0 = .05
+
+    # Default: .2
+    # for 1024, rank deficient for .25
+    match_r = .20
 
     @classmethod
     def my_print(cls, x):
@@ -30,6 +38,23 @@ class PolarFD:
 
     def eval_B(self, J, th):
         return eval_T(J, self.eval_g_inv(th))
+
+    def calc_N_var(self):
+        """ Calculate variables that depend on N """
+        self.hr = (self.R2-self.R0)/self.N
+        self.hth = (2*np.pi - self.a) / self.N
+
+        self.dim0 = (self.N+1)**2
+        self.dim = self.dim0 + self.Nlam
+
+    def new_system(self):
+        """ Create variables for making a new sparse system """
+        self.rhs = []
+        self.row = 0
+
+        self.data = []
+        self.row_ind = []
+        self.col_ind = []
 
     def set_bc_origin(self):
         """
@@ -74,7 +99,7 @@ class PolarFD:
             self.rhs.append(self.problem.eval_bc(r, 1))
             self.row += 1
 
-    def set_bc_arc(self):
+    def set_bc_arc(self, known):
         # Set BC at arc
         N = self.N
 
@@ -84,12 +109,17 @@ class PolarFD:
             self.col_ind.append(self.get_index(N, l))
 
             th = self.get_th(l)
-            for J in range(self.Nlam):
-                self.data.append(-self.eval_B(J, th))
-                self.row_ind.append(self.row)
-                self.col_ind.append(self.get_index_b(J))
+            rhs_value = 0
 
-            self.rhs.append(0)
+            for J in range(self.Nlam):
+                if known:
+                    rhs_value += self.lam[J] * self.eval_B(J, th)
+                else:
+                    self.data.append(-self.eval_B(J, th))
+                    self.row_ind.append(self.row)
+                    self.col_ind.append(self.get_index_b(J))
+
+            self.rhs.append(rhs_value)
             self.row += 1
 
     def set_chebyshev_match(self):
@@ -127,6 +157,43 @@ class PolarFD:
 
                 self.rhs.append(0)
                 self.row += 1
+
+    def set_fd2(self, m, l):
+        """
+        Create equation for second order finite difference scheme
+        at the node (m, l)
+        """
+        r_1 = self.get_r(m-1/2)
+        r = self.get_r(m)
+        r1 = self.get_r(m+1/2)
+
+        hr = self.hr
+        hth = self.hth
+        k = self.k
+
+        local = np.zeros([3, 3])
+
+        local[-1, -1] += 0
+        local[0, -1] += 1/(hth**2*r**2)
+        local[1, -1] += 0
+
+        local[-1, 0] += r_1/(hr**2*r)
+        local[0, 0] += k**2 - 2/(hth**2*r**2) - r1/(hr**2*r) - r_1/(hr**2*r)
+        local[1, 0] += r1/(hr**2*r)
+
+        local[-1, 1] += 0
+        local[0, 1] += 1/(hth**2*r**2)
+        local[1, 1] += 0
+
+        th = self.get_th(l)
+        f = self.problem.eval_f_polar(r, th)
+
+        # 4th order
+        self.rhs.append(f)
+
+        self.copy_local(m, l, local)
+        self.row += 1
+
 
     def set_fd4(self, m, l):
         """
@@ -222,12 +289,15 @@ class PolarFD:
             self.row_ind.append(self.row)
             self.col_ind.append(self.get_index(m1, l1))
 
-    def get_z_interp(self, N, Nlam, problem, R1, eval_g, eval_g_inv):
+    def get_z_interp(self, N, N2, Nlam, nstaple, problem, R1, R2,
+        eval_g, eval_g_inv):
         """
         Return an interpolating function that approximates z
 
         N -- between 16 and 1024
-        R1 -- value of r up to which the interpolating function must be
+        R1 -- smallest value of r for which the interpolating function must be
+            accurate
+        R2 -- largest value of r for which the interpolating function must be
             accurate
         chebyshev_manager --
         """
@@ -242,25 +312,18 @@ class PolarFD:
         self.a = problem.a
         self.nu = problem.nu
 
-        # rec: .05
-        self.R0 = .05
         self.R1 = R1
+        self.R2 = R2
 
-        # Default: .2
-        # for 1024, rank deficient for .25
-        self.match_r = .20
-
-        self.dim0 = (N+1)**2
-        self.dim = self.dim0 + Nlam
+        self.calc_N_var()
+        dim0 = self.dim0
 
         self.my_print('N = {}'.format(N))
         self.my_print('Nlam = {}'.format(Nlam))
         self.my_print('R0 = {}'.format(self.R0))
         self.my_print('R1 = {}'.format(self.R1))
+        self.my_print('R2 = {}'.format(self.R2))
         self.my_print('match_r = {}'.format(self.match_r))
-
-        self.hr = (self.R1-self.R0)/N
-        self.hth = (2*np.pi - self.a) / N
 
         # Calculate Chebyshev coefficients of the expected solution
         # (for comparison only)
@@ -269,23 +332,18 @@ class PolarFD:
 
         for i in range(len(t_roots)):
             th = eval_g(t_roots[i])
-            boundary_data[i] = problem.eval_expected__no_w(R1, th)
+            boundary_data[i] = problem.eval_expected__no_w(R2, th)
 
         true_lam = np.polynomial.chebyshev.chebfit(t_roots, boundary_data, Nlam)
         self.my_print('First chebyshev coef not included: {}'.format(true_lam[-1]))
 
         true_lam = true_lam[:-1]
 
-        self.rhs = []
-        self.row = 0
-
-        self.data = []
-        self.row_ind = []
-        self.col_ind = []
+        self.new_system()
 
         self.set_bc_origin()
         self.set_bc_wedge()
-        self.set_bc_arc()
+        self.set_bc_arc(known=False)
 
         self.set_chebyshev_match()
         self.set_match_0()
@@ -294,6 +352,13 @@ class PolarFD:
         for m in range(1, N):
             for l in range(1, N):
                 self.set_fd4(m, l)
+
+        # Extra equations to make sure system is full rank
+        if nstaple != 0:
+            my_range = range(1, N, (N-1) // nstaple)
+            self.my_print('Actual number of staples: {}'.format(len(my_range)))
+            for l in my_range:
+                self.set_fd2(N-1, l)
 
         shape = (max(self.row_ind)+1, max(self.col_ind)+1)
         self.my_print('System shape: {} x {}'.format(*shape))
@@ -305,8 +370,10 @@ class PolarFD:
         eng.workspace['data'] = matlab.double(self.data)
         eng.workspace['rhs'] = matlab.double(self.rhs)
 
-        u = eng.eval('sparse(row_ind, col_ind, data) \ rhs.\'')
-        u = np.array(u._data)
+        sol = eng.eval('sparse(row_ind, col_ind, data) \ rhs.\'')
+        sol = np.array(sol._data)
+        u = sol[:dim0]
+        self.lam = sol[dim0:]
 
         eng.quit()
 
@@ -327,10 +394,10 @@ class PolarFD:
         residual = M.dot(exp_sol) - self.rhs
         self.my_print('residual(exp): {}'.format(np.max(np.abs(residual))))
 
-        residual = M.dot(u) - self.rhs
+        residual = M.dot(sol) - self.rhs
         self.my_print('residual(matlab): {}'.format(np.max(np.abs(residual))))
 
-        self.my_print('Max norm of sol: {}'.format(np.max(np.abs(u[:self.dim0]))))
+        self.my_print('Max norm of sol: {}'.format(np.max(np.abs(u))))
 
         # Measure error on arc
         error = []
@@ -341,19 +408,58 @@ class PolarFD:
 
         self.my_print('Error on arc: {}'.format(np.max(error)))
 
+        # Now that we know the boundary data, solve the system again
+        # with a higher value of N
+        N = self.N = N2
+        self.my_print('N2 = {}'.format(N))
+
+        self.calc_N_var()
+        self.new_system()
+
+        self.set_bc_origin()
+        self.set_bc_wedge()
+        self.set_bc_arc(known=True)
+
+        # Finite difference scheme
+        for m in range(1, N):
+            for l in range(1, N):
+                self.set_fd4(m, l)
+
+        # Solve the system exactly
+        M = csc_matrix((self.data, (self.row_ind, self.col_ind)))
+        self.rhs = np.array(self.rhs)
+
+        u = spsolve(M, self.rhs)
+
         # Create interpolating function
-        points = np.zeros((self.dim0, 2))
-        data = np.zeros(self.dim0)
+        points = []
+        data = []
 
-        for m in range(N+1):
+        if self.problem.boundary.name == 'arc':
+            # 1-dimensional interpolation
             for l in range(N+1):
-                i = self.get_index(m, l)
-                points[i, 0] = self.get_r(m)
-                points[i, 1] = self.get_th(l)
-                data[i] = u[i]
+                i = self.get_index(N, l)
+                points.append(self.get_th(l))
+                data.append(u[i])
 
-        raw_interpolator = CloughTocher2DInterpolator(points, data)
-        interpolator = lambda r, th: float(raw_interpolator(r, th))
+            raw_interpolator = interp1d(points, data, kind='cubic')
+            interpolator = lambda r, th: float(raw_interpolator(th))
+
+        else:
+            # 2-dimensional interpolation
+            for m in range(N+1):
+                # Don't bother interpolating far away from the
+                # perturbed boundary
+                if self.get_r(m+3) < self.R1:
+                    continue
+
+                for l in range(N+1):
+                    i = self.get_index(m, l)
+                    points.append((self.get_r(m), self.get_th(l)))
+                    data.append(u[i])
+
+            raw_interpolator = CloughTocher2DInterpolator(points, data)
+            interpolator = lambda r, th: float(raw_interpolator(r, th))
 
         # Measure error on perturbed boundary
         interpolator_boundary = []
@@ -361,7 +467,7 @@ class PolarFD:
 
         for th in abcoef.th_data:
             r = self.problem.boundary.eval_r(th)
-
+            #if np.isnan(interpolator(r, th)): print(r,th)
             interpolator_boundary.append(interpolator(r, th))
             u_boundary.append(problem.eval_expected__no_w(r, th))
 
