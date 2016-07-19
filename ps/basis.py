@@ -114,7 +114,9 @@ class PsBasis:
                 eval_g = lambda t: self.eval_g(0, t)
                 eval_g_inv =lambda th: self.eval_g_inv(0, th)
 
-                z_interp = polarfd.get_z_interp(self.polarfd_N,
+                my_polarfd = polarfd.PolarFD()
+                z_interp = my_polarfd.get_z_interp(self.polarfd_N,
+                    self.polarfd_Nlam,
                     self.problem,
                     abcoef.get_R1(self.boundary),
                     eval_g,
@@ -135,8 +137,9 @@ class PsBasis:
                 eval_bc0, self.M, m1)[0]
             self.problem.a_coef = self.a_coef
 
-            error = np.max(np.abs(self.a_coef - self.problem.fft_a_coef[:self.M]))
-            print('a_coef error:', error)
+            if self.boundary.name == 'arc':
+                error = np.max(np.abs(self.a_coef - self.problem.fft_a_coef[:self.M]))
+                print('a_coef error:', error)
 
 
     def get_chebyshev_coef(self, sid, func):

@@ -36,6 +36,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         self.scheme_order = options['scheme_order']
         self.polarfd_N = options['polarfd_N']
+        self.polarfd_Nlam = options['polarfd_Nlam']
 
         self.M = get_M(self.scheme_order)
         self.problem.M = self.M

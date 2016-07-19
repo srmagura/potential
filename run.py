@@ -38,8 +38,11 @@ parser.add_argument('--cheat-fft', action='store_true',
     help='for testing purposes. Uses the true values of the a/b '
     'coefficients, which really should not be known')
 
-parser.add_argument('-polarfd-N', type=int, default=64,
-    help='grid size for polarfd')
+parser.add_argument('--polarfd-N', type=int, default=64,
+    help='polarfd: grid size')
+
+parser.add_argument('--polarfd-Nlam', type=int, default=10,
+    help='polarfd: number of Chebyshev coefficients')
 
 args = parser.parse_args()
 
@@ -58,6 +61,7 @@ options = {
     'scheme_order': args.o,
     'cheat_fft': args.cheat_fft,
     'polarfd_N': args.polarfd_N,
+    'polarfd_Nlam': args.polarfd_Nlam,
 }
 
 meta_options = {

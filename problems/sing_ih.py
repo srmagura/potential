@@ -14,7 +14,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
     hreg = HReg.ode
 
-    k = 1
+    k = 3
 
     n_basis_dict = {
         16: (24, 6),
@@ -126,7 +126,9 @@ class IH_Bessel(SingIH_Problem):
         kr2 = k*r/2
 
         v_asympt0 = 0
-        for l in range(8):
+
+        # Recommended: 8 terms
+        for l in range(10):
             x = 3/11 + l + 1
             v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
 
@@ -168,7 +170,7 @@ class I_Bessel(IH_Bessel):
         r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
         return self.eval_v(r, th)
 
-'''
+
 class IH_Bessel_Line(IH_Bessel):
 
     # Expected is known only for the true arc
@@ -191,10 +193,14 @@ class IH_Bessel_Line(IH_Bessel):
         nu = self.nu
         k = self.k
 
-        th = arg
-        r = self.boundary.eval_r(th)
-        return jv(nu/2, k*r) * (th - a) / (2*np.pi - a)
-'''
+        r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
+        if sid == 0:
+            return jv(nu/2, k*r) * (th - a) / (2*np.pi - a)
+        elif sid == 1:
+            return jv(nu/2, k*r)
+        elif sid == 2:
+            return 0
+
 
 # TODO change data on wedge
 """class IH_Bessel_Quadratic(IH_Bessel):

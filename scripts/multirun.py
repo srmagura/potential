@@ -3,24 +3,24 @@ import subprocess
 import itertools as it
 from multiprocessing import Pool
 
-C = 1024
+C = 32
 
 OUT_DIR_escape =  r'/Users/sam/Google\ Drive/research/output/'
 OUT_DIR_noescape = r'/Users/sam/Google Drive/research/output/'
 
-problem_list = ('trace-sine-range', 'shift-hat', 'shift-parabola',
-    'shift-line-sine',)
-#boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
-boundary_list = ('cubic',)
+#problem_list = ('trace-sine-range', 'shift-hat', 'shift-parabola',
+#    'shift-line-sine',)
+problem_list = ('ih-bessel-line',)
+boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
 
 def worker(inputs):
     problem, boundary = inputs
     filename = OUT_DIR_escape + problem + '/' + boundary + '.txt'
 
-    command = 'python3 run.py {} {} -c {} '.format(problem, boundary, C)
-    command += '> ' + filename
+    command = 'python3 run.py {} {} -c {} -r '.format(problem, boundary, C)
+    command += ' > ' + filename
     #print(command)
-    subprocess.run(command, shell=True)
+    subprocess.call(command, shell=True)
     print('Done: {} {}'.format(problem, boundary))
 
 for problem_name in problem_list:
