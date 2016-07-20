@@ -29,7 +29,7 @@ def get_R1_R2(boundary):
     R1 = min(R1, boundary.eval_r(2*np.pi))
     return (R1, R2)
 
-def calc_a_coef(problem, boundary, eval_bc0, M, m1, to_subtract=None):
+def calc_a_coef(problem, boundary, eval_bc0, M, m1):
     k = problem.k
     R = problem.R
     a = problem.a
@@ -45,9 +45,6 @@ def calc_a_coef(problem, boundary, eval_bc0, M, m1, to_subtract=None):
         phi0_data[i] = eval_bc0(th)
         for m in range(1, m1+1):
             W[i, m-1] = jv(m*nu, k*r) * np.sin(m*nu*(th-a))
-
-    if to_subtract is not None:
-        phi0_data -= to_subtract
 
     for m in range(M+1, m1+1):
         W[:, m-1] = W[:, m-1] / jv(m*nu, k*R)

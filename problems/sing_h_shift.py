@@ -59,4 +59,4 @@ class Shift_LineSine(SingH_Shift):
     }
 
     def eval_phi0(self, th):
-        return functions.eval_linesine(th, self.a, self.nu)
+        return functions.eval_linesine(th, self.k, self.R, self.a, self.nu)

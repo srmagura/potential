@@ -94,7 +94,18 @@ class SingIH_Problem(SympyProblem, SingularKnown):
                 modules=lambdify_modules)
 
         # TODO rename back to eval_v_asympt?
-        self.eval_regfunc = my_lambdify(v_asympt)
+
+        v_asympt_lambda = my_lambdify(v_asympt)
+        def eval_regfunc(r, th):
+            if r > 0:
+                return v_asympt_lambda(r, th)
+            else:
+                return 0
+
+        self.eval_regfunc = eval_regfunc
+        # MEGA FIXME
+        #self.eval_regfunc = lambda r, th: 0
+
         #self.eval_q = my_lambdify(q1)
         #self.eval_f1 = my_lambdify(f1)
 
@@ -109,7 +120,6 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         """ Evaluate regularized BC """
         r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
         return self.eval_bc__noreg(arg, sid) - self.eval_regfunc(r, th)
-
 
 class IH_Bessel(SingIH_Problem):
     """ Abstract class. """
@@ -127,8 +137,9 @@ class IH_Bessel(SingIH_Problem):
 
         v_asympt0 = 0
 
-        # Recommended: 8 terms
-        for l in range(10):
+        # Recommended: 10 terms
+        # MEGA FIXME not enough terms for polarfd
+        for l in range(3):
             x = 3/11 + l + 1
             v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
 
@@ -167,14 +178,26 @@ class I_Bessel(IH_Bessel):
     expected_known = True
 
     def eval_bc__noreg(self, arg, sid):
+        a = self.a
+        nu = self.nu
+        k = self.k
+
         r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-        return self.eval_v(r, th)
+        if sid == 0:
+            return self.eval_v(r, th)
+        elif sid == 1:
+            if r > 0:
+                return self.eval_v(r, th)
+            else:
+                return 0
+        elif sid == 2:
+            return 0
 
 
 class IH_Bessel_Line(IH_Bessel):
 
     # Expected is known only for the true arc
-    expected_known=True
+    expected_known = True
 
     def __init__(self, **kwargs):
         a = self.a
@@ -197,7 +220,10 @@ class IH_Bessel_Line(IH_Bessel):
         if sid == 0:
             return jv(nu/2, k*r) * (th - a) / (2*np.pi - a)
         elif sid == 1:
-            return jv(nu/2, k*r)
+            if r > 0:
+                return jv(nu/2, k*r)
+            else:
+                return 0
         elif sid == 2:
             return 0
 

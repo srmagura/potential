@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 from scipy.special import jv
 
 from chebyshev import eval_dn_T_t, get_chebyshev_roots
@@ -141,9 +142,16 @@ class PsBasis:
                 eval_bc0, self.M, m1)[0]
             self.problem.a_coef = self.a_coef
 
-            if self.boundary.name == 'arc':
+            if(self.boundary.name == 'arc' and
+                hasattr(self.problem, 'fft_a_coef')):
                 error = np.max(np.abs(self.a_coef - self.problem.fft_a_coef[:self.M]))
                 print('a_coef error:', error)
+
+        np.set_printoptions(precision=15)
+        print()
+        print('a_coef:')
+        print(scipy.real(self.a_coef))
+        print()
 
 
     def get_chebyshev_coef(self, sid, func):

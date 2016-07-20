@@ -29,7 +29,7 @@ class SmoothProblem(PizzaProblem):
         """
         Evaluate extended boundary condition.
         """
-        r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
+        r, th = domain_util.arg_to_polar_abs(self.boundary, self.a, arg, sid)
         return self.eval_expected_polar(r, th)
 
     def eval_d_u_outwards(self, arg, sid):
@@ -39,7 +39,7 @@ class SmoothProblem(PizzaProblem):
         k = self.k
         a = self.a
 
-        r, th = domain_util.arg_to_polar(self.boundary, a, arg, sid)
+        r, th = domain_util.arg_to_polar_abs(self.boundary, a, arg, sid)
         x, y = r*np.cos(th), r*np.sin(th)
 
         grad = self.get_grad(x, y)

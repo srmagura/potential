@@ -32,7 +32,11 @@ def wrap_func(a, arg, sid):
 
     return (arg, sid)
 
-def arg_to_polar(boundary, a, arg, sid):
+
+def arg_to_polar_abs(boundary, a, arg, sid):
+    """
+    Always return positive r
+    """
     if sid == 0:
         return (boundary.eval_r(arg), arg)
     elif sid == 1:
@@ -45,6 +49,17 @@ def arg_to_polar(boundary, a, arg, sid):
             return (arg, a)
         else:
             return (-arg, np.pi + a)
+
+def arg_to_polar(boundary, a, arg, sid):
+    """
+    Always keep the "original" sign of r
+    """
+    if sid == 0:
+        return (boundary.eval_r(arg), arg)
+    elif sid == 1:
+        return (arg, 2*np.pi)
+    elif sid == 2:
+        return (arg, a)
 
 def get_sid(a, th):
     """

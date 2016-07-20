@@ -8,7 +8,7 @@ import problems.functions as functions
 from .singular import SingularKnown, HReg
 
 #_k = 5.5
-_k = 10.75
+_k = 3
 
 _n_basis_dict = {
     16: (24, 6),
@@ -39,13 +39,8 @@ class SingH_Trace(SingularKnown):
     def eval_bc(self, arg, sid):
         if sid == 0:
             if not self.no_fourier:
-                r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-                # MEGA FIXME
-                m = 8
-                a = self.a
-                nu = self.nu
-                k = self.k
-                return self.eval_expected_polar(r, th) + jv(-m*nu, k*r) * np.sin(m*nu*(th-a))
+                r, th = domain_util.arg_to_polar_abs(self.boundary, self.a, arg, sid)
+                return self.eval_expected_polar(r, th)
             else:
                 return self.eval_phi0(arg)
         else:
@@ -59,7 +54,7 @@ class SingH_Trace(SingularKnown):
         a = self.a
         nu = self.nu
 
-        r, th = domain_util.arg_to_polar(self.boundary, a, arg, sid)
+        r, th = domain_util.arg_to_polar_abs(self.boundary, a, arg, sid)
 
         d_u = 0
 
@@ -158,4 +153,4 @@ class Trace_LineSine(SingH_Trace):
     }
 
     def eval_phi0(self, th):
-        return functions.eval_linesine(th, self.a, self.nu)
+        return functions.eval_linesine(th, self.k, self.R, self.a, self.nu)

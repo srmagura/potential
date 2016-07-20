@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.special import jv
 
 from .problem import PizzaProblem
 
@@ -25,5 +26,7 @@ def eval_hat_th(th):
 def eval_parabola(th, a):
     return -(th - a) * (th - 2*np.pi)
 
-def eval_linesine(th, a, nu):
-    return (th - a)/(2*np.pi - a) - np.sin(nu/2*(th-a))
+def eval_linesine(th, k, R, a, nu):
+    # FIXME ? (depends on k)
+
+    return jv(nu/2, k*R)*((th - a)/(2*np.pi - a) - np.sin(nu/2*(th-a)))
