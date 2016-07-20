@@ -42,12 +42,12 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         pi = sympy.pi
         k, a, r, th, x = sympy.symbols('k a r th x')
 
-        def do_laplacian(u):
+        def apply_helmholtz_op(u):
             d_u_r = diff(u, r)
             return diff(d_u_r, r) + d_u_r / r + diff(u, th, 2) / r**2 + k**2 * u
 
-        #f = -do_laplacian(g + v_asympt)
-        f = -do_laplacian(v_asympt)
+        #f = -apply_helmholtz_op(g + v_asympt)
+        f = -apply_helmholtz_op(v_asympt)
         kwargs['f_expr'] = f
 
         #logistic = 1 / (1 + sympy.exp(-90*(x-0.5)))
@@ -56,7 +56,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         #q1 = (r**2 * 1/2 * (th-2*pi)**2 * f.subs(th, 2*pi) *
         #    logistic.subs(x, (th-2*pi)/(2*pi-a)+1))
 
-        #f1 = f - do_laplacian(q1)
+        #f1 = f - apply_helmholtz_op(q1)
 
         self.build_sympy_subs_dict()
         subs_dict = self.sympy_subs_dict
@@ -103,8 +103,6 @@ class SingIH_Problem(SympyProblem, SingularKnown):
                 return 0
 
         self.eval_regfunc = eval_regfunc
-        # MEGA FIXME
-        #self.eval_regfunc = lambda r, th: 0
 
         #self.eval_q = my_lambdify(q1)
         #self.eval_f1 = my_lambdify(f1)
@@ -125,12 +123,14 @@ class IH_Bessel(SingIH_Problem):
     """ Abstract class. """
 
     expected_known = False
+    K = 0
 
     def __init__(self, **kwargs):
         a = self.a
         nu = self.nu
         k = self.k
         R = self.R
+        K = self.K
 
         r, th = sympy.symbols('r th')
         kr2 = k*r/2
@@ -138,14 +138,13 @@ class IH_Bessel(SingIH_Problem):
         v_asympt0 = 0
 
         # Recommended: 10 terms
-        # MEGA FIXME not enough terms for polarfd
-        for l in range(3):
-            x = 3/11 + l + 1
+        for l in range(10):
+            x = (K+1/2)*nu + l + 1
             v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
 
-        v_asympt0 *= kr2**(3/11)
+        v_asympt0 *= kr2**((K+1/2)*nu)
 
-        v_asympt = v_asympt0 * sympy.sin(nu/2*(th-a))
+        v_asympt = v_asympt0 * sympy.sin(nu*(K+1/2)*(th-a))
 
         #g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt0)
 
@@ -160,8 +159,9 @@ class IH_Bessel(SingIH_Problem):
         a = self.a
         nu = self.nu
         k = self.k
+        K = self.K
 
-        return jv(nu/2, k*r) * np.sin(nu/2 * (th-a))
+        return jv(nu*(K+1/2), k*r) * np.sin(nu*(K+1/2)* (th-a))
 
     def eval_expected__no_w(self, r, th):
         if r == 0:
@@ -192,6 +192,11 @@ class I_Bessel(IH_Bessel):
                 return 0
         elif sid == 2:
             return 0
+
+
+class I_Bessel3(I_Bessel):
+
+    K = 3
 
 
 class IH_Bessel_Line(IH_Bessel):
@@ -226,6 +231,7 @@ class IH_Bessel_Line(IH_Bessel):
                 return 0
         elif sid == 2:
             return 0
+
 
 
 # TODO change data on wedge

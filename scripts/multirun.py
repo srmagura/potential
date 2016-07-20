@@ -11,7 +11,7 @@ OUT_DIR_noescape = r'/Users/sam/Google Drive/research/output/'
 problem_list = ('ih-bessel-line',)
 boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
 
-args = '-c 1024 -r --polarfd-N 512 --polarfd-N2 2048'
+args = '-c 1024 -r --polarfd-N 512 --polarfd-N2 1024'
 
 def worker(inputs):
     problem, boundary = inputs

@@ -17,8 +17,8 @@ class PolarFD:
     R0 = .05
 
     # Default: .2
-    # for 1024, rank deficient for .25
-    match_r = .20
+    # for 1024, rank deficient for .25 and .3
+    match_r = .2
 
     @classmethod
     def my_print(cls, x):
@@ -354,11 +354,14 @@ class PolarFD:
                 self.set_fd4(m, l)
 
         # Extra equations to make sure system is full rank
-        if nstaple != 0:
-            my_range = range(1, N, (N-1) // nstaple)
-            self.my_print('Actual number of staples: {}'.format(len(my_range)))
-            for l in my_range:
-                self.set_fd2(N-1, l)
+        #if nstaple != 0:
+            #step = (N-1) // (nstaple+1)
+            #my_range = range(step, N, step)[:nstaple]
+            #my_range = list(range(1, nstaple//2)) + list(range(N-1, N-nstaple//2,-1))
+
+        #    self.my_print('Actual number of staples: {}'.format(len(my_range)))
+        #    for l in my_range:
+        #        self.set_fd2(N-1, l)
 
         shape = (max(self.row_ind)+1, max(self.col_ind)+1)
         self.my_print('System shape: {} x {}'.format(*shape))
