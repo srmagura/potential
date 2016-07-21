@@ -161,14 +161,40 @@ class PsInhomo:
         }
 
     def do_extend_inhomo_0_standard(self, i, j):
-        r, th = self.get_polar(i, j)
         n, th = self.boundary_coord_cache[(i, j)]
+        r0 = self.boundary.eval_r(th)
 
         p = self.problem
 
-        v = self.inhomo_extend_polar(
+        x0 = r0 * np.cos(th)
+        y0 = r0 * np.sin(th)
+
+        x1, y1 = self.get_coord(i, j)
+
+        vec = np.array((x1-x0, y1-y0))
+        vec /= np.linalg.norm(vec)
+
+        d_f_n = p.eval_grad_f_polar(r0, th).dot(vec) * np.sign(n)
+
+        hessian = p.eval_hessian_f_polar(r0, th)
+        d2_f_n = hessian.dot(vec).dot(vec)
+
+        d_f_th = p.eval_d_f_th(r0, th)
+        d2_f_th = p.eval_d2_f_th(r0, th)
+
+        d_th_s = self.boundary.eval_d_th_s(th)
+        d2_th_s = self.boundary.eval_d2_th_s(th)
+
+        v = self.inhomo_extend_arbitrary(
             n=n,
-            f=p.eval_f_polar(r, th),
+            f=p.eval_f_polar(r0, th),
+            d_f_n=d_f_n,
+            d2_f_n=d2_f_n,
+            d_f_th=d_f_th,
+            d2_f_th=d2_f_th,
+            d_th_s=d_th_s,
+            d2_th_s=d2_th_s,
+            curv=self.boundary.eval_curv(th),
         )
 
         return {'elen': abs(n), 'value': v}

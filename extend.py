@@ -1,6 +1,9 @@
 import math
 import numpy as np
 
+def convert_d2(d, d2, d_th_s, d2_th_s):
+    return d2 * d_th_s**2 + d * d2_th_s
+
 class SolverExtend:
     """
     Extension procedures available to all Solvers.
@@ -30,8 +33,8 @@ class SolverExtend:
         def convert_d(d):
             return d * d_th_s
 
-        def convert_d2(d, d2):
-            return d2 * d_th_s**2 + d * d2_th_s
+        def my_convert_d2(d, d2):
+            return convert_d2(d, d2, d_th_s, d2_th_s)
 
         def convert_d4(d, d2, d3, d4):
             return (d_th_s**4 * d4 +
@@ -47,12 +50,12 @@ class SolverExtend:
             xi1=kwargs['xi1'],
             d_xi0_s=convert_d(d_xi0_th),
             d_xi1_s=convert_d(d_xi1_th),
-            d2_xi0_s=convert_d2(d_xi0_th, d2_xi0_th),
-            d2_xi1_s=convert_d2(d_xi1_th, d2_xi1_th),
+            d2_xi0_s=my_convert_d2(d_xi0_th, d2_xi0_th),
+            d2_xi1_s=my_convert_d2(d_xi1_th, d2_xi1_th),
             d4_xi0_s=convert_d4(d_xi0_th, d2_xi0_th, d3_xi0_th, d4_xi0_th),
             curv=curv,
             d_curv_s=convert_d(d_curv_th),
-            d2_curv_s=convert_d2(d_curv_th, d2_curv_th)
+            d2_curv_s=my_convert_d2(d_curv_th, d2_curv_th)
         )
 
 
@@ -107,6 +110,7 @@ class SolverExtend:
 
         return v
 
+    # TODO remove?
     def inhomo_extend_polar(self, **kwargs):
         """
         Inhomogeneous extension from the circle/arc, including the
@@ -133,15 +137,39 @@ class SolverExtend:
             #d2_curv_s=convert_d2(d_curv_th, d2_curv_th)
         )
 
-    def extend_inhomo_circle(self, **kwargs):
+    def inhomo_extend_arbitrary(self, **kwargs):
         """ Inhomogeneous extension from the circle/arc. """
+        p = self.problem
+        if p.homogeneous:
+            return 0
+
+        k = self.k
+
         n = kwargs['n']
         f = kwargs['f']
 
-        derivs = [0, 0, f,
-            #d_f_r - f / R,
-            #d2_f_r - d2_f_th / R**2 - d_f_r / R + (3/R**2 - k**2) * f
-        ]
+        d_f_n = kwargs['d_f_n']
+        d2_f_n = kwargs['d2_f_n']
+        d_f_th = kwargs['d_f_th']
+        d2_f_th = kwargs['d2_f_th']
+
+        d_th_s = kwargs['d_th_s']
+        d2_th_s = kwargs['d2_th_s']
+
+        curv = kwargs['curv']
+
+        derivs = [0, 0, f]
+
+        derivs.append(d_f_n + curv * derivs[2])
+
+        d2_f_s = convert_d2(d_f_th, d2_f_th, d_th_s, d2_th_s)
+
+        derivs.append(
+            d2_f_n
+            + (2*curv**2 - k**2) * derivs[2]
+            + curv * derivs[3]
+            - d2_f_s
+        )
 
         v = 0
         for l in range(len(derivs)):

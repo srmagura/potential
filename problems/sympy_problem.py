@@ -98,7 +98,9 @@ class SympyProblem:
         Evaluate gradient of f at (x, y), using the chain rule. Returns the
         result as a NumPy array.
         """
-        r, th = cart_to_polar(x, y)
+        return self.eval_grad_f_polar(*cart_to_polar(x, y))
+
+    def eval_grad_f_polar(self, r, th):
         d_f_r = self.eval_d_f_r(r, th)
         d_f_th = self.eval_d_f_th(r, th)
 
@@ -112,8 +114,10 @@ class SympyProblem:
         Evaluate Hessian of f at (x, y), using the chain rule. Returns the
         result as a 2x2 NumPy array.
         """
+        return self.eval_hessian_f_polar(*cart_to_polar(x, y))
+
+    def eval_hessian_f_polar(self, r, th):
         # Get derivatives of f WRT r and th
-        r, th = cart_to_polar(x, y)
         d_f_r = self.eval_d_f_r(r, th)
         d_f_th = self.eval_d_f_th(r, th)
 
