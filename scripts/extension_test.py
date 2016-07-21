@@ -65,13 +65,14 @@ def run_test(N):
             sid, etype = setype
 
             if setypes is None or setype in setypes:
+
                 exp = problem.eval_expected_polar(r, th)
 
                 diff = abs(exp - data['value'])
                 error.append(diff)
                 th_list.append(th)
 
-                #if diff > 1e-1:
+                #if diff > 1e-6:
                 #    print('r={}  th={}  diff={}'.format(r, th, diff))
                 #    print('x={}  y={}'.format(solver.get_coord(*node)))
                 #    print('exp={}   act={}'.format(exp, data['value']))

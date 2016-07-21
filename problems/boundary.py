@@ -49,6 +49,7 @@ class Boundary:
         # Calculate d_x_th, d_y_th using the formula from:
         # http://tutorial.math.lamar.edu/Classes/CalcII/PolarTangents.aspx
         d_r_th = sympy.diff(r, th)
+        d2_r_th = sympy.diff(d_r_th, th)
 
         x = r * sympy.cos(th)
         y = r * sympy.sin(th)
@@ -56,6 +57,8 @@ class Boundary:
         d_y_th = sympy.diff(y, th)
 
         self.eval_d_r_th = sympy.lambdify(th, d_r_th.subs(subs_dict))
+        self.eval_d2_r_th = sympy.lambdify(th, d2_r_th.subs(subs_dict))
+
         self.eval_d_x_th = sympy.lambdify(th, d_x_th.subs(subs_dict))
         self.eval_d_y_th = sympy.lambdify(th, d_y_th.subs(subs_dict))
 
