@@ -10,7 +10,7 @@ import abcoef
 
 from .problem import PizzaProblem
 
-HReg = enum.Enum('EType', 'none cheat_fft linsys ode')
+HReg = enum.Enum('EType', 'none acheat linsys ode')
 
 class SingularProblem(PizzaProblem):
     """
@@ -29,14 +29,19 @@ class SingularKnown(SingularProblem):
     m_max = 200
 
     def __init__(self, **kwargs):
-        if 'to_dst' in kwargs:
-            to_dst = kwargs.pop('to_dst')
-        else:
-            to_dst = lambda th: 0
+        super().__init__(**kwargs)
 
-        self.fft_b_coef = fourier.arc_dst(self.a, to_dst)[:self.m_max]
-        self.fft_a_coef = abcoef.b_to_a(self.fft_b_coef, self.k,
-            self.R, self.nu)
+        if 'to_dst' in kwargs:
+            self.to_dst = kwargs.pop('to_dst')
+        else:
+            self.to_dst = lambda th: 0
+
+    def set_boundary(self, boundary):
+        super().set_boundary(boundary)
+        if self.boundary.name == 'arc':
+            self.fft_b_coef = fourier.arc_dst(self.a, self.to_dst)[:self.m_max]
+            self.fft_a_coef = abcoef.b_to_a(self.fft_b_coef, self.k,
+                self.R, self.nu)
 
     def eval_expected_polar(self, r, th):
         k = self.k

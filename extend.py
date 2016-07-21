@@ -107,7 +107,7 @@ class SolverExtend:
 
         return v
 
-    def calc_inhomo_circle(self, r, th):
+    def inhomo_extend_polar(self, **kwargs):
         """
         Inhomogeneous extension from the circle/arc, including the
         calculation of the necessary derivatives of f.
@@ -116,31 +116,35 @@ class SolverExtend:
         if p.homogeneous:
             return 0
 
-        R = self.R
-        x = R * np.cos(th)
-        y = R * np.sin(th)
+        #curv = kwargs['curv']
+        #d_curv_th = kwargs['d_curv_th']
+        #d2_curv_th = kwargs['d2_curv_th']
 
-        f = p.eval_f(x, y)
-
-        d_f_r = p.eval_d_f_r(R, th)
-        d2_f_r = p.eval_d2_f_r(R, th)
-        d2_f_th = p.eval_d2_f_th(R, th)
+        #d_th_s = kwargs['d_th_s']
+        #d2_th_s = kwargs['d2_th_s']
+        #d3_th_s = kwargs['d3_th_s']
+        #d4_th_s = kwargs['d4_th_s']
 
         return self.extend_inhomo_circle(
-            r, f, d_f_r, d2_f_r, d2_f_th)
+            n=kwargs['n'],
+            f=kwargs['f'],
+            #curv=curv,
+            #d_curv_s=convert_d(d_curv_th),
+            #d2_curv_s=convert_d2(d_curv_th, d2_curv_th)
+        )
 
-    def extend_inhomo_circle(self, r, f, d_f_r, d2_f_r, d2_f_th):
+    def extend_inhomo_circle(self, **kwargs):
         """ Inhomogeneous extension from the circle/arc. """
-        R = self.R
-        k = self.k
+        n = kwargs['n']
+        f = kwargs['f']
 
         derivs = [0, 0, f,
-            d_f_r - f / R,
-            d2_f_r - d2_f_th / R**2 - d_f_r / R + (3/R**2 - k**2) * f
+            #d_f_r - f / R,
+            #d2_f_r - d2_f_th / R**2 - d_f_r / R + (3/R**2 - k**2) * f
         ]
 
         v = 0
         for l in range(len(derivs)):
-            v += derivs[l] / math.factorial(l) * (r - R)**l
+            v += derivs[l] / math.factorial(l) * n**l
 
         return v

@@ -162,10 +162,16 @@ class PsInhomo:
 
     def do_extend_inhomo_0_standard(self, i, j):
         r, th = self.get_polar(i, j)
-        return {
-            'elen': abs(self.R - r),
-            'value': self.calc_inhomo_circle(r, th),
-        }
+        n, th = self.boundary_coord_cache[(i, j)]
+
+        p = self.problem
+
+        v = self.inhomo_extend_polar(
+            n=n,
+            f=p.eval_f_polar(r, th),
+        )
+
+        return {'elen': abs(n), 'value': v}
 
     def _extend_inhomo_0_lr(self, i, j, radius_sid):
         p = self.problem
@@ -208,7 +214,7 @@ class PsInhomo:
 
         return {
             'elen': self.R*abs(delta) + abs(self.R - r),
-            'value': self.extend_inhomo_circle(r, f, d_f_r, d2_f_r, d2_f_th)
+            'value': 0 #self.extend_inhomo_circle(r, f, d_f_r, d2_f_r, d2_f_th)
         }
 
     def do_extend_inhomo_0_left(self, i, j):

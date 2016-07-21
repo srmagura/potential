@@ -62,8 +62,8 @@ def print_options(options, meta_options={}):
     print('a = ' + prec_str.format(problem.a))
     print('bet = ' + prec_str.format(boundary.bet))
     print('AD_len = ' + prec_str.format(problem.AD_len))
-    if options.get('cheat_fft', False):
-        print('!! cheat_fft = True !!')
+    if options.get('acheat', False):
+        print('!! acheat = True !!')
     else:
         print('m1 = {}'.format(problem.get_m1()))
     print()

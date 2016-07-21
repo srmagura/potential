@@ -34,8 +34,8 @@ parser = parser
 arg_list = ['problem', 'boundary', 'N', 'c', 'o', 'r', 'a']
 io_util.add_arguments(parser, arg_list)
 
-parser.add_argument('--cheat-fft', action='store_true',
-    help='for testing purposes. Uses the true values of the a/b '
+parser.add_argument('--acheat', action='store_true',
+    help='for testing purposes. Uses the true-ish values of the a/b '
     'coefficients, which really should not be known')
 
 parser.add_argument('--polarfd-N', type=int, default=64,
@@ -55,10 +55,10 @@ args = parser.parse_args()
 
 problem = problems.problem_dict[args.problem]()
 boundary = problems.boundary.boundaries[args.boundary](problem.R, k=problem.k)
-problem.boundary = boundary
+problem.set_boundary(boundary)
 
-if args.cheat_fft:
-    problem.hreg = HReg.cheat_fft
+if args.acheat:
+    problem.hreg = HReg.acheat
 
 N_list = get_N_list(args.N, args.c)
 
@@ -66,7 +66,7 @@ N_list = get_N_list(args.N, args.c)
 options = {
     'problem': problem,
     'scheme_order': args.o,
-    'cheat_fft': args.cheat_fft,
+    'acheat': args.acheat,
     'polarfd_N': args.polarfd_N,
     'polarfd_N2': args.polarfd_N2,
     'polarfd_Nlam': args.polarfd_Nlam,

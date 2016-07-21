@@ -12,7 +12,7 @@ class Problem:
     AD_len = 2*np.pi
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        pass
 
     def eval_expected(self, x, y, **kwargs):
         r, th = cart_to_polar(x, y)
@@ -52,7 +52,7 @@ class PizzaProblem(Problem):
     nu = _nu
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        pass
 
     def get_n_basis(self, N, **kwargs):
         if hasattr(self, 'n_basis_dict'):
@@ -95,3 +95,6 @@ class PizzaProblem(Problem):
 
         # TODO?
         return 7
+
+    def set_boundary(self, boundary):
+        self.boundary = boundary

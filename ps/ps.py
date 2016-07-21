@@ -22,7 +22,6 @@ def get_M(scheme_order):
     elif scheme_order == 4:
         return 7
 
-
 class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
 
@@ -35,10 +34,10 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.boundary = self.problem.boundary
 
         self.scheme_order = options['scheme_order']
-        self.polarfd_N = options['polarfd_N']
-        self.polarfd_N2 = options['polarfd_N2']
-        self.polarfd_Nlam = options['polarfd_Nlam']
-        self.polarfd_nstaple = options['polarfd_nstaple']
+        self.polarfd_N = options.get('polarfd_N', 64)
+        self.polarfd_N2 = options.get('polarfd_N2', 64)
+        self.polarfd_Nlam = options.get('polarfd_Nlam', 10)
+        self.polarfd_nstaple = options.get('polarfd_nstaple', 0)
 
         self.M = get_M(self.scheme_order)
         self.problem.M = self.M

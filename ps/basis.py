@@ -96,8 +96,13 @@ class PsBasis:
         hreg = self.problem.hreg
         eval_bc0 = None
 
-        if hreg == HReg.cheat_fft:
-            self.a_coef = self.problem.fft_a_coef[:self.M]
+        if hreg == HReg.acheat:
+            if hasattr(self.problem, 'fft_a_coef'):
+                self.a_coef = self.problem.fft_a_coef[:self.M]
+            else:
+                def eval_bc0(th):
+                    r = self.boundary.eval_r(th)
+                    return self.problem.eval_bc__noreg(th, 0) - self.problem.eval_v(r, th)
 
         elif hreg == HReg.linsys:
 
@@ -147,11 +152,11 @@ class PsBasis:
                 error = np.max(np.abs(self.a_coef - self.problem.fft_a_coef[:self.M]))
                 print('a_coef error:', error)
 
-        np.set_printoptions(precision=15)
-        print()
-        print('a_coef:')
-        print(scipy.real(self.a_coef))
-        print()
+            np.set_printoptions(precision=15)
+            print()
+            print('a_coef:')
+            print(scipy.real(self.a_coef))
+            print()
 
 
     def get_chebyshev_coef(self, sid, func):

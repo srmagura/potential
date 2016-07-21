@@ -152,6 +152,12 @@ class IH_Bessel(SingIH_Problem):
         kwargs['v_asympt'] = v_asympt
         super().__init__(**kwargs)
 
+    def set_boundary(self, boundary):
+        super().set_boundary(boundary)
+
+        if boundary.name == 'arc':
+            self.expected_known = True
+
     def eval_v(self, r, th):
         """
         Using this function is "cheating".
@@ -174,8 +180,6 @@ class I_Bessel(IH_Bessel):
     """
     a coefficients are all 0
     """
-
-    expected_known = True
 
     def eval_bc__noreg(self, arg, sid):
         a = self.a
@@ -200,9 +204,6 @@ class I_Bessel3(I_Bessel):
 
 
 class IH_Bessel_Line(IH_Bessel):
-
-    # Expected is known only for the true arc
-    expected_known = True
 
     def __init__(self, **kwargs):
         a = self.a
