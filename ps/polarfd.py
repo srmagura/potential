@@ -289,7 +289,7 @@ class PolarFD:
             self.row_ind.append(self.row)
             self.col_ind.append(self.get_index(m1, l1))
 
-    def get_z_interp(self, N, N2, Nlam, nstaple, problem, R1, R2,
+    def get_z_interp(self, N, N2, Nlam, staple, problem, R1, R2,
         eval_g, eval_g_inv):
         """
         Return an interpolating function that approximates z
@@ -299,7 +299,6 @@ class PolarFD:
             accurate
         R2 -- largest value of r for which the interpolating function must be
             accurate
-        chebyshev_manager --
         """
         self.N = N
         self.Nlam = Nlam
@@ -354,14 +353,10 @@ class PolarFD:
                 self.set_fd4(m, l)
 
         # Extra equations to make sure system is full rank
-        #if nstaple != 0:
-            #step = (N-1) // (nstaple+1)
-            #my_range = range(step, N, step)[:nstaple]
-            #my_range = list(range(1, nstaple//2)) + list(range(N-1, N-nstaple//2,-1))
-
-        #    self.my_print('Actual number of staples: {}'.format(len(my_range)))
-        #    for l in my_range:
-        #        self.set_fd2(N-1, l)
+        if staple:
+            for m in range(N//2, N//2+3):
+                for l in range(1, N):
+                    self.set_fd2(m, l)
 
         shape = (max(self.row_ind)+1, max(self.col_ind)+1)
         self.my_print('System shape: {} x {}'.format(*shape))
@@ -411,28 +406,29 @@ class PolarFD:
 
         self.my_print('Error on arc: {}'.format(np.max(error)))
 
-        # Now that we know the boundary data, solve the system again
-        # with a higher value of N
-        N = self.N = N2
-        self.my_print('N2 = {}'.format(N))
+        if False:
+            # Now that we know the boundary data, solve the system again
+            # with a higher value of N
+            N = self.N = N2
+            self.my_print('N2 = {}'.format(N))
 
-        self.calc_N_var()
-        self.new_system()
+            self.calc_N_var()
+            self.new_system()
 
-        self.set_bc_origin()
-        self.set_bc_wedge()
-        self.set_bc_arc(known=True)
+            self.set_bc_origin()
+            self.set_bc_wedge()
+            self.set_bc_arc(known=True)
 
-        # Finite difference scheme
-        for m in range(1, N):
-            for l in range(1, N):
-                self.set_fd4(m, l)
+            # Finite difference scheme
+            for m in range(1, N):
+                for l in range(1, N):
+                    self.set_fd4(m, l)
 
-        # Solve the system exactly
-        M = csc_matrix((self.data, (self.row_ind, self.col_ind)))
-        self.rhs = np.array(self.rhs)
+            # Solve the system exactly
+            M = csc_matrix((self.data, (self.row_ind, self.col_ind)))
+            self.rhs = np.array(self.rhs)
 
-        u = spsolve(M, self.rhs)
+            u = spsolve(M, self.rhs)
 
         # Create interpolating function
         points = []

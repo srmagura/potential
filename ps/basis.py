@@ -126,7 +126,7 @@ class PsBasis:
                 z_interp = my_polarfd.get_z_interp(self.polarfd_N,
                     self.polarfd_N2,
                     self.polarfd_Nlam,
-                    self.polarfd_nstaple,
+                    self.polarfd_staple,
                     self.problem,
                     R1, R2,
                     eval_g,

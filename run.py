@@ -47,9 +47,9 @@ parser.add_argument('--polarfd-N2', type=int, default=64,
 parser.add_argument('--polarfd-Nlam', type=int, default=10,
     help='polarfd: number of Chebyshev coefficients')
 
-parser.add_argument('--polarfd-nstaple', type=int, default=0,
-    help='polarfd: number of extra equations to add to make system '
-    'overdetermined')
+parser.add_argument('--polarfd-staple', action='store_true',
+    help='polarfd: add eqatuions to make system '
+    'overdetermined?')
 
 args = parser.parse_args()
 
@@ -70,7 +70,7 @@ options = {
     'polarfd_N': args.polarfd_N,
     'polarfd_N2': args.polarfd_N2,
     'polarfd_Nlam': args.polarfd_Nlam,
-    'polarfd_nstaple': args.polarfd_nstaple,
+    'polarfd_staple': args.polarfd_staple,
 }
 
 meta_options = {
