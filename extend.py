@@ -166,7 +166,6 @@ class SolverExtend:
             - d2_f_s
         )
 
-        #print('------------------------')
         v = 0
         for l in range(len(derivs)):
             v += derivs[l] / math.factorial(l) * n**l

@@ -108,30 +108,3 @@ class Smooth_YCos(SympyProblem, SmoothProblem):
 
     def get_grad(self, x, y):
         return (-y*np.sin(x), np.cos(x))
-
-
-# TODO: delete?
-class Smooth_R(SympyProblem, SmoothProblem):
-    """
-    Inhomogeneous problem that depends only on r.
-    """
-
-    k = 1
-
-    def __init__(self, **kwargs):
-        k, r, th = sympy.symbols('k r th')
-        sin = sympy.sin
-        cos = sympy.cos
-        kwargs['f_expr'] = - sin(r) + cos(r) / r + k**2 * sin(r)
-        super().__init__(**kwargs)
-
-    def eval_expected(self, x, y):
-        return np.sin(np.sqrt(x**2+y**2))
-
-    def get_grad(self, x, y):
-        cos = np.cos
-        sqrt = np.sqrt
-        return (
-            x*cos(sqrt(x**2 + y**2))/sqrt(x**2 + y**2),
-            y*cos(sqrt(x**2 + y**2))/sqrt(x**2 + y**2)
-        )

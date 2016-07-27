@@ -111,8 +111,8 @@ class SympyProblem:
 
     def eval_hessian_f(self, x, y):
         """
-        Evaluate Hessian of f at (x, y), using the chain rule. Returns the
-        result as a 2x2 NumPy array.
+        Evaluate the Cartesian Hessian of f at (x, y), using the chain rule.
+        Returns the result as a 2x2 NumPy array.
         """
         return self.eval_hessian_f_polar(*cart_to_polar(x, y))
 

@@ -169,13 +169,6 @@ class PsInhomo:
         hessian = p.eval_hessian_f_polar(r0, th)
         d2_f_n = hessian.dot(vec).dot(vec)
 
-        eps = 1e-5
-        x_1 = x0 - eps*(x1-x0)
-        y_1 = y0 - eps*(y1-y0)
-        x1 = x0 + eps*(x1-x0)
-        y1 = y0 + eps*(y1-y0)
-        h = np.linalg.norm([x1-x0, y1-y0])
-
         v = self.inhomo_extend_polar(
             n=n,
             f=p.eval_f_polar(r0, th),
@@ -196,47 +189,111 @@ class PsInhomo:
         return {'elen': abs(n), 'value': v}
 
     def _extend_inhomo_0_lr(self, i, j, radius_sid):
+        """
+        0l and 0r inhomogeneous extensions
+
+        First use the gradient and Hessian of f to approximate
+        f and its derivatives on an extension of the outer boundary (arc).
+        Then perform the extension using these approximate derivatives.
+
+        "left" = upper corner
+        "right" = lower corner
+        """
         p = self.problem
         R = self.R
         a = self.a
 
-        x, y = self.get_coord(i, j)
-        r, th = self.get_polar(i, j)
+        n, th1 = self.boundary_coord_cache[(i, j)]
+        r1 = self.boundary.eval_r(th1)
 
         if radius_sid == 1:
             th0 = 2*np.pi
         elif radius_sid == 2:
             th0 = a
 
-        delta = th - th0
+        # Starting point for Taylor
+        x0 = R * np.cos(th0)
+        y0 = R * np.sin(th0)
 
+        # Ending point for Taylor and starting point for equation-based
+        # extension
+        x1 = r1 * np.cos(th1)
+        y1 = r1 * np.sin(th1)
+
+        # Unit vector in direction of Taylor
+        vec = np.array((x1-x0, y1-y0))
+        delta = np.linalg.norm(vec)
+        vec /= np.linalg.norm(vec)
+
+        # Starting values for Taylor
         f0 = p.eval_f_polar(R, th0)
-        f_derivs = [f0]
+        grad_f0 = p.eval_grad_f_polar(R, th0)
+        hessian_f = hessian_f0 = p.eval_hessian_f_polar(R, th0)
 
-        d_f_th0 = p.eval_d_f_th(R, th0)
-        d2_f_th0 = p.eval_d2_f_th(R, th0)
+        f_derivs = [f0,
+            grad_f0.dot(vec),
+            hessian_f0.dot(vec).dot(vec)
+        ]
 
-        f_derivs.extend([d_f_th0, d2_f_th0])
-
+        # Taylor series for f
         f = 0
         for l in range(len(f_derivs)):
             f += f_derivs[l] * delta**l / math.factorial(l)
 
-        d_f_r = 0
-        d_f_r0 = p.eval_d_f_r(R, th0)
-        d2_f_r_th0 = p.eval_d2_f_r_th(R, th0)
+        # Taylor series for gradient of f
+        grad_f = grad_f0 + delta * hessian_f0.dot(vec)
 
-        d_f_r_derivs = (d_f_r0, d2_f_r_th0)
+        # Ending point for equation-based extension
+        x2, y2 = self.get_coord(i, j)
+        #r2, th2 = self.get_polar(i, j)
 
-        for l in range(len(d_f_r_derivs)):
-            d_f_r += d_f_r_derivs[l] * delta**l / math.factorial(l)
+        # First and second normal derivatives of f
+        normal = np.array((x2-x1, y2-y1))
+        normal /= np.linalg.norm(normal)
 
-        d2_f_r = p.eval_d2_f_r(R, th0)
-        d2_f_th = p.eval_d2_f_th(R, th0)
+        d_f_n = grad_f.dot(normal)
+        d2_f_n = hessian_f.dot(normal).dot(normal)
+
+        # Do Taylor for d_f_th
+        polar_vec = np.array([r1 - R, th1 - th0])
+
+        # The polar gradient of d_f_th
+        d_f_th_grad0 = np.array([
+            p.eval_d2_f_r_th(R, th0),
+            p.eval_d2_f_th(R, th0)
+        ])
+
+        d_f_th = p.eval_d_f_th(R, th0) + d_f_th_grad0.dot(polar_vec)
+
+        # The polar gradient of d_f_r
+        d_f_r_grad0 = np.array([
+            p.eval_d2_f_r(R, th0),
+            p.eval_d2_f_r_th(R, th0)
+        ])
+
+        d_f_r = p.eval_d_f_r(R, th0) + d_f_r_grad0.dot(polar_vec)
+
+
+        v = self.inhomo_extend_polar(
+            n=n,
+            f=f,
+            d_f_n=d_f_n,
+            d2_f_n=d2_f_n,
+            d_f_th=d_f_th,
+            d2_f_th=p.eval_d2_f_th(R, th0),
+            d_f_r=d_f_r,
+            d2_f_r=p.eval_d2_f_r(R, th0),
+            d2_f_r_th=p.eval_d2_f_r_th(R, th0),
+            d_th_s=self.boundary.eval_d_th_s(th1),
+            d2_th_s=self.boundary.eval_d2_th_s(th1),
+            d_r_th=self.boundary.eval_d_r_th(th1),
+            d2_r_th=self.boundary.eval_d2_r_th(th1),
+            curv=self.boundary.eval_curv(th1),
+        )
 
         return {
-            'elen': self.R*abs(delta) + abs(self.R - r),
-            'value': 0 #self.extend_inhomo_circle(r, f, d_f_r, d2_f_r, d2_f_th)
+            'elen': abs(delta) + abs(n),
+            'value': v
         }
 
     def do_extend_inhomo_0_left(self, i, j):
