@@ -72,9 +72,9 @@ def run_test(N):
                 error.append(diff)
                 th_list.append(th)
 
-                #if diff > 1e-6:
-                #    print('r={}  th={}  diff={}'.format(r, th, diff))
-                #    print('x={}  y={}'.format(solver.get_coord(*node)))
+
+                #print('r={}  th={}  diff={}'.format(r, th, diff))
+                #print('x={}  y={}'.format(*solver.get_coord(*node)))
                 #    print('exp={}   act={}'.format(exp, data['value']))
                 #    print()
 

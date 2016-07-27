@@ -245,7 +245,6 @@ class PsInhomo:
 
         # Ending point for equation-based extension
         x2, y2 = self.get_coord(i, j)
-        #r2, th2 = self.get_polar(i, j)
 
         # First and second normal derivatives of f
         normal = np.array((x2-x1, y2-y1))
@@ -272,7 +271,6 @@ class PsInhomo:
         ])
 
         d_f_r = p.eval_d_f_r(R, th0) + d_f_r_grad0.dot(polar_vec)
-
 
         v = self.inhomo_extend_polar(
             n=n,
