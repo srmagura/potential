@@ -12,7 +12,7 @@ from .sympy_problem import SympyProblem
 
 class SingIH_Problem(SympyProblem, SingularKnown):
 
-    hreg = HReg.ode
+    zmethod = True
 
     k = 3
 
@@ -35,7 +35,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
     }
 
     def __init__(self, **kwargs):
-        #g = kwargs.pop('g')
+        g = kwargs.pop('g')
         v_asympt = kwargs.pop('v_asympt')
 
         diff = sympy.diff
@@ -46,17 +46,17 @@ class SingIH_Problem(SympyProblem, SingularKnown):
             d_u_r = diff(u, r)
             return diff(d_u_r, r) + d_u_r / r + diff(u, th, 2) / r**2 + k**2 * u
 
-        #f = -apply_helmholtz_op(g + v_asympt)
-        f = -apply_helmholtz_op(v_asympt)
-        kwargs['f_expr'] = f
 
-        #logistic = 1 / (1 + sympy.exp(-90*(x-0.5)))
+        f0 = -apply_helmholtz_op(g+v_asympt)
+        #kwargs['f_expr'] = f
+
+        logistic = 1 / (1 + sympy.exp(-90*(x-0.5)))
 
         # TODO insert q2
-        #q1 = (r**2 * 1/2 * (th-2*pi)**2 * f.subs(th, 2*pi) *
-        #    logistic.subs(x, (th-2*pi)/(2*pi-a)+1))
+        q1 = (r**2 * 1/2 * (th-2*pi)**2 * f.subs(th, 2*pi) *
+            logistic.subs(x, (th-2*pi)/(2*pi-a)+1))
 
-        #f1 = f - apply_helmholtz_op(q1)
+        f1 = f0 - apply_helmholtz_op(q1)
 
         self.build_sympy_subs_dict()
         subs_dict = self.sympy_subs_dict
@@ -96,28 +96,24 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         # TODO rename back to eval_v_asympt?
 
         v_asympt_lambda = my_lambdify(v_asympt)
-        def eval_regfunc(r, th):
+        def eval_v_asympt(r, th):
             if r > 0:
                 return v_asympt_lambda(r, th)
             else:
                 return 0
 
-        self.eval_regfunc = eval_regfunc
+        self.eval_v_asympt = eval_v_asympt_lambda
 
-        #self.eval_q = my_lambdify(q1)
-        #self.eval_f1 = my_lambdify(f1)
+        self.eval_gq = my_lambdify(g+q1)
+        self.eval_f1 = my_lambdify(f1)
 
-        #r_data = np.arange(self.R/256, self.R, .0001)
+        r_data = np.arange(self.R/256, self.R, .0001)
 
-        #f1_data = np.array([self.eval_f1(r, 2*np.pi) for r in r_data])
-        #print('f1_max:', np.max(np.abs(f1_data)))'''
+        f1_data = np.array([self.eval_f1(r, 2*np.pi) for r in r_data])
+        print('f1_max:', np.max(np.abs(f1_data)))
 
         super().__init__(**kwargs)
 
-    def eval_bc(self, arg, sid):
-        """ Evaluate regularized BC """
-        r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-        return self.eval_bc__noreg(arg, sid) - self.eval_regfunc(r, th)
 
 class IH_Bessel(SingIH_Problem):
     """ Abstract class. """
@@ -146,9 +142,9 @@ class IH_Bessel(SingIH_Problem):
 
         v_asympt = v_asympt0 * sympy.sin(nu*(K+1/2)*(th-a))
 
-        #g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt0)
+        g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt0)
 
-        #kwargs['g'] = g
+        kwargs['g'] = g
         kwargs['v_asympt'] = v_asympt
         super().__init__(**kwargs)
 
@@ -181,7 +177,7 @@ class I_Bessel(IH_Bessel):
     a coefficients are all 0
     """
 
-    def eval_bc__noreg(self, arg, sid):
+    def eval_bc(self, arg, sid):
         a = self.a
         nu = self.nu
         k = self.k
@@ -217,7 +213,7 @@ class IH_Bessel_Line(IH_Bessel):
         kwargs['to_dst'] = to_dst
         super().__init__(**kwargs)
 
-    def eval_bc__noreg(self, arg, sid):
+    def eval_bc(self, arg, sid):
         a = self.a
         nu = self.nu
         k = self.k
@@ -238,7 +234,7 @@ class IH_Bessel_Line(IH_Bessel):
 # TODO change data on wedge
 """class IH_Bessel_Quadratic(IH_Bessel):
 
-    def eval_bc__noreg(self, arg, sid):
+    def eval_bc(self, arg, sid):
         a = self.a
         nu = self.nu
         k = self.k

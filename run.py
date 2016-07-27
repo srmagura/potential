@@ -7,6 +7,7 @@ import problems
 from problems.singular import HReg
 
 import ps.ps
+import ps.zmethod
 
 import io_util
 from io_util import prec_str
@@ -38,19 +39,6 @@ parser.add_argument('--acheat', action='store_true',
     help='for testing purposes. Uses the true-ish values of the a/b '
     'coefficients, which really should not be known')
 
-parser.add_argument('--polarfd-N', type=int, default=64,
-    help='polarfd: grid size')
-
-parser.add_argument('--polarfd-N2', type=int, default=64,
-    help='polarfd: grid size for second pass')
-
-parser.add_argument('--polarfd-Nlam', type=int, default=10,
-    help='polarfd: number of Chebyshev coefficients')
-
-parser.add_argument('--polarfd-staple', action='store_true',
-    help='polarfd: add eqatuions to make system '
-    'overdetermined?')
-
 args = parser.parse_args()
 
 problem = problems.problem_dict[args.problem]()
@@ -67,10 +55,6 @@ options = {
     'problem': problem,
     'scheme_order': args.o,
     'acheat': args.acheat,
-    'polarfd_N': args.polarfd_N,
-    'polarfd_N2': args.polarfd_N2,
-    'polarfd_Nlam': args.polarfd_Nlam,
-    'polarfd_staple': args.polarfd_staple,
 }
 
 meta_options = {
@@ -93,7 +77,10 @@ prev_error = None
 for N in N_list:
     options['N'] = N
 
-    solver = ps.ps.PizzaSolver(options)
+    if problem.zmethod:
+        solver = ps.zmethod.ZMethod(options)
+    else:
+        solver = ps.ps.PizzaSolver(options)
 
     print('---- {0} x {0} ----'.format(N))
     result = solver.run()

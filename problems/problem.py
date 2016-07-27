@@ -7,6 +7,7 @@ class Problem:
 
     homogeneous = False
     expected_known = False
+    zmethod = False
 
     R = 2.3
     AD_len = 2*np.pi

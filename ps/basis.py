@@ -108,34 +108,7 @@ class PsBasis:
 
             def eval_bc0(th):
                 return self.problem.eval_bc(th, 0)
-
-        elif hreg == HReg.ode:
-            # TODO rename HReg.ode to HReg.polarfd?
-
-            if hasattr(self.problem, 'a_coef'):
-                # This is just to save time
-                self.a_coef = self.problem.a_coef
-            else:
-                #z_data = ode.calc_z(self.problem, abcoef.th_data, self.M)
-                eval_g = lambda t: self.eval_g(0, t)
-                eval_g_inv =lambda th: self.eval_g_inv(0, th)
-
-                my_polarfd = polarfd.PolarFD()
-                R1, R2 = abcoef.get_R1_R2(self.boundary)
-
-                z_interp = my_polarfd.get_z_interp(self.polarfd_N,
-                    self.polarfd_N2,
-                    self.polarfd_Nlam,
-                    self.polarfd_staple,
-                    self.problem,
-                    R1, R2,
-                    eval_g,
-                    eval_g_inv,
-                )
-
-                def eval_bc0(th):
-                    r = self.boundary.eval_r(th)
-                    return self.problem.eval_bc(th, 0) - z_interp(r, th)
+                
         else:
             assert hreg == HReg.none
             self.a_coef = np.zeros(self.M)
