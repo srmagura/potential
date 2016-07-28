@@ -245,12 +245,18 @@ class PsInhomo:
 
         # Ending point for equation-based extension
         x2, y2 = self.get_coord(i, j)
+        r2, th2 = self.get_polar(i, j)
 
         # First and second normal derivatives of f
         normal = np.array((x2-x1, y2-y1))
         normal /= np.linalg.norm(normal)
 
         d_f_n = grad_f.dot(normal)
+
+        # If normal points inwards, we need to flip the sign of d_f_n
+        if r2 < self.boundary.eval_r(th2):
+            d_f_n *= -1
+
         d2_f_n = hessian_f.dot(normal).dot(normal)
 
         # Do Taylor for d_f_th

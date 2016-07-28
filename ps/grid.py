@@ -82,6 +82,7 @@ class PsGrid:
             0: [
                 self.get_coord_inv(R+h/2, h/2),
                 self.get_coord_inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2),
+                self.get_coord_inv(R*np.cos(a)-h/2, R*np.sin(a)-h/2),
             ],
             1: [self.get_coord_inv(R+h/2, h/2)],
             2: [self.get_coord_inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2)],

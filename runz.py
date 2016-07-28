@@ -42,6 +42,9 @@ parser.add_argument('--acheat', action='store_true',
     help='for testing purposes. Uses the true-ish values of the a/b '
     'coefficients, which really should not be known')
 
+parser.add_argument('--z1cheat', action='store_true',
+    help='for testing purposes. Skip the ODE method')
+
 args = parser.parse_args()
 
 problem = problems.problem_dict[args.problem]()
@@ -58,6 +61,7 @@ options = {
     'problem': problem,
     'scheme_order': args.o,
     'acheat': args.acheat,
+    'z1cheat': args.z1cheat,
 }
 
 meta_options = {
@@ -85,10 +89,11 @@ for N in N_list:
     options['N'] = N
 
     print('---- {0} x {0} ----'.format(N))
-    solver = ps.zmethod.ZMethod(options)
+    my_zmethod = ps.zmethod.ZMethod(options)
 
-    result = solver.run()
+    result = my_zmethod.run()
 
+    solver = result['solver']
     #if result.error is not None:
     #    print('Error: ' + prec_str.format(result.error))
 
@@ -112,4 +117,4 @@ for N in N_list:
     print()
     sys.stdout.flush()
 
-    prev_error = result.error
+    #prev_error = result.error

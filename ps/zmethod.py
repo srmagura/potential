@@ -20,6 +20,7 @@ class ZMethod():
 
     def __init__(self, options):
         self.problem = options['problem']
+        self.z1cheat = options['z1cheat']
         self.boundary = self.problem.boundary
         self.options = options
 
@@ -36,16 +37,26 @@ class ZMethod():
 
         self.do_algebra()
 
-        self.z1_fourier = ps.ode.calc_z1_fourier(
-            self.eval_f1, a, nu, k, R, self.M
-        )
-        self.check_ode_accuracy()
+        expected_z1_fourier = self.calc_expected_z1_fourier()
+
+        if self.z1cheat:
+            self.z1_fourier = expected_z1_fourier
+        else:
+            self.z1_fourier = ps.ode.calc_z1_fourier(
+                self.eval_f1, a, nu, k, R, self.M
+            )
+
+            print('ODE error:')
+            print(np.abs(self.z1_fourier - expected_z1_fourier))
 
         self.do_z_BVP()
 
         result = {
-            'z': self.z
+            'z': self.z,
+            'solver': self.solver,
         }
+
+        return result
 
     def do_algebra(self):
         g = self.problem.g
@@ -79,19 +90,25 @@ class ZMethod():
         lambdify_modules = SympyProblem.lambdify_modules
 
         def my_lambdify(expr):
-            return sympy.lambdify((r, th),
+            # Assuming function is 0 at r=0 ... this may not
+            # be necessary
+            lam = sympy.lambdify((r, th),
                 expr.subs(subs_dict),
                 modules=lambdify_modules)
 
-        v_asympt_lambda = my_lambdify(v_asympt)
-        def eval_v_asympt(r, th):
-            if r > 0:
-                return v_asympt_lambda(r, th)
-            else:
-                return 0
 
-        self.eval_v_asympt = eval_v_asympt
+            def newfunc(r, th):
+                if r == 0:
+                    return 0
+                else:
+                    #print(r)
+                    return lam(r, th)
+
+            return newfunc
+
+
         self.f_expr = f
+        self.eval_v_asympt = my_lambdify(v_asympt)
 
         self.eval_gq = my_lambdify(g+q)
         self.eval_f1 = my_lambdify(f1)
@@ -127,19 +144,24 @@ class ZMethod():
                     self.boundary, a, arg, sid
                 )
 
-                v_asympt = eval_v_asympt(r, th)
-                gq = eval_gq(r, th)
-
                 if sid == 0:
                     fourier_series = 0
                     for m in range(1, M+1):
                         fourier_series += z1_fourier[m-1] * np.sin(m*nu*(th-a))
 
-                    return fourier_series + gq
+                    return fourier_series + eval_gq(r, th)
+
                 elif sid == 1:
-                    return eval_phi1(r) - v_asympt
+                    if r >= 0:
+                        v_asympt = eval_v_asympt(r, th)
+                        return eval_phi1(r) - v_asympt
+
                 elif sid == 2:
-                    return eval_phi2(r) - v_asympt
+                    if r >= 0:
+                        v_asympt = eval_v_asympt(r, th)
+                        return eval_phi1(r) - v_asympt
+
+                return 0
 
 
         my_z_BVP = z_BVP()
@@ -154,23 +176,20 @@ class ZMethod():
 
         self.z = self.solver.run().u_act
 
-    def check_ode_accuracy(self):
+    def calc_expected_z1_fourier(self):
         """
-        Estimate accuracy of the z1 fourier coefficients returned
-        by the ODE method
+        Compute the expected Fourier coefficients of z1 from
+        z1 = v - (v_asympt g + q)
 
-        Compute the Fourier coefficients of (z1 + g + q + v_asympt) - v,
-        which should be zero, since the quantity in parenthesis
-        should equal v
+        For checking the accuracy of the ODE method or
+        skipping the ODE method during testing
         """
         R = self.R
 
-        def gqv(th):
-            return (self.eval_gq(R, th) + self.eval_v_asympt(R, th)
-                - self.problem.eval_v(R, th)
+        def z1_expected(th):
+            return (self.problem.eval_v(R, th) -
+                (self.eval_gq(R, th) + self.eval_v_asympt(R, th))
             )
 
         # This should be close to 0
-        error_fourier = self.z1_fourier + arc_dst(self.a, gqv)[:self.M]
-        print('ODE error:')
-        print(error_fourier)
+        return arc_dst(self.a, z1_expected)[:self.M]

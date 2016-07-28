@@ -72,11 +72,11 @@ def run_test(N):
                 error.append(diff)
                 th_list.append(th)
 
-
-                #print('r={}  th={}  diff={}'.format(r, th, diff))
-                #print('x={}  y={}'.format(*solver.get_coord(*node)))
-                #    print('exp={}   act={}'.format(exp, data['value']))
-                #    print()
+                #if diff > 1e-5:
+                #    print('r={}  th={}  diff={}'.format(r, th, diff))
+                #    print('x={}  y={}'.format(*solver.get_coord(*node)))
+                    #    print('exp={}   act={}'.format(exp, data['value']))
+                    #    print()
 
 
     #plt.plot(th_list, np.log10(error), 'o')
