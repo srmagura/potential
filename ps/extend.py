@@ -32,7 +32,13 @@ class PsExtend:
         x, y = self.get_coord(i, j)
 
         if sid == 0:
-            n, th = self.boundary_coord_cache[(i, j)]
+            if (i, j) in self.boundary_coord_cache:
+                n, th = self.boundary_coord_cache[(i, j)]
+            else:
+                # This can only happen during testing
+                n, th = self.boundary.get_boundary_coord(
+                    *self.get_polar(i, j)
+                )
 
             if th > 2*np.pi:
                 return EType.right

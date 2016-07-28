@@ -5,8 +5,6 @@ from scipy.special import jv
 from chebyshev import eval_dn_T_t, get_chebyshev_roots
 import abcoef
 import domain_util
-import ps.ode as ode
-import ps.polarfd as polarfd
 
 from problems.singular import HReg
 
@@ -108,7 +106,7 @@ class PsBasis:
 
             def eval_bc0(th):
                 return self.problem.eval_bc(th, 0)
-                
+
         else:
             assert hreg == HReg.none
             self.a_coef = np.zeros(self.M)

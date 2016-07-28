@@ -34,10 +34,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         self.boundary = self.problem.boundary
 
         self.scheme_order = options['scheme_order']
-        self.polarfd_N = options.get('polarfd_N', 64)
-        self.polarfd_N2 = options.get('polarfd_N2', 64)
-        self.polarfd_Nlam = options.get('polarfd_Nlam', 10)
-        self.polarfd_staple = options.get('polarfd_staple', False)
+        self.fake_grid = options.get('fake_grid', False)
 
         self.M = get_M(self.scheme_order)
         self.problem.M = self.M

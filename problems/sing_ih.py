@@ -34,85 +34,6 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         'sine7': 204,
     }
 
-    def __init__(self, **kwargs):
-        g = kwargs.pop('g')
-        v_asympt = kwargs.pop('v_asympt')
-
-        diff = sympy.diff
-        pi = sympy.pi
-        k, a, r, th, x = sympy.symbols('k a r th x')
-
-        def apply_helmholtz_op(u):
-            d_u_r = diff(u, r)
-            return diff(d_u_r, r) + d_u_r / r + diff(u, th, 2) / r**2 + k**2 * u
-
-
-        f0 = -apply_helmholtz_op(g+v_asympt)
-        #kwargs['f_expr'] = f
-
-        logistic = 1 / (1 + sympy.exp(-90*(x-0.5)))
-
-        # TODO insert q2
-        q1 = (r**2 * 1/2 * (th-2*pi)**2 * f.subs(th, 2*pi) *
-            logistic.subs(x, (th-2*pi)/(2*pi-a)+1))
-
-        f1 = f0 - apply_helmholtz_op(q1)
-
-        self.build_sympy_subs_dict()
-        subs_dict = self.sympy_subs_dict
-        lambdify_modules = SympyProblem.lambdify_modules
-
-        #plt.plot(r_data, f1_data)
-        #plt.show()
-
-        #_f_lambda = sympy.lambdify(r, f.subs(subs_dict).subs('th', 2*np.pi),
-        #    modules=lambdify_modules)
-        #f_data = np.array([_f_lambda(r) for r in r_data])
-        #print('fmax: ', np.max(np.abs(f_data)))
-
-        #plt.plot(r_data, f_data)
-
-        #q1_lambda = sympy.lambdify(r, q1.subs(subs_dict).subs('th', np.pi),
-        #    modules=lambdify_modules)
-        #q1_data = np.array([q1_lambda(r) for r in r_data])
-        #print('qmax: ', np.max(np.abs(q1_data)))
-
-        #plt.plot(r_data, q1_data)
-        #plt.show()
-
-        #_lambda = sympy.lambdify(r,
-        #    (abs(diff(q1, u, r) + .subs(subs_dict).subs('th', 2*np.pi),
-        #    modules=lambdify_modules)
-        #f_data = np.array([_f_lambda(r) for r in r_data])
-
-        #plt.show()
-        #import sys; sys.exit(0)
-
-        def my_lambdify(expr):
-            return sympy.lambdify((r, th),
-                expr.subs(subs_dict),
-                modules=lambdify_modules)
-
-        # TODO rename back to eval_v_asympt?
-
-        v_asympt_lambda = my_lambdify(v_asympt)
-        def eval_v_asympt(r, th):
-            if r > 0:
-                return v_asympt_lambda(r, th)
-            else:
-                return 0
-
-        self.eval_v_asympt = eval_v_asympt_lambda
-
-        self.eval_gq = my_lambdify(g+q1)
-        self.eval_f1 = my_lambdify(f1)
-
-        r_data = np.arange(self.R/256, self.R, .0001)
-
-        f1_data = np.array([self.eval_f1(r, 2*np.pi) for r in r_data])
-        print('f1_max:', np.max(np.abs(f1_data)))
-
-        super().__init__(**kwargs)
 
 
 class IH_Bessel(SingIH_Problem):
@@ -134,18 +55,18 @@ class IH_Bessel(SingIH_Problem):
         v_asympt0 = 0
 
         # Recommended: 10 terms
-        for l in range(10):
+        for l in range(3):
             x = (K+1/2)*nu + l + 1
             v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
 
         v_asympt0 *= kr2**((K+1/2)*nu)
 
-        v_asympt = v_asympt0 * sympy.sin(nu*(K+1/2)*(th-a))
+        self.v_asympt = v_asympt0 * sympy.sin(nu*(K+1/2)*(th-a))
+        self.g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt0)
 
-        g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt0)
+        # Derivatives of RHS are calculated in zmethod
+        kwargs['f_expr'] = sympy.sympify(0)
 
-        kwargs['g'] = g
-        kwargs['v_asympt'] = v_asympt
         super().__init__(**kwargs)
 
     def set_boundary(self, boundary):

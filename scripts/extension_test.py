@@ -112,8 +112,12 @@ if __name__ == '__main__':
 
     options = {
         'problem': problem,
-        'scheme_order': 4
+        'scheme_order': 4,
+        'fake_grid': False,
     }
+
+    if options['fake_grid']:
+        print('Warning: using fake grid.')
 
     meta_options = {'procedure_name': 'extension_test'}
     io_util.print_options(options, meta_options)

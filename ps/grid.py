@@ -66,3 +66,27 @@ class PsGrid:
             union_gamma_set |= gamma_set
 
         self.union_gamma = list(union_gamma_set)
+
+        if self.fake_grid:
+            return self.ps_construct_fake_grid()
+
+    def ps_construct_fake_grid(self):
+        """
+        For testing extension test only. Dangerous
+        """
+        R = self.R
+        a = self.a
+        h = self.AD_len / self.N
+
+        self.all_gamma = {
+            0: [
+                self.get_coord_inv(R+h/2, h/2),
+                self.get_coord_inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2),
+            ],
+            1: [self.get_coord_inv(R+h/2, h/2)],
+            2: [self.get_coord_inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2)],
+        }
+
+        self.union_gamma = set()
+        for sid in range(3):
+            self.union_gamma |= set(self.all_gamma[sid])
