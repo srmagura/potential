@@ -135,6 +135,11 @@ class PsInhomo:
             normal /= np.linalg.norm(normal)
 
         d_f_n = grad_f.dot(normal)
+
+        # If normal points in, flip sign of d_f_n
+        if n < 0:
+            d_f_n *= -1
+
         d2_f_n = hessian_f.dot(normal).dot(normal)
 
         d2_f_s = hessian_f.dot(tangent).dot(tangent)

@@ -78,14 +78,19 @@ class PsGrid:
         a = self.a
         h = self.AD_len / self.N
 
+        inv = self.get_coord_inv
+
         self.all_gamma = {
             0: [
-                self.get_coord_inv(R+h/2, h/2),
-                self.get_coord_inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2),
-                self.get_coord_inv(R*np.cos(a)-h/2, R*np.sin(a)-h/2),
+                inv(R+h/2, h/2),
+                inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2),
+                inv(R*np.cos(a)-h/2, R*np.sin(a)-h/2),
             ],
-            1: [self.get_coord_inv(R+h/2, h/2)],
-            2: [self.get_coord_inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2)],
+            1: [
+                inv(R+h/2, h/2),
+                inv(R+h/2, -h/2),
+            ],
+            2: [inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2)],
         }
 
         self.union_gamma = set()
