@@ -8,31 +8,14 @@ import domain_util
 
 from .singular import SingularKnown, HReg
 from .sympy_problem import SympyProblem
+from .problem import PizzaProblem
 
+# These are very different than "real" problems since zmethod is used
 
-class SingIH_Problem(SympyProblem, SingularKnown):
+class SingIH_Problem(PizzaProblem):
 
     zmethod = True
-
     k = 3
-
-    n_basis_dict = {
-        16: (24, 6),
-        32: (33, 8),
-        64: (42, 12),
-        128: (65, 18),
-        256: (80, 30),
-        512: (100, 40),
-        1024: (120, 45),
-    }
-
-    m1_dict = {
-        'arc': 8,
-        'outer-sine': 210,
-        'inner-sine': 236,
-        'cubic': 200,
-        'sine7': 204,
-    }
 
 
 
@@ -46,7 +29,6 @@ class IH_Bessel(SingIH_Problem):
         a = self.a
         nu = self.nu
         k = self.k
-        R = self.R
         K = self.K
 
         r, th = sympy.symbols('r th')
@@ -64,16 +46,6 @@ class IH_Bessel(SingIH_Problem):
         self.v_asympt = v_asympt0 * sympy.sin(nu*(K+1/2)*(th-a))
         self.g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt0)
 
-        # Derivatives of RHS are calculated in zmethod
-        kwargs['f_expr'] = sympy.sympify(0)
-
-        super().__init__(**kwargs)
-
-    def set_boundary(self, boundary):
-        super().set_boundary(boundary)
-
-        if boundary.name == 'arc':
-            self.expected_known = True
 
     def eval_v(self, r, th):
         """
@@ -87,32 +59,25 @@ class IH_Bessel(SingIH_Problem):
         return jv(nu*(K+1/2), k*r) * np.sin(nu*(K+1/2)* (th-a))
 
     def eval_expected__no_w(self, r, th):
-        if r == 0:
-            return 0
-
-        return self.eval_v(r, th) - self.eval_regfunc(r, th)
-
+        return self.eval_v(r, th)
 
 class I_Bessel(IH_Bessel):
     """
     a coefficients are all 0
     """
 
-    def eval_bc(self, arg, sid):
-        a = self.a
-        nu = self.nu
-        k = self.k
+    def eval_phi0(self, th):
+        r = self.boundary.eval_r(th)
+        return self.eval_v(r, th)
 
-        r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-        if sid == 0:
-            return self.eval_v(r, th)
-        elif sid == 1:
-            if r > 0:
-                return self.eval_v(r, th)
-            else:
-                return 0
-        elif sid == 2:
+    def eval_phi1(self, r):
+        if r > 0:
+            return self.eval_v(r, 2*np.pi)
+        else:
             return 0
+
+    def eval_phi2(self, r):
+        return 0
 
 
 class I_Bessel3(I_Bessel):

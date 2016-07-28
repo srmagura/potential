@@ -1,3 +1,6 @@
+"""
+Run the zmethod
+"""
 import sys
 
 import argparse
@@ -72,33 +75,39 @@ u2 = None
 u1 = None
 u0 = None
 
+z2 = None
+z1 = None
+z0 = None
+
 prev_error = None
 
 for N in N_list:
     options['N'] = N
 
-    solver = ps.ps.PizzaSolver(options)
-
     print('---- {0} x {0} ----'.format(N))
-    result = solver.run()
-    if result is None:
-        continue
+    solver = ps.zmethod.ZMethod(options)
 
-    if result.error is not None:
-        print('Error: ' + prec_str.format(result.error))
+    result = solver.run()
+
+    #if result.error is not None:
+    #    print('Error: ' + prec_str.format(result.error))
 
     u2 = u1
     u1 = u0
-    u0 = result.u_act
+    #u0 = result.u_act
 
-    if prev_error is not None:
-        convergence = np.log2(prev_error / result.error)
+    z2 = z1
+    z1 = z0
+    z0 = result['z']
 
-        print('Convergence: ' + prec_str.format(convergence))
+    #if prev_error is not None:
+    #    convergence = np.log2(prev_error / result.error)
 
-    if do_rel_conv and u2 is not None:
-        convergence = solver.calc_rel_convergence(u0, u1, u2)
-        print('Rel convergence: ' + prec_str.format(convergence))
+    #    print('Convergence: ' + prec_str.format(convergence))
+
+    if z2 is not None:
+        convergence = solver.calc_rel_convergence(z0, z1, z2)
+        print('z rel convergence: ' + prec_str.format(convergence))
 
     print()
     sys.stdout.flush()
