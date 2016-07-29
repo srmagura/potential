@@ -7,16 +7,18 @@ import abcoef
 import fourier
 
 # Recommended: 512
-fourier_N = 128
+fourier_N = 512
 
 # Recommended: 1e-10
-atol = rtol = 1e-5
+atol = rtol = 1e-10
 
 def my_print(s):
     print('(ode) {}'.format(s))
 
 def calc_z1_fourier(eval_f1, a, nu, k, R, M):
     arc_dst = lambda func: fourier.arc_dst(a, func, N=fourier_N)
+
+    my_print('tol: {}'.format(atol))
 
     # Estimate the accuracy of the DFT
     r = R
@@ -25,6 +27,7 @@ def calc_z1_fourier(eval_f1, a, nu, k, R, M):
     my_print('Fourier discretization error: {}'.format(np.max(np.abs(d1-d2))))
 
     h = R / 256
+
 
     global n_dst
     n_dst = 0

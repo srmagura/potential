@@ -83,6 +83,9 @@ z2 = None
 z1 = None
 z0 = None
 
+# Cache result of ODE method
+z1_fourier = None
+
 prev_error = None
 
 for N in N_list:
@@ -90,6 +93,7 @@ for N in N_list:
 
     print('---- {0} x {0} ----'.format(N))
     my_zmethod = ps.zmethod.ZMethod(options)
+    my_zmethod.z1_fourier = z1_fourier
 
     result = my_zmethod.run()
 
@@ -117,4 +121,5 @@ for N in N_list:
     print()
     sys.stdout.flush()
 
+    z1_fourier = my_zmethod.z1_fourier
     #prev_error = result.error

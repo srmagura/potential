@@ -150,6 +150,11 @@ class PsDebug:
 
         print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
 
+        #for l in range(len(exact_data)):
+        #    diff = abs(exact_data[l] - expansion_data[l])
+        #    if diff > .06:
+        #        print(sample[l], 'diff:', diff)
+
         if not plot:
             return
 

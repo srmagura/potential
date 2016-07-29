@@ -30,25 +30,8 @@ class ZMethod():
         self.R = self.boundary.R + self.boundary.bet
 
     def run(self):
-        a = self.a
-        nu = self.nu
-        k = self.k
-        R = self.R
-
         self.do_algebra()
-
-        expected_z1_fourier = self.calc_expected_z1_fourier()
-
-        if self.z1cheat:
-            self.z1_fourier = expected_z1_fourier
-        else:
-            self.z1_fourier = ps.ode.calc_z1_fourier(
-                self.eval_f1, a, nu, k, R, self.M
-            )
-
-            print('ODE error:')
-            print(np.abs(self.z1_fourier - expected_z1_fourier))
-
+        self.calc_z1_fourier()
         self.do_z_BVP()
 
         result = {
@@ -73,11 +56,13 @@ class ZMethod():
         f = -apply_helmholtz_op(v_asympt)
         f0 = f - apply_helmholtz_op(g)
 
-        logistic = 1 / (1 + sympy.exp(-90*(x-0.5)))
+        # Polynomial with p(0) = p'(0) = p"(0) = 0,
+        # p(1) = 1 and p'(1) = p"(1) = 0
+        p = 10 * x**3 - 15 * x**4 + 6 * x**5
 
         # TODO insert q1
-        q2 = (r**2 * 1/2 * (th-2*pi)**2 * f0.subs(th, 2*pi) *
-            logistic.subs(x, (th-2*pi)/(2*pi-a)+1))
+        q2 = (r**2 * 1/2 * (th-2*np.pi)**2 * f0.subs(th, 2*pi) *
+            p.subs(x, (th-2*pi)/(2*pi-a)+1))
 
         q = q2
         f1 = f0 - apply_helmholtz_op(q)
@@ -87,6 +72,7 @@ class ZMethod():
             'a': self.a,
             'nu': self.nu,
         }
+
         lambdify_modules = SympyProblem.lambdify_modules
 
         def my_lambdify(expr):
@@ -101,7 +87,6 @@ class ZMethod():
                 if r == 0:
                     return 0
                 else:
-                    #print(r)
                     return lam(r, th)
 
             return newfunc
@@ -112,6 +97,10 @@ class ZMethod():
 
         self.eval_gq = my_lambdify(g+q)
         self.eval_f1 = my_lambdify(f1)
+
+        #f1_data = [self.eval_f1(r, 2*np.pi) for r in np.linspace(0, self.R, 512)]
+        #f1_max = np.max(np.abs(f1_data))
+        #print('f1_max:', f1_max)
 
     def do_z_BVP(self):
         a = self.a
@@ -129,12 +118,16 @@ class ZMethod():
 
         z1_fourier = self.z1_fourier
 
+        _n_basis_dict = self.problem.n_basis_dict
+
         class z_BVP(SympyProblem, PizzaProblem):
 
             hreg = HReg.none
+            n_basis_dict = _n_basis_dict
 
             def __init__(self, **kwargs):
                 kwargs['f_expr'] = f_expr
+
                 self.k = k
 
                 super().__init__(**kwargs)
@@ -159,7 +152,7 @@ class ZMethod():
                 elif sid == 2:
                     if r >= 0:
                         v_asympt = eval_v_asympt(r, th)
-                        return eval_phi1(r) - v_asympt
+                        return eval_phi2(r) - v_asympt
 
                 return 0
 
@@ -175,6 +168,29 @@ class ZMethod():
         self.solver = ps.ps.PizzaSolver(options)
 
         self.z = self.solver.run().u_act
+
+
+    def calc_z1_fourier(self):
+        a = self.a
+        nu = self.nu
+        k = self.k
+        R = self.R
+        
+        expected_z1_fourier = self.calc_expected_z1_fourier()
+
+        if self.z1cheat:
+            self.z1_fourier = expected_z1_fourier
+        elif self.z1_fourier is not None:
+            # Cached from a previous run
+            pass
+        else:
+            self.z1_fourier = ps.ode.calc_z1_fourier(
+                self.eval_f1, a, nu, k, R, self.M
+            )
+
+            print('ODE error:')
+            print(np.abs(self.z1_fourier - expected_z1_fourier))
+
 
     def calc_expected_z1_fourier(self):
         """

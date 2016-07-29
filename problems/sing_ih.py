@@ -17,6 +17,15 @@ class SingIH_Problem(PizzaProblem):
     zmethod = True
     k = 3
 
+    n_basis_dict = {
+        16: (24, 6),
+        32: (33, 8),
+        64: (42, 12),
+        128: (65, 18),
+        256: (80, 30),
+        512: (100, 40),
+        1024: (120, 45),
+    }
 
 
 class IH_Bessel(SingIH_Problem):
