@@ -33,9 +33,10 @@ class ZMethod():
         self.do_algebra()
         self.calc_z1_fourier()
         self.do_z_BVP()
+        #self.do_w_BVP()
 
         result = {
-            'z': self.z,
+            'v': self.v,
             'solver': self.solver,
         }
 
@@ -102,6 +103,46 @@ class ZMethod():
         #f1_max = np.max(np.abs(f1_data))
         #print('f1_max:', f1_max)
 
+    def calc_z1_fourier(self):
+        a = self.a
+        nu = self.nu
+        k = self.k
+        R = self.R
+
+        expected_z1_fourier = self.calc_expected_z1_fourier()
+
+        if self.z1cheat:
+            self.z1_fourier = expected_z1_fourier
+        elif self.z1_fourier is not None:
+            # Cached from a previous run
+            pass
+        else:
+            self.z1_fourier = ps.ode.calc_z1_fourier(
+                self.eval_f1, a, nu, k, R, self.M
+            )
+
+            print('ODE error:')
+            print(np.abs(self.z1_fourier - expected_z1_fourier))
+
+
+    def calc_expected_z1_fourier(self):
+        """
+        Compute the expected Fourier coefficients of z1 from
+        z1 = v - (v_asympt g + q)
+
+        For checking the accuracy of the ODE method or
+        skipping the ODE method during testing
+        """
+        R = self.R
+
+        def z1_expected(th):
+            return (self.problem.eval_v(R, th) -
+                (self.eval_gq(R, th) + self.eval_v_asympt(R, th))
+            )
+
+        # This should be close to 0
+        return arc_dst(self.a, z1_expected)[:self.M]
+
     def do_z_BVP(self):
         a = self.a
         nu = self.nu
@@ -167,45 +208,75 @@ class ZMethod():
         # Save the solver so we can use its grid
         self.solver = ps.ps.PizzaSolver(options)
 
-        self.z = self.solver.run().u_act
+        z = self.solver.run().u_act
+
+        # Add back v_asympt
+        self.v = np.zeros(z.shape, dtype=complex)
+        for i, j in self.solver.global_Mplus:
+            r, th = self.solver.get_polar(i, j)
+            self.v[i-1, j-1] = z[i-1, j-1] + self.eval_v_asympt(r, th)
 
 
-    def calc_z1_fourier(self):
+    def do_w_BVP(self):
         a = self.a
         nu = self.nu
         k = self.k
         R = self.R
-        
-        expected_z1_fourier = self.calc_expected_z1_fourier()
-
-        if self.z1cheat:
-            self.z1_fourier = expected_z1_fourier
-        elif self.z1_fourier is not None:
-            # Cached from a previous run
-            pass
-        else:
-            self.z1_fourier = ps.ode.calc_z1_fourier(
-                self.eval_f1, a, nu, k, R, self.M
-            )
-
-            print('ODE error:')
-            print(np.abs(self.z1_fourier - expected_z1_fourier))
+        M = self.M
 
 
-    def calc_expected_z1_fourier(self):
-        """
-        Compute the expected Fourier coefficients of z1 from
-        z1 = v - (v_asympt g + q)
+        eval_v_asympt = self.eval_v_asympt
+        eval_gq = self.eval_gq
 
-        For checking the accuracy of the ODE method or
-        skipping the ODE method during testing
-        """
-        R = self.R
+        z1_fourier = self.z1_fourier
 
-        def z1_expected(th):
-            return (self.problem.eval_v(R, th) -
-                (self.eval_gq(R, th) + self.eval_v_asympt(R, th))
-            )
+        _n_basis_dict = self.problem.n_basis_dict
 
-        # This should be close to 0
-        return arc_dst(self.a, z1_expected)[:self.M]
+        class z_BVP(SympyProblem, PizzaProblem):
+
+            hreg = HReg.none
+            n_basis_dict = _n_basis_dict
+
+            def __init__(self, **kwargs):
+                kwargs['f_expr'] = f_expr
+
+                self.k = k
+
+                super().__init__(**kwargs)
+
+            def eval_bc(self, arg, sid):
+                r, th = domain_util.arg_to_polar(
+                    self.boundary, a, arg, sid
+                )
+
+                if sid == 0:
+                    fourier_series = 0
+                    for m in range(1, M+1):
+                        fourier_series += z1_fourier[m-1] * np.sin(m*nu*(th-a))
+
+                    return fourier_series + eval_gq(r, th)
+
+                elif sid == 1:
+                    if r >= 0:
+                        v_asympt = eval_v_asympt(r, th)
+                        return eval_phi1(r) - v_asympt
+
+                elif sid == 2:
+                    if r >= 0:
+                        v_asympt = eval_v_asympt(r, th)
+                        return eval_phi2(r) - v_asympt
+
+                return 0
+
+
+        my_z_BVP = z_BVP()
+        my_z_BVP.boundary = Arc(self.R)
+
+        options = {}
+        options.update(self.options)
+        options['problem'] = my_z_BVP
+
+        # Save the solver so we can use its grid
+        self.solver = ps.ps.PizzaSolver(options)
+
+        self.z = self.solver.run().u_act

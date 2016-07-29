@@ -79,9 +79,9 @@ u2 = None
 u1 = None
 u0 = None
 
-z2 = None
-z1 = None
-z0 = None
+v2 = None
+v1 = None
+v0 = None
 
 # Cache result of ODE method
 z1_fourier = None
@@ -105,18 +105,18 @@ for N in N_list:
     u1 = u0
     #u0 = result.u_act
 
-    z2 = z1
-    z1 = z0
-    z0 = result['z']
+    v2 = v1
+    v1 = v0
+    v0 = result['v']
 
     #if prev_error is not None:
     #    convergence = np.log2(prev_error / result.error)
 
     #    print('Convergence: ' + prec_str.format(convergence))
 
-    if z2 is not None:
-        convergence = solver.calc_rel_convergence(z0, z1, z2)
-        print('z rel convergence: ' + prec_str.format(convergence))
+    if v2 is not None:
+        convergence = solver.calc_rel_convergence(v0, v1, v2)
+        print('v rel convergence: ' + prec_str.format(convergence))
 
     print()
     sys.stdout.flush()
