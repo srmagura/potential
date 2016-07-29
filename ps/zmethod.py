@@ -3,6 +3,8 @@ import sympy
 
 import matplotlib.pyplot as plt
 
+from scipy.interpolate import interp2d
+
 from problems.problem import PizzaProblem
 from problems.sympy_problem import SympyProblem
 from problems.boundary import Arc
@@ -10,6 +12,7 @@ from problems.singular import HReg
 
 import ps.ps
 import ps.ode
+from ps.polarfd import PolarFD
 
 from fourier import arc_dst
 import domain_util
@@ -22,22 +25,27 @@ class ZMethod():
         self.problem = options['problem']
         self.z1cheat = options['z1cheat']
         self.boundary = self.problem.boundary
+        self.N = options['N']
         self.options = options
 
         self.a = PizzaProblem.a
         self.nu = PizzaProblem.nu
         self.k = self.problem.k
-        self.R = self.boundary.R + self.boundary.bet
+        self.arc_R = self.boundary.R + 2*self.boundary.bet
 
     def run(self):
         self.do_algebra()
         self.calc_z1_fourier()
         self.do_z_BVP()
-        #self.do_w_BVP()
+        self.do_w_BVP()
+
+        u = self.v + self.w
 
         result = {
             'v': self.v,
-            'solver': self.solver,
+            'u': u,
+            'arc_solver': self.arc_solver,
+            'pert_solver': self.pert_solver,
         }
 
         return result
@@ -93,7 +101,7 @@ class ZMethod():
             return newfunc
 
 
-        self.f_expr = f
+        self.eval_f = my_lambdify(f)
         self.eval_v_asympt = my_lambdify(v_asympt)
 
         self.eval_gq = my_lambdify(g+q)
@@ -150,71 +158,58 @@ class ZMethod():
         R = self.R
         M = self.M
 
-        f_expr = self.f_expr
-        eval_phi1 = self.problem.eval_phi1
-        eval_phi2 = self.problem.eval_phi2
+        def eval_phi0(th):
+            fourier_series = 0
+            for m in range(1, M+1):
+                fourier_series += self.z1_fourier[m-1] * np.sin(m*nu*(th-a))
 
-        eval_v_asympt = self.eval_v_asympt
-        eval_gq = self.eval_gq
+            return fourier_series + self.eval_gq(r, th)
 
-        z1_fourier = self.z1_fourier
+        def eval_phi1(r):
+            if r >= 0:
+                v_asympt = self.eval_v_asympt(r, th)
+                return self.problem.eval_phi1(r) - v_asympt
 
-        _n_basis_dict = self.problem.n_basis_dict
+        def eval_phi2(r):
+            if r >= 0:
+                v_asympt = self.eval_v_asympt(r, th)
+                return eval_phi2(r) - v_asympt
 
-        class z_BVP(SympyProblem, PizzaProblem):
-
-            hreg = HReg.none
-            n_basis_dict = _n_basis_dict
-
-            def __init__(self, **kwargs):
-                kwargs['f_expr'] = f_expr
-
-                self.k = k
-
-                super().__init__(**kwargs)
-
-            def eval_bc(self, arg, sid):
-                r, th = domain_util.arg_to_polar(
-                    self.boundary, a, arg, sid
-                )
-
-                if sid == 0:
-                    fourier_series = 0
-                    for m in range(1, M+1):
-                        fourier_series += z1_fourier[m-1] * np.sin(m*nu*(th-a))
-
-                    return fourier_series + eval_gq(r, th)
-
-                elif sid == 1:
-                    if r >= 0:
-                        v_asympt = eval_v_asympt(r, th)
-                        return eval_phi1(r) - v_asympt
-
-                elif sid == 2:
-                    if r >= 0:
-                        v_asympt = eval_v_asympt(r, th)
-                        return eval_phi2(r) - v_asympt
-
-                return 0
-
-
-        my_z_BVP = z_BVP()
-        my_z_BVP.boundary = Arc(self.R)
-
-        options = {}
-        options.update(self.options)
-        options['problem'] = my_z_BVP
-
-        # Save the solver so we can use its grid
-        self.solver = ps.ps.PizzaSolver(options)
-
-        z = self.solver.run().u_act
+        self.polarfd = PolarFD()
+        z = self.polarfd.solve(self.N, k, a, nu, R,
+            eval_phi0, eval_phi1, eval_phi2)
 
         # Add back v_asympt
         self.v = np.zeros(z.shape, dtype=complex)
-        for i, j in self.solver.global_Mplus:
-            r, th = self.solver.get_polar(i, j)
+        for i, j in self.arc_solver.global_Mplus:
+            r, th = self.arc_solver.get_polar(i, j)
             self.v[i-1, j-1] = z[i-1, j-1] + self.eval_v_asympt(r, th)
+
+    def create_v_interp(self):
+        r_data = []
+        th_data = []
+        v_real_data = []
+        v_imag_data = []
+
+        rmin = self.boundary.R - self.boundary.bet
+
+        for i, j in self.arc_solver.global_Mplus:
+            r, th = self.arc_solver.get_polar(i, j)
+
+
+            r_data.append(r)
+            th_data.append(th)
+
+            v_real_data.append(self.v[i-1, j-1].real)
+            v_imag_data.append(self.v[i-1, j-1].imag)
+
+        real_interp = interp2d(r_data, th_data, v_real_data, kind='quintic')
+        imag_interp = interp2d(r_data, th_data, v_imag_data, kind='quintic')
+
+        def interp(r, th):
+            return complex(real_interp(r, th), imag_interp(r, th))
+
+        return interp
 
 
     def do_w_BVP(self):
@@ -224,24 +219,21 @@ class ZMethod():
         R = self.R
         M = self.M
 
-
-        eval_v_asympt = self.eval_v_asympt
-        eval_gq = self.eval_gq
-
-        z1_fourier = self.z1_fourier
-
         _n_basis_dict = self.problem.n_basis_dict
 
-        class z_BVP(SympyProblem, PizzaProblem):
+        eval_phi0 = self.problem.eval_phi0
 
-            hreg = HReg.none
+        v_interp = self.create_v_interp()
+
+        class w_BVP(PizzaProblem):
+
+            homogeneous = True
+
+            hreg = HReg.linsys
             n_basis_dict = _n_basis_dict
 
             def __init__(self, **kwargs):
-                kwargs['f_expr'] = f_expr
-
                 self.k = k
-
                 super().__init__(**kwargs)
 
             def eval_bc(self, arg, sid):
@@ -250,33 +242,19 @@ class ZMethod():
                 )
 
                 if sid == 0:
-                    fourier_series = 0
-                    for m in range(1, M+1):
-                        fourier_series += z1_fourier[m-1] * np.sin(m*nu*(th-a))
-
-                    return fourier_series + eval_gq(r, th)
-
-                elif sid == 1:
-                    if r >= 0:
-                        v_asympt = eval_v_asympt(r, th)
-                        return eval_phi1(r) - v_asympt
-
-                elif sid == 2:
-                    if r >= 0:
-                        v_asympt = eval_v_asympt(r, th)
-                        return eval_phi2(r) - v_asympt
+                    return eval_phi0(th) - v_interp(r, th)
 
                 return 0
 
 
-        my_z_BVP = z_BVP()
-        my_z_BVP.boundary = Arc(self.R)
+        my_w_BVP = w_BVP()
+        my_w_BVP.boundary = self.problem.boundary
 
         options = {}
         options.update(self.options)
-        options['problem'] = my_z_BVP
+        options['problem'] = my_w_BVP
 
         # Save the solver so we can use its grid
-        self.solver = ps.ps.PizzaSolver(options)
+        self.pert_solver = ps.ps.PizzaSolver(options)
 
-        self.z = self.solver.run().u_act
+        self.w = self.pert_solver.run().u_act
