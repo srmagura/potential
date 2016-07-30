@@ -37,15 +37,15 @@ class ZMethod():
         self.do_algebra()
         self.calc_z1_fourier()
         self.do_z_BVP()
-        self.do_w_BVP()
+        #self.do_w_BVP()
 
-        u = self.v + self.w
+        #u = self.v + self.w
 
         result = {
             'v': self.v,
-            'u': u,
-            'arc_solver': self.arc_solver,
-            'pert_solver': self.pert_solver,
+            #'u': u,
+            'polarfd': self.polarfd,
+            #'pert_solver': self.pert_solver,
         }
 
         return result
@@ -101,7 +101,7 @@ class ZMethod():
             return newfunc
 
 
-        self.eval_f = my_lambdify(f)
+        self.f_expr = f
         self.eval_v_asympt = my_lambdify(v_asympt)
 
         self.eval_gq = my_lambdify(g+q)
@@ -112,11 +112,6 @@ class ZMethod():
         #print('f1_max:', f1_max)
 
     def calc_z1_fourier(self):
-        a = self.a
-        nu = self.nu
-        k = self.k
-        R = self.R
-
         expected_z1_fourier = self.calc_expected_z1_fourier()
 
         if self.z1cheat:
@@ -126,7 +121,8 @@ class ZMethod():
             pass
         else:
             self.z1_fourier = ps.ode.calc_z1_fourier(
-                self.eval_f1, a, nu, k, R, self.M
+                self.eval_f1, self.a, self.nu, self.k,
+                self.arc_R, self.M
             )
 
             print('ODE error:')
@@ -141,7 +137,7 @@ class ZMethod():
         For checking the accuracy of the ODE method or
         skipping the ODE method during testing
         """
-        R = self.R
+        R = self.arc_R
 
         def z1_expected(th):
             return (self.problem.eval_v(R, th) -
@@ -155,35 +151,51 @@ class ZMethod():
         a = self.a
         nu = self.nu
         k = self.k
-        R = self.R
         M = self.M
+
+        f_expr = self.f_expr
+
+        class DummySympyProblem(SympyProblem, PizzaProblem):
+            def __init__(self):
+                self.k = k
+                super().__init__(f_expr=f_expr)
+
+        dummy = DummySympyProblem()
 
         def eval_phi0(th):
             fourier_series = 0
             for m in range(1, M+1):
                 fourier_series += self.z1_fourier[m-1] * np.sin(m*nu*(th-a))
 
-            return fourier_series + self.eval_gq(r, th)
+            return fourier_series + self.eval_gq(self.arc_R, th)
 
         def eval_phi1(r):
             if r >= 0:
-                v_asympt = self.eval_v_asympt(r, th)
+                v_asympt = self.eval_v_asympt(r, 2*np.pi)
                 return self.problem.eval_phi1(r) - v_asympt
 
         def eval_phi2(r):
             if r >= 0:
-                v_asympt = self.eval_v_asympt(r, th)
-                return eval_phi2(r) - v_asympt
+                v_asympt = self.eval_v_asympt(r, a)
+                return self.problem.eval_phi2(r) - v_asympt
 
         self.polarfd = PolarFD()
-        z = self.polarfd.solve(self.N, k, a, nu, R,
-            eval_phi0, eval_phi1, eval_phi2)
+        z = self.polarfd.solve(self.N, k, a, nu, self.arc_R,
+            eval_phi0, eval_phi1, eval_phi2,
+            dummy.eval_f_polar, dummy.eval_d_f_r,
+            dummy.eval_d2_f_r, dummy.eval_d2_f_th
+        )
 
         # Add back v_asympt
-        self.v = np.zeros(z.shape, dtype=complex)
-        for i, j in self.arc_solver.global_Mplus:
-            r, th = self.arc_solver.get_polar(i, j)
-            self.v[i-1, j-1] = z[i-1, j-1] + self.eval_v_asympt(r, th)
+        N = self.N
+        self.v = np.zeros((N+1, N+1), dtype=complex)
+
+        for m in range(N+1):
+            for l in range(N+1):
+                r = self.polarfd.get_r(m)
+                th = self.polarfd.get_th(l)
+                index = self.polarfd.get_index(m, l)
+                self.v[m, l] = z[index] + self.eval_v_asympt(r, th)
 
     def create_v_interp(self):
         r_data = []
@@ -216,7 +228,7 @@ class ZMethod():
         a = self.a
         nu = self.nu
         k = self.k
-        R = self.R
+        arc_R = self.arc_R
         M = self.M
 
         _n_basis_dict = self.problem.n_basis_dict

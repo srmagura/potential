@@ -97,14 +97,14 @@ for N in N_list:
 
     result = my_zmethod.run()
 
-    arc_solver = result['arc_solver']
-    pert_solver = result['pert_solver']
+    polarfd = result['polarfd']
+    #pert_solver = result['pert_solver']
     #if result.error is not None:
     #    print('Error: ' + prec_str.format(result.error))
 
     u2 = u1
     u1 = u0
-    u0 = result['u']
+    #u0 = result['u']
 
     v2 = v1
     v1 = v0
@@ -116,12 +116,12 @@ for N in N_list:
     #    print('Convergence: ' + prec_str.format(convergence))
 
     if v2 is not None:
-        convergence = arc_solver.calc_rel_convergence(v0, v1, v2)
+        convergence = polarfd.calc_rel_convergence(v0, v1, v2)
         print('v rel convergence: ' + prec_str.format(convergence))
 
-    if u2 is not None:
-        convergence = pert_solver.calc_rel_convergence(u0, u1, u2)
-        print('u rel convergence: ' + prec_str.format(convergence))
+    #if u2 is not None:
+    #    convergence = pert_solver.calc_rel_convergence(u0, u1, u2)
+    #    print('u rel convergence: ' + prec_str.format(convergence))
 
     print()
     sys.stdout.flush()

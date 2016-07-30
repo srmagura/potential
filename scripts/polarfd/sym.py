@@ -4,7 +4,7 @@ import scipy.special
 def do_lapacian(u):
     return diff(u, r, 2) + diff(u, r) / r + diff(u, th, 2) / r**2 + k**2 * u
 
-_k = 1
+_k = 3
 
 a = pi/6
 nu = pi / (2*pi - a)

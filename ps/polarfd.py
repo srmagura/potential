@@ -11,7 +11,8 @@ class PolarFD:
 
     @classmethod
     def my_print(cls, x):
-        print('(polarfd) ' + str(x))
+        pass
+        #print('(polarfd) ' + str(x))
 
     def get_r(self, m):
         return self.R0 + m*self.hr
