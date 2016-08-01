@@ -247,7 +247,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         ext = self.extend_boundary()
         regular_part = self.get_potential(ext) + self.ap_sol_f
 
-        u_act = regular_part + self.get_singular_part()
+        u_act = regular_part #+ self.get_singular_part()
 
         error = self.eval_error(u_act)
 

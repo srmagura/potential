@@ -75,9 +75,9 @@ Perform the convergence test.
 """
 do_rel_conv = args.r or not problem.expected_known
 
-w2 = None
-w1 = None
-w0 = None
+u2 = None
+u1 = None
+u0 = None
 
 v2 = None
 v1 = None
@@ -99,32 +99,33 @@ for N in N_list:
 
     polarfd = result['polarfd']
     pert_solver = result['pert_solver']
-    #if result.error is not None:
-    #    print('Error: ' + prec_str.format(result.error))
+    u_error = result['u_error']
+
+    if u_error is not None:
+        print('Error: ' + prec_str.format(u_error))
 
     v2 = v1
     v1 = v0
     v0 = result['v']
 
-    w2 = u1
-    w1 = u0
-    w0 = result['w']
-
-    #if prev_error is not None:
-    #    convergence = np.log2(prev_error / result.error)
-
-    #    print('Convergence: ' + prec_str.format(convergence))
+    u2 = u1
+    u1 = u0
+    u0 = result['u']
 
     if v2 is not None:
         convergence = polarfd.calc_rel_convergence(v0, v1, v2)
         print('v rel convergence: ' + prec_str.format(convergence))
 
-    if w2 is not None:
-        convergence = pert_solver.calc_rel_convergence(w0, w1, w2)
-        print('w rel convergence: ' + prec_str.format(convergence))
+    if u2 is not None:
+        convergence = pert_solver.calc_rel_convergence(u0, u1, u2)
+        print('u rel convergence: ' + prec_str.format(convergence))
+
+    if prev_error is not None:
+        convergence = np.log2(prev_error / u_error)
+        print('u convergence: ' + prec_str.format(convergence))
 
     print()
     sys.stdout.flush()
 
     z1_fourier = my_zmethod.z1_fourier
-    #prev_error = result.error
+    prev_error = u_error

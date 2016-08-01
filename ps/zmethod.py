@@ -3,6 +3,7 @@ import sympy
 
 import matplotlib.pyplot as plt
 
+import scipy
 from scipy.interpolate import interp2d
 
 from problems.problem import PizzaProblem
@@ -16,6 +17,7 @@ from ps.polarfd import PolarFD
 
 from fourier import arc_dst
 import domain_util
+import abcoef
 
 class ZMethod:
 
@@ -27,6 +29,7 @@ class ZMethod:
     def run(self):
         self.problem = self.options['problem']
         self.z1cheat = self.options['z1cheat']
+        self.acheat = self.options['acheat']
         self.boundary = self.problem.boundary
         self.N = self.options['N']
 
@@ -40,14 +43,13 @@ class ZMethod:
         self.do_algebra()
         self.calc_z1_fourier()
         self.do_z_BVP()
-        self.do_w_BVP()
-
-        # FIXME
-        #u = self.v + self.w
+        self.calc_a_coef()
+        self.do_u_BVP()
 
         result = {
             'v': self.v,
-            'w': w,
+            'u': self.u,
+            'u_error': self.u_error,
             'polarfd': self.polarfd,
             'pert_solver': self.pert_solver,
         }
@@ -111,12 +113,15 @@ class ZMethod:
         self.eval_gq = my_lambdify(g+q)
         self.eval_f1 = my_lambdify(f1)
 
-        #f1_data = [self.eval_f1(r, 2*np.pi) for r in np.linspace(0, self.R, 512)]
-        #f1_max = np.max(np.abs(f1_data))
-        #print('f1_max:', f1_max)
+        """r_data = np.linspace(0, self.arc_R, 512)
+        f1_data = [self.eval_f1(r, 2*np.pi) for r in r_data]
+        f1_max = np.max(np.abs(f1_data))
+        plt.plot(r_data, f1_data)
+        plt.show()
+        print('f1_max:', f1_max)"""
 
     def calc_z1_fourier(self):
-        expected_z1_fourier = self.calc_expected_z1_fourier()
+        expected_z1_fourier = self.get_expected_z1_fourier()
 
         if self.z1cheat:
             self.z1_fourier = expected_z1_fourier
@@ -133,7 +138,7 @@ class ZMethod:
             print(np.abs(self.z1_fourier - expected_z1_fourier))
 
 
-    def calc_expected_z1_fourier(self):
+    def get_expected_z1_fourier(self):
         """
         Compute the expected Fourier coefficients of z1 from
         z1 = v - (v_asympt g + q)
@@ -183,8 +188,8 @@ class ZMethod:
                 v_asympt = self.eval_v_asympt(r, a)
                 return self.problem.eval_phi2(r) - v_asympt
 
-        self.polarfd = PolarFD()
-        z = self.polarfd.solve(self.N, k, a, nu, self.arc_R,
+        self.polarfd = PolarFD(self.N, a, nu, self.arc_R)
+        z = self.polarfd.solve(k,
             eval_phi0, eval_phi1, eval_phi2,
             dummy.eval_f_polar, dummy.eval_d_f_r,
             dummy.eval_d2_f_r, dummy.eval_d2_f_th
@@ -201,52 +206,46 @@ class ZMethod:
                 index = self.polarfd.get_index(m, l)
                 self.v[m, l] = z[index] + self.eval_v_asympt(r, th)
 
-    def do_w_BVP(self):
+    def calc_a_coef(self):
         a = self.a
         nu = self.nu
         k = self.k
         arc_R = self.arc_R
         M = self.M
 
-        _n_basis_dict = self.problem.n_basis_dict
+        fft_a_coef = self.get_expected_a_coef()
 
-        eval_phi0 = self.problem.eval_phi0
+        if self.acheat:
+            #self.a_coef = fft_a_coef
 
-        v_interp = self.create_v_interp()
+            # FIXME
+            self.a_coef = np.zeros(M)
+        else:
+            eval_phi0 = self.problem.eval_phi0
+            v_interp = self.create_v_interp()
 
-        class w_BVP(PizzaProblem):
+            def eval_bc0(th):
+                r = self.boundary.eval_r(th)
+                return eval_phi0(th) - v_interp(r, th)
 
-            homogeneous = True
+            a_coef, singvals = abcoef.calc_a_coef(self.problem,
+                self.boundary, eval_bc0, self.M, self.problem.get_m1())
 
-            hreg = HReg.linsys
-            n_basis_dict = _n_basis_dict
+            self.a_coef = a_coef
 
-            def __init__(self, **kwargs):
-                self.k = k
-                super().__init__(**kwargs)
+            if self.boundary.name == 'arc':
+                error = np.max(np.abs(self.a_coef - fft_a_coef))
+                print('a_coef error:', error)
+            elif self.problem.name == 'i-bessel':
+                print('a_coef:', scipy.real(a_coef))
 
-            def eval_bc(self, arg, sid):
-                r, th = domain_util.arg_to_polar(
-                    self.boundary, a, arg, sid
-                )
+    def get_expected_a_coef(self):
+        def eval_bc0(th):
+            r = self.boundary.eval_r(th)
+            return self.problem.eval_phi0(th) - self.problem.eval_v(r, th)
 
-                if sid == 0:
-                    return eval_phi0(th) - v_interp(r, th)
+        return arc_dst(self.a, eval_bc0)[:self.M]
 
-                return 0
-
-
-        my_w_BVP = w_BVP()
-        my_w_BVP.boundary = self.problem.boundary
-
-        options = {}
-        options.update(self.options)
-        options['problem'] = my_w_BVP
-
-        # Save the solver so we can use its grid
-        self.pert_solver = ps.ps.PizzaSolver(options)
-
-        self.w = self.pert_solver.run().u_act
 
     def create_v_interp(self):
         """
@@ -295,3 +294,67 @@ class ZMethod:
             return complex(real_interp(r, th), imag_interp(r, th))
 
         return interp
+
+    def do_u_BVP(self):
+        a = self.a
+        nu = self.nu
+        k = self.k
+        M = self.M
+
+        eval_v_asympt = self.eval_v_asympt
+        f_expr = self.f_expr
+
+        eval_phi0 = self.problem.eval_phi0
+        eval_phi1 = self.problem.eval_phi1
+        eval_phi2 = self.problem.eval_phi2
+        eval_expected_polar = self.problem.eval_expected_polar
+
+        a_coef = self.a_coef
+
+        expected_known = self.problem.name == 'i-bessel'
+
+        class u_BVP(SympyProblem, PizzaProblem):
+
+            hreg = HReg.none
+
+            def __init__(self):
+                self.k = k
+                self.expected_known = expected_known
+                super().__init__(f_expr=f_expr)
+
+            def eval_bc(self, arg, sid):
+                r, th = domain_util.arg_to_polar(self.boundary, a, arg, sid)
+
+                if sid == 0:
+                    bc = eval_phi0(th) - eval_v_asympt(r, th)
+
+                    # FIXME
+                    #for m in range(1, M+1):
+                    #    bc -= a_coef[m-1] * np.sin(m*nu*(th-a))
+
+                    return bc
+
+                elif sid == 1 and r >= 0:
+                    return eval_phi1(r) - eval_v_asympt(r, 2*np.pi)
+
+                elif sid == 2 and r >= 0:
+                    return eval_phi2(r) - eval_v_asympt(r, a)
+
+                return 0
+
+            def eval_expected_polar(self, r, th):
+                return eval_expected_polar(r, th) - eval_v_asympt(r, th)
+
+        my_u_BVP = u_BVP()
+        my_u_BVP.boundary = self.problem.boundary
+
+        options = {}
+        options.update(self.options)
+        options['problem'] = my_u_BVP
+
+        # Save the solver so we can use its grid
+        self.pert_solver = ps.ps.PizzaSolver(options)
+
+        result = self.pert_solver.run()
+        self.u = result.u_act
+        self.u_error = result.error

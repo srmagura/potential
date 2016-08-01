@@ -10,6 +10,7 @@ th_data = np.linspace(PizzaProblem.a, 2*np.pi, n_nodes + 2)[1:-1]
 
 def get_R1_R2(boundary):
     """
+    #TODO: delete??
     Approximate the smallest (R1) and greatest (R2) r values on the boundary
     """
     R2 = 0

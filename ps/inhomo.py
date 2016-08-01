@@ -52,9 +52,12 @@ class PsInhomo:
             elif sid == 2:
                 x0, y0 = self.get_radius_point(2, x, y)
             elif sid == 0:
+                n, th0 = self.boundary_coord_cache[i, j]
+                r0 = self.boundary.eval_r(th0)
+
                 if etype == EType.standard:
-                    x0 = R * np.cos(th)
-                    y0 = R * np.sin(th)
+                    x0 = r0 * np.cos(th0)
+                    y0 = r0 * np.sin(th0)
                 elif etype == EType.left:
                     x0 = R * np.cos(a)
                     y0 = R * np.sin(a)

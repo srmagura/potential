@@ -13,7 +13,7 @@ import ps.ps
 #from ps.extend import EType
 
 from problems.smooth import Smooth_YCos
-from problems.boundary import Arc
+from problems.boundary import Arc, OuterSine
 
 import io_util
 
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     allowed_sid = list(map(int, args.s))
 
     problem = Smooth_YCos()
-    boundary = Arc(problem.R)
+    boundary = OuterSine(problem.R)
     problem.boundary = boundary
 
     options = {

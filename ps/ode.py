@@ -7,10 +7,10 @@ import abcoef
 import fourier
 
 # Recommended: 512
-fourier_N = 512
+fourier_N = 1024
 
 # Recommended: 1e-10
-atol = rtol = 1e-10
+atol = rtol = 1e-12
 
 def my_print(s):
     print('(ode) {}'.format(s))
