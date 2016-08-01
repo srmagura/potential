@@ -17,35 +17,39 @@ from ps.polarfd import PolarFD
 from fourier import arc_dst
 import domain_util
 
-class ZMethod():
+class ZMethod:
 
     M = 7
 
     def __init__(self, options):
-        self.problem = options['problem']
-        self.z1cheat = options['z1cheat']
-        self.boundary = self.problem.boundary
-        self.N = options['N']
         self.options = options
+
+    def run(self):
+        self.problem = self.options['problem']
+        self.z1cheat = self.options['z1cheat']
+        self.boundary = self.problem.boundary
+        self.N = self.options['N']
 
         self.a = PizzaProblem.a
         self.nu = PizzaProblem.nu
         self.k = self.problem.k
-        self.arc_R = self.boundary.R + 2*self.boundary.bet
 
-    def run(self):
+        self.arc_R = self.boundary.R + self.boundary.bet
+
+
         self.do_algebra()
         self.calc_z1_fourier()
         self.do_z_BVP()
-        #self.do_w_BVP()
+        self.do_w_BVP()
 
+        # FIXME
         #u = self.v + self.w
 
         result = {
             'v': self.v,
-            #'u': u,
+            'w': w,
             'polarfd': self.polarfd,
-            #'pert_solver': self.pert_solver,
+            'pert_solver': self.pert_solver,
         }
 
         return result
@@ -197,33 +201,6 @@ class ZMethod():
                 index = self.polarfd.get_index(m, l)
                 self.v[m, l] = z[index] + self.eval_v_asympt(r, th)
 
-    def create_v_interp(self):
-        r_data = []
-        th_data = []
-        v_real_data = []
-        v_imag_data = []
-
-        rmin = self.boundary.R - self.boundary.bet
-
-        for i, j in self.arc_solver.global_Mplus:
-            r, th = self.arc_solver.get_polar(i, j)
-
-
-            r_data.append(r)
-            th_data.append(th)
-
-            v_real_data.append(self.v[i-1, j-1].real)
-            v_imag_data.append(self.v[i-1, j-1].imag)
-
-        real_interp = interp2d(r_data, th_data, v_real_data, kind='quintic')
-        imag_interp = interp2d(r_data, th_data, v_imag_data, kind='quintic')
-
-        def interp(r, th):
-            return complex(real_interp(r, th), imag_interp(r, th))
-
-        return interp
-
-
     def do_w_BVP(self):
         a = self.a
         nu = self.nu
@@ -270,3 +247,51 @@ class ZMethod():
         self.pert_solver = ps.ps.PizzaSolver(options)
 
         self.w = self.pert_solver.run().u_act
+
+    def create_v_interp(self):
+        """
+        Create 6th order accurate interpolating function for v
+        """
+        N = self.N
+
+        r_data = []
+        th_data = []
+        v_real_data = []
+        v_imag_data = []
+
+        # Don't need to interpolate far away from boundary
+        if N >= 128:
+            rmin = (self.boundary.R - self.boundary.bet) * (2/3)
+        else:
+            rmin = 0
+
+        for m in range(N+1):
+            r = self.polarfd.get_r(m)
+            if r < rmin:
+                continue
+
+            r_data.append(r)
+
+        for l in range(N+1):
+            th = self.polarfd.get_th(l)
+            th_data.append(th)
+
+        for m in range(N+1):
+            r = self.polarfd.get_r(m)
+            if r < rmin:
+                continue
+
+            for l in range(N+1):
+                th = self.polarfd.get_th(l)
+
+                v_real_data.append(self.v[m, l].real)
+                v_imag_data.append(self.v[m, l].imag)
+
+
+        real_interp = interp2d(r_data, th_data, v_real_data, kind='quintic')
+        imag_interp = interp2d(r_data, th_data, v_imag_data, kind='quintic')
+
+        def interp(r, th):
+            return complex(real_interp(r, th), imag_interp(r, th))
+
+        return interp

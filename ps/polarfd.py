@@ -9,6 +9,14 @@ class PolarFD:
     # rec: .05
     R0 = .05
 
+    def __init__(self, N, a, nu, R1):
+        self.N = N
+        self.a = a
+        self.nu = nu
+        self.R1 = R1
+
+        self.calc_N_var()
+
     @classmethod
     def my_print(cls, x):
         pass
@@ -188,18 +196,12 @@ class PolarFD:
             self.row_ind.append(self.row)
             self.col_ind.append(self.get_index(m1, l1))
 
-    def solve(self, N, k, a, nu, R1, eval_phi0, eval_phi1, eval_phi2,
+    def solve(self, k, eval_phi0, eval_phi1, eval_phi2,
         eval_f, eval_d_f_r, eval_d2_f_r, eval_d2_f_th):
         """
 
         """
-        self.N = N
-
         self.k = k
-        self.a = a
-        self.nu = nu
-
-        self.R1 = R1
 
         self.eval_phi0 = eval_phi0
         self.eval_phi1 = eval_phi1
@@ -210,8 +212,7 @@ class PolarFD:
         self.eval_d2_f_r = eval_d2_f_r
         self.eval_d2_f_th = eval_d2_f_th
 
-        self.calc_N_var()
-
+        N = self.N
         self.my_print('N = {}'.format(N))
         self.my_print('R0 = {}'.format(self.R0))
         self.my_print('R1 = {}'.format(self.R1))
