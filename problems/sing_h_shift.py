@@ -40,7 +40,7 @@ class Shift_Parabola(SingH_Shift):
         'arc': 48,
         'outer-sine': 200,
         'inner-sine': 220,
-        'cubic': 140, #210,
+        'cubic': 140,
         'sine7': 218,
     }
 

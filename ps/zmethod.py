@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 
 import scipy
 from scipy.interpolate import interp2d
+from scipy.special import jv
+from scipy.fftpack import dst
 
 from problems.problem import PizzaProblem
 from problems.sympy_problem import SympyProblem
@@ -48,6 +50,7 @@ class ZMethod:
 
         result = {
             'v': self.v,
+            'v_error': self.get_v_error(),
             'u': self.u,
             'u_error': self.u_error,
             'polarfd': self.polarfd,
@@ -97,7 +100,6 @@ class ZMethod:
                 expr.subs(subs_dict),
                 modules=lambdify_modules)
 
-
             def newfunc(r, th):
                 if r == 0:
                     return 0
@@ -113,12 +115,16 @@ class ZMethod:
         self.eval_gq = my_lambdify(g+q)
         self.eval_f1 = my_lambdify(f1)
 
-        """r_data = np.linspace(0, self.arc_R, 512)
-        f1_data = [self.eval_f1(r, 2*np.pi) for r in r_data]
-        f1_max = np.max(np.abs(f1_data))
-        plt.plot(r_data, f1_data)
-        plt.show()
-        print('f1_max:', f1_max)"""
+        #r_data = np.linspace(0, .1, 512)
+        #f1_data = [self.eval_f1(r, 2*np.pi) for r in r_data]
+        #f1_max = np.max(np.abs(f1_data))
+        #print('f1_max:', f1_max)
+
+        #th = np.pi
+        #z_data = [self.problem.eval_v(r, th) - self.eval_v_asympt(r, th)
+        #    for r in r_data]
+        #plt.plot(r_data, z_data)
+        #plt.show()
 
     def calc_z1_fourier(self):
         expected_z1_fourier = self.get_expected_z1_fourier()
@@ -216,10 +222,7 @@ class ZMethod:
         fft_a_coef = self.get_expected_a_coef()
 
         if self.acheat:
-            #self.a_coef = fft_a_coef
-
-            # FIXME
-            self.a_coef = np.zeros(M)
+            self.a_coef = fft_a_coef
         else:
             eval_phi0 = self.problem.eval_phi0
             v_interp = self.create_v_interp()
@@ -231,21 +234,25 @@ class ZMethod:
             a_coef, singvals = abcoef.calc_a_coef(self.problem,
                 self.boundary, eval_bc0, self.M, self.problem.get_m1())
 
+            #a_coef = arc_dst(a, eval_bc0)[:self.M]
             self.a_coef = a_coef
 
+            np.set_printoptions(precision=4)
             if self.boundary.name == 'arc':
-                error = np.max(np.abs(self.a_coef - fft_a_coef))
+                error = np.abs(self.a_coef - fft_a_coef)
                 print('a_coef error:', error)
-            elif self.problem.name == 'i-bessel':
+                print()
+            elif self.problem.name == 'iz-bessel':
                 print('a_coef:', scipy.real(a_coef))
+                print()
 
     def get_expected_a_coef(self):
         def eval_bc0(th):
             r = self.boundary.eval_r(th)
             return self.problem.eval_phi0(th) - self.problem.eval_v(r, th)
 
-        return arc_dst(self.a, eval_bc0)[:self.M]
-
+        b_coef = arc_dst(self.a, eval_bc0)[:self.M]
+        return abcoef.b_to_a(b_coef, self.k, self.problem.R, self.nu)
 
     def create_v_interp(self):
         """
@@ -311,7 +318,7 @@ class ZMethod:
 
         a_coef = self.a_coef
 
-        expected_known = self.problem.name == 'i-bessel'
+        expected_known = self.problem.name == 'iz-bessel'
 
         class u_BVP(SympyProblem, PizzaProblem):
 
@@ -328,9 +335,8 @@ class ZMethod:
                 if sid == 0:
                     bc = eval_phi0(th) - eval_v_asympt(r, th)
 
-                    # FIXME
-                    #for m in range(1, M+1):
-                    #    bc -= a_coef[m-1] * np.sin(m*nu*(th-a))
+                    for m in range(1, M+1):
+                        bc -= a_coef[m-1] * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
 
                     return bc
 
@@ -358,3 +364,21 @@ class ZMethod:
         result = self.pert_solver.run()
         self.u = result.u_act
         self.u_error = result.error
+
+    def get_v_error(self):
+        N = self.N
+        errors = []
+
+        for m in range(1, N):
+            r = self.polarfd.get_r(m)
+            expected = np.zeros(N-1)
+
+            for l in range(1, N):
+                th = self.polarfd.get_th(l)
+                expected[l-1] = self.problem.eval_v(r, th)
+
+            to_dst = expected - self.v[m, 1:N]
+            fourier = dst(to_dst, type=1)[:self.M] / N
+            errors.append(np.max(np.abs(fourier)))
+
+        return max(errors)

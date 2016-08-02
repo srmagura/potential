@@ -8,16 +8,16 @@ OUT_DIR_noescape = r'/Users/sam/Google Drive/research/output/'
 
 #problem_list = ('trace-sine-range', 'shift-hat', 'shift-parabola',
 #    'shift-line-sine',)
-problem_list = ('ih-bessel-line',)
+problem_list = ('ihz-bessel-line',)
 boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
 
-args = '-c 1024 -r --polarfd-N 512 --polarfd-N2 1024'
+args = '-c 1024'
 
 def worker(inputs):
     problem, boundary = inputs
     filename = OUT_DIR_escape + problem + '/' + boundary + '.txt'
 
-    command = 'python3 run.py {} {} {}'.format(problem, boundary, args)
+    command = 'python3 runz.py {} {} {}'.format(problem, boundary, args)
     command += ' > ' + filename
     #print(command)
     subprocess.call(command, shell=True)

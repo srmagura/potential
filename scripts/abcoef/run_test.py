@@ -1,6 +1,6 @@
 # To allow __main__ in subdirectory
 import sys
-sys.path.append(sys.path[0] + '/..')
+sys.path.append(sys.path[0] + '/../..')
 
 import argparse
 
@@ -11,9 +11,8 @@ import io_util
 import problems
 import problems.boundary
 
-import ps.coordinator
 
-from star.shared import calc_a_coef
+from abcoef import calc_a_coef
 
 parser = argparse.ArgumentParser()
 
@@ -22,9 +21,6 @@ args = parser.parse_args()
 
 problem = problems.problem_dict[args.problem]()
 boundary = problems.boundary.boundaries[args.boundary](problem.R)
-
-#coord = ps.coordinator.Coordinator(problem, None, {'boundary': boundary})
-#coord.print_info()
 
 M = 7
 
@@ -37,8 +33,9 @@ R = problem.R
 a = problem.a
 nu = problem.nu
 
-def eval_phi0(r, th):
-    return problem.eval_expected_polar(r, th)
+def eval_phi0(th):
+    r = boundary.eval_r(th)
+    return problem.eval_expected_(r, th)
 
 def print_array(array):
     assert np.max(np.abs(scipy.imag(array))) == 0

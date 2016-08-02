@@ -86,7 +86,8 @@ v0 = None
 # Cache result of ODE method
 z1_fourier = None
 
-prev_error = None
+prev_u_error = None
+prev_v_error = None
 
 for N in N_list:
     options['N'] = N
@@ -100,32 +101,43 @@ for N in N_list:
     polarfd = result['polarfd']
     pert_solver = result['pert_solver']
     u_error = result['u_error']
-
-    if u_error is not None:
-        print('Error: ' + prec_str.format(u_error))
+    v_error = result['v_error']
 
     v2 = v1
     v1 = v0
     v0 = result['v']
 
+    if v_error is not None:
+        print('v error: ' + prec_str.format(v_error))
+
+    #if v2 is not None:
+    #    convergence = polarfd.calc_rel_convergence(v0, v1, v2)
+    #    print('v rel convergence: ' + prec_str.format(convergence))
+
+    if prev_v_error is not None:
+        convergence = np.log2(prev_v_error / v_error)
+        print('v convergence: ' + prec_str.format(convergence))
+
+    print()
+
     u2 = u1
     u1 = u0
     u0 = result['u']
 
-    if v2 is not None:
-        convergence = polarfd.calc_rel_convergence(v0, v1, v2)
-        print('v rel convergence: ' + prec_str.format(convergence))
+    if u_error is not None:
+        print('Error: ' + prec_str.format(u_error))
 
     if u2 is not None:
         convergence = pert_solver.calc_rel_convergence(u0, u1, u2)
         print('u rel convergence: ' + prec_str.format(convergence))
 
-    if prev_error is not None:
-        convergence = np.log2(prev_error / u_error)
+    if prev_u_error is not None:
+        convergence = np.log2(prev_u_error / u_error)
         print('u convergence: ' + prec_str.format(convergence))
 
     print()
     sys.stdout.flush()
 
     z1_fourier = my_zmethod.z1_fourier
-    prev_error = u_error
+    prev_u_error = u_error
+    prev_v_error = v_error

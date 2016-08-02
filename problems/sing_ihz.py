@@ -27,14 +27,6 @@ class SingIH_Problem(PizzaProblem):
         1024: (120, 45),
     }
 
-    # Could be improved
-    m1_dict = {
-        'arc': 7,
-        'outer-sine': 134,
-        'inner-sine': 220,
-        'cubic': 210,
-        'sine7': 200,
-    }
 
 class IH_Bessel(SingIH_Problem):
     """ Abstract class. """
@@ -53,7 +45,7 @@ class IH_Bessel(SingIH_Problem):
 
         v_asympt0 = 0
 
-        for l in range(3):
+        for l in range(8):
             x = (K+1/2)*nu + l + 1
             v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
 
@@ -82,6 +74,14 @@ class IZ_Bessel(IH_Bessel):
     a coefficients are all 0
     """
 
+    m1_dict = {
+        'arc': 7,
+        'outer-sine': 134,
+        'inner-sine': 220,
+        'cubic': 210,
+        'sine7': 200,
+    }
+
     def eval_phi0(self, th):
         r = self.boundary.eval_r(th)
         return self.eval_v(r, th)
@@ -98,40 +98,33 @@ class IZ_Bessel(IH_Bessel):
     def eval_expected_polar(self, r, th):
         return self.eval_v(r, th)
 
-class I_Bessel3(I_Bessel):
 
-    K = 3
+class IHZ_Bessel_Line(IH_Bessel):
 
+    m1_dict = {
+        'arc': 8,
+        'outer-sine': 210,
+        'inner-sine': 236,
+        'cubic': 200,
+        'sine7': 204,
+    }
 
-class IH_Bessel_Line(IH_Bessel):
-
-    def __init__(self, **kwargs):
-        a = self.a
-        nu = self.nu
-        k = self.k
-        R = self.R
-
-        def to_dst(th):
-            return jv(nu/2, k*R) * (th - a) / (2*np.pi - a) - self.eval_v(R, th)
-
-        kwargs['to_dst'] = to_dst
-        super().__init__(**kwargs)
-
-    def eval_bc(self, arg, sid):
+    def eval_phi0(self, th):
         a = self.a
         nu = self.nu
         k = self.k
 
-        r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-        if sid == 0:
-            return jv(nu/2, k*r) * (th - a) / (2*np.pi - a)
-        elif sid == 1:
-            if r > 0:
-                return jv(nu/2, k*r)
-            else:
-                return 0
-        elif sid == 2:
+        r = self.boundary.eval_r(th)
+        return jv(nu/2, k*r) * (th - a) / (2*np.pi - a)
+
+    def eval_phi1(self, r):
+        if r > 0:
+            return jv(self.nu/2, self.k*r)
+        else:
             return 0
+
+    def eval_phi2(self, r):
+        return 0
 
 
 
