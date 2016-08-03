@@ -39,12 +39,12 @@ class ZMethod:
         self.nu = PizzaProblem.nu
         self.k = self.problem.k
 
-        self.arc_R = self.boundary.R + self.boundary.bet
-
+        self.arc_R = self.boundary.R + self.boundary.bet + 1
 
         self.do_algebra()
         self.calc_z1_fourier()
         self.do_z_BVP()
+        self.create_v_interp()
         self.calc_a_coef()
         self.do_u_BVP()
 
@@ -78,11 +78,13 @@ class ZMethod:
         # p(1) = 1 and p'(1) = p"(1) = 0
         p = 10 * x**3 - 15 * x**4 + 6 * x**5
 
-        # TODO insert q1
+        q1 = (r**2 * 1/2 * (th-a)**2 * f0.subs(th, a) *
+            p.subs(x, (a-th)/(2*pi-a)+1))
+
         q2 = (r**2 * 1/2 * (th-2*np.pi)**2 * f0.subs(th, 2*pi) *
             p.subs(x, (th-2*pi)/(2*pi-a)+1))
 
-        q = q2
+        q = q1 + q2
         f1 = f0 - apply_helmholtz_op(q)
 
         subs_dict = {
@@ -112,19 +114,33 @@ class ZMethod:
         self.f_expr = f
         self.eval_v_asympt = my_lambdify(v_asympt)
 
+        eval_g = my_lambdify(g)
         self.eval_gq = my_lambdify(g+q)
         self.eval_f1 = my_lambdify(f1)
 
         #r_data = np.linspace(0, .1, 512)
         #f1_data = [self.eval_f1(r, 2*np.pi) for r in r_data]
+        #f1_data += [self.eval_f1(r, self.a) for r in r_data]
         #f1_max = np.max(np.abs(f1_data))
         #print('f1_max:', f1_max)
+
+        #bc_data1 = [self.problem.eval_phi1(r) - self.eval_v_asympt(r, 2*np.pi)
+        #    - eval_g(r, 2*np.pi) for r in r_data]
+        #bc_max1 = np.max(np.abs(bc_data1))
+        #print('bc_max1:', bc_max1)
+
+        #bc_data2 = [self.problem.eval_phi2(r) - self.eval_v_asympt(r, self.a)
+        #    - eval_g(r, self.a) for r in r_data]
+        #bc_max2 = np.max(np.abs(bc_data2))
+        #print('bc_max2:', bc_max2)
 
         #th = np.pi
         #z_data = [self.problem.eval_v(r, th) - self.eval_v_asympt(r, th)
         #    for r in r_data]
         #plt.plot(r_data, z_data)
         #plt.show()
+
+
 
     def calc_z1_fourier(self):
         expected_z1_fourier = self.get_expected_z1_fourier()
@@ -167,6 +183,7 @@ class ZMethod:
         nu = self.nu
         k = self.k
         M = self.M
+        N = self.N
 
         f_expr = self.f_expr
 
@@ -194,15 +211,18 @@ class ZMethod:
                 v_asympt = self.eval_v_asympt(r, a)
                 return self.problem.eval_phi2(r) - v_asympt
 
-        self.polarfd = PolarFD(self.N, a, nu, self.arc_R)
-        z = self.polarfd.solve(k,
-            eval_phi0, eval_phi1, eval_phi2,
-            dummy.eval_f_polar, dummy.eval_d_f_r,
-            dummy.eval_d2_f_r, dummy.eval_d2_f_th
-        )
+        self.polarfd = PolarFD(N, a, nu, self.arc_R)
+
+        if not self.acheat:
+            z = self.polarfd.solve(k,
+                eval_phi0, eval_phi1, eval_phi2,
+                dummy.eval_f_polar, dummy.eval_d_f_r,
+                dummy.eval_d2_f_r, dummy.eval_d2_f_th
+            )
+        else:
+            z = np.zeros((N+1)**2)
 
         # Add back v_asympt
-        N = self.N
         self.v = np.zeros((N+1, N+1), dtype=complex)
 
         for m in range(N+1):
@@ -225,16 +245,14 @@ class ZMethod:
             self.a_coef = fft_a_coef
         else:
             eval_phi0 = self.problem.eval_phi0
-            v_interp = self.create_v_interp()
 
             def eval_bc0(th):
                 r = self.boundary.eval_r(th)
-                return eval_phi0(th) - v_interp(r, th)
+                return eval_phi0(th) - self.v_interp(r, th)
 
             a_coef, singvals = abcoef.calc_a_coef(self.problem,
                 self.boundary, eval_bc0, self.M, self.problem.get_m1())
 
-            #a_coef = arc_dst(a, eval_bc0)[:self.M]
             self.a_coef = a_coef
 
             np.set_printoptions(precision=4)
@@ -250,6 +268,16 @@ class ZMethod:
         def eval_bc0(th):
             r = self.boundary.eval_r(th)
             return self.problem.eval_phi0(th) - self.problem.eval_v(r, th)
+
+        def eval_diff(th):
+            r = self.boundary.eval_r(th)
+            return self.problem.eval_v(r, th) - self.v_interp(r, th)
+
+
+        interp_error = arc_dst(self.a, eval_diff)[:self.M]
+        print('b interp error:')
+        print(interp_error)
+        print()
 
         b_coef = arc_dst(self.a, eval_bc0)[:self.M]
         return abcoef.b_to_a(b_coef, self.k, self.problem.R, self.nu)
@@ -300,7 +328,7 @@ class ZMethod:
         def interp(r, th):
             return complex(real_interp(r, th), imag_interp(r, th))
 
-        return interp
+        self.v_interp = interp
 
     def do_u_BVP(self):
         a = self.a

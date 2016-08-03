@@ -27,32 +27,42 @@ class SingIH_Problem(PizzaProblem):
         1024: (120, 45),
     }
 
+nterms = 8
+print('FS nterms:', nterms)
+
+def get_v_asympt0(K, k, nu):
+    v_asympt0 = 0
+    r, th = sympy.symbols('r th')
+    kr2 = k*r/2
+
+
+    for l in range(nterms):
+        x = (K+1/2)*nu + l + 1
+        v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
+
+    v_asympt0 *= kr2**((K+1/2)*nu)
+    return v_asympt0
+
 
 class IH_Bessel(SingIH_Problem):
     """ Abstract class. """
 
     expected_known = False
-    K = 0
+
 
     def __init__(self, **kwargs):
         a = self.a
         nu = self.nu
         k = self.k
-        K = self.K
 
         r, th = sympy.symbols('r th')
-        kr2 = k*r/2
 
-        v_asympt0 = 0
+        v_asympt01 = get_v_asympt0(0, k, nu)
 
-        for l in range(8):
-            x = (K+1/2)*nu + l + 1
-            v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
-
-        v_asympt0 *= kr2**((K+1/2)*nu)
-
-        self.v_asympt = v_asympt0 * sympy.sin(nu*(K+1/2)*(th-a))
-        self.g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt0)
+        self.v_asympt = (
+            get_v_asympt0(0, k, nu) * sympy.sin(nu/2*(th-a))
+        )
+        self.g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt01)
 
 
     def eval_v(self, r, th):
@@ -62,12 +72,12 @@ class IH_Bessel(SingIH_Problem):
         a = self.a
         nu = self.nu
         k = self.k
-        K = self.K
 
-        return jv(nu*(K+1/2), k*r) * np.sin(nu*(K+1/2)* (th-a))
+        return jv(nu/2, k*r) * np.sin(nu/2* (th-a))
 
     #def eval_expected__no_w(self, r, th):
     #    return self.eval_v(r, th)
+
 
 class IZ_Bessel(IH_Bessel):
     """
@@ -127,15 +137,70 @@ class IHZ_Bessel_Line(IH_Bessel):
         return 0
 
 
+class IHZ_Bessel_Quadratic(SingIH_Problem):
 
-# TODO change data on wedge
-"""class IH_Bessel_Quadratic(IH_Bessel):
+    expected_known = False
 
-    def eval_bc(self, arg, sid):
+    m1_dict = {
+        'arc': 7,
+        'outer-sine': 200,
+        'inner-sine': 220,
+        'cubic': 140,
+        'sine7': 218,
+    }
+
+    def __init__(self, **kwargs):
         a = self.a
         nu = self.nu
         k = self.k
-        R = self.R
 
-        th = arg
-        return jv(nu/2, k*R) * (th - a)**2 / (2*np.pi - a)**2"""
+        r, th = sympy.symbols('r th')
+
+        v_asympt01 = get_v_asympt0(0, k, nu)
+        v_asympt03 = get_v_asympt0(1, k, nu)
+
+        self.v_asympt = (
+            v_asympt01 * sympy.sin(nu/2*(th-a)) +
+            v_asympt03 * sympy.sin(3*nu/2*(th-2*np.pi))
+        )
+
+        self.g = (
+            (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt01)
+            + (th - 2*np.pi) / (a - 2*np.pi) * (sympy.besselj(3*nu/2, k*r) - v_asympt03)
+        )
+
+    def eval_v(self, r, th):
+        """
+        Using this function is "cheating".
+        """
+        a = self.a
+        nu = self.nu
+        k = self.k
+
+        return (
+            jv(nu/2, k*r) * np.sin(nu/2 * (th-a)) +
+            jv(3*nu/2, k*r) * np.sin(3*nu/2 * (th-2*np.pi))
+        )
+
+    def eval_phi0(self, th):
+        a = self.a
+        nu = self.nu
+        k = self.k
+
+        r = self.boundary.eval_r(th)
+        p = lambda th: (th-a) * (th - (2*np.pi-a)) / (a*(2*np.pi - a))
+
+        return jv(3*nu/2, k*r) + (jv(nu/2, k*r) - jv(3*nu/2, k*r)) * p(th)
+        #return self.eval_v(r, th) #FIXME
+
+    def eval_phi1(self, r):
+        if r > 0:
+            return jv(self.nu/2, self.k*r)
+        else:
+            return 0
+
+    def eval_phi2(self, r):
+        if r > 0:
+            return jv(3*self.nu/2, self.k*r)
+        else:
+            return 0
