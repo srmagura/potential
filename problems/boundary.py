@@ -135,7 +135,7 @@ class Boundary:
                 (y1 - y0) * (-dr*np.sin(th) - r*np.cos(th)))
 
         # Optimization bounds
-        diff = np.pi/6
+        diff = np.pi/7
 
         lbound = th1 - diff
 

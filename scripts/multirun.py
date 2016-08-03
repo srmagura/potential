@@ -9,7 +9,7 @@ OUT_DIR_noescape = r'/Users/sam/Google Drive/research/output/'
 #problem_list = ('trace-sine-range', 'shift-hat', 'shift-parabola',
 #    'shift-line-sine',)
 problem_list = ('ihz-bessel-quadratic',)
-boundary_list = ('outer-sine', 'inner-sine', 'cubic', 'sine7',)
+boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
 
 args = '-c 1024'
 
