@@ -6,6 +6,7 @@ import sympy
 
 import domain_util
 
+import problems.functions as functions
 from .singular import SingularKnown, HReg
 from .sympy_problem import SympyProblem
 from .problem import PizzaProblem
@@ -15,7 +16,6 @@ from .problem import PizzaProblem
 class SingIH_Problem(PizzaProblem):
 
     zmethod = True
-    k = 3
 
     n_basis_dict = {
         16: (24, 6),
@@ -27,8 +27,19 @@ class SingIH_Problem(PizzaProblem):
         1024: (120, 45),
     }
 
+    m1_dict = {
+        'arc': 7,
+        'outer-sine': 200,
+        'inner-sine': 200,
+        'cubic': 200,
+        'sine7': 200,
+    }
+
 nterms = 8
 print('FS nterms:', nterms)
+
+alt_phi1_ext = False
+print('ihz-bessel-line alternate phi1 extension:', alt_phi1_ext)
 
 def get_v_asympt0(K, k, nu):
     v_asympt0 = 0
@@ -54,6 +65,7 @@ class IH_Bessel(SingIH_Problem):
         a = self.a
         nu = self.nu
         k = self.k
+        R = self.R
 
         r, th = sympy.symbols('r th')
 
@@ -62,8 +74,12 @@ class IH_Bessel(SingIH_Problem):
         self.v_asympt = (
             get_v_asympt0(0, k, nu) * sympy.sin(nu/2*(th-a))
         )
-        self.g = (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt01)
 
+        phi1 = sympy.besselj(nu/2, k*r) - v_asympt01
+        if alt_phi1_ext:
+            phi1 += sympy.Piecewise((0, r<R), ((r-R)**5, True))
+
+        self.g = (th - a) / (2*np.pi - a) * (phi1)
 
     def eval_v(self, r, th):
         """
@@ -111,13 +127,7 @@ class IZ_Bessel(IH_Bessel):
 
 class IHZ_Bessel_Line(IH_Bessel):
 
-    m1_dict = {
-        'arc': 8,
-        'outer-sine': 210,
-        'inner-sine': 236,
-        'cubic': 200,
-        'sine7': 204,
-    }
+    k = 5.5
 
     def eval_phi0(self, th):
         a = self.a
@@ -128,8 +138,14 @@ class IHZ_Bessel_Line(IH_Bessel):
         return jv(nu/2, k*r) * (th - a) / (2*np.pi - a)
 
     def eval_phi1(self, r):
-        if r > 0:
-            return jv(self.nu/2, self.k*r)
+        R = self.R
+        bc = jv(self.nu/2, self.k*r)
+
+
+        if r > R and alt_phi1_ext:
+            return bc + (r-R)**5
+        elif r > 0:
+            return bc
         else:
             return 0
 
@@ -139,15 +155,9 @@ class IHZ_Bessel_Line(IH_Bessel):
 
 class IHZ_Bessel_Quadratic(SingIH_Problem):
 
-    expected_known = False
+    k = 3
 
-    m1_dict = {
-        'arc': 7,
-        'outer-sine': 200,
-        'inner-sine': 220,
-        'cubic': 140,
-        'sine7': 218,
-    }
+    expected_known = False
 
     def __init__(self, **kwargs):
         a = self.a

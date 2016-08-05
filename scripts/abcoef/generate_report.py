@@ -5,7 +5,8 @@ import sys
 M = 7
 prec_str = '{:.5}'
 
-problem_list = ('trace-hat', 'trace-parabola', 'trace-line-sine',)
+#problem_list = ('trace-hat', 'trace-parabola', 'trace-line-sine',)
+problem_list = ('trace-line-sine',)
 boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
 
 def create_header(max_error):

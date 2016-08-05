@@ -26,7 +26,7 @@ class SingularKnown(SingularProblem):
     Singular problem with known solution.
     """
 
-    m_max = 200
+    m_max = 300
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -36,12 +36,10 @@ class SingularKnown(SingularProblem):
         else:
             self.to_dst = lambda th: 0
 
-    def set_boundary(self, boundary):
-        super().set_boundary(boundary)
-        if self.boundary.name == 'arc':
-            self.fft_b_coef = fourier.arc_dst(self.a, self.to_dst)[:self.m_max]
-            self.fft_a_coef = abcoef.b_to_a(self.fft_b_coef, self.k,
-                self.R, self.nu)
+        self.fft_b_coef = fourier.arc_dst(self.a, self.to_dst)[:self.m_max]
+        self.fft_a_coef = abcoef.b_to_a(self.fft_b_coef, self.k,
+            self.R, self.nu)
+
 
     def eval_expected_polar(self, r, th):
         k = self.k

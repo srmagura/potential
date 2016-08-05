@@ -9,8 +9,8 @@ class Boundary:
 
     additional_params = {}
 
-    def __init__(self, R, bet=None, k=None):
-        self.a = PizzaProblem.a
+    def __init__(self, R, bet=None, k=None, a=PizzaProblem.a):
+        self.a = a
         self.R = R
 
         if bet is None:
@@ -22,7 +22,7 @@ class Boundary:
             'R': self.R,
             'bet': self.bet,
             'a': self.a,
-            'nu': PizzaProblem.nu
+            'nu': np.pi / (2*np.pi-self.a)
         }
 
         self.subs_dict.update(self.additional_params)
@@ -179,7 +179,7 @@ class InnerSine(Boundary):
 class Sine7(Boundary):
     name = 'sine7'
     r_expr_str = 'R + bet*sin(7*nu*(th-a))'
-    bet0 = 0.05
+    bet0 = 0.025
 
 
 cubic_C = (91*np.sqrt(91) - 136)*np.pi**3/2916

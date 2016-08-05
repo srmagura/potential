@@ -118,21 +118,21 @@ class ZMethod:
         self.eval_gq = my_lambdify(g+q)
         self.eval_f1 = my_lambdify(f1)
 
-        #r_data = np.linspace(0, .1, 512)
-        #f1_data = [self.eval_f1(r, 2*np.pi) for r in r_data]
-        #f1_data += [self.eval_f1(r, self.a) for r in r_data]
-        #f1_max = np.max(np.abs(f1_data))
-        #print('f1_max:', f1_max)
+        """r_data = np.linspace(0, .1, 512)
+        f1_data = [self.eval_f1(r, 2*np.pi) for r in r_data]
+        f1_data += [self.eval_f1(r, self.a) for r in r_data]
+        f1_max = np.max(np.abs(f1_data))
+        print('f1_max:', f1_max)
 
-        #bc_data1 = [self.problem.eval_phi1(r) - self.eval_v_asympt(r, 2*np.pi)
-        #    - eval_g(r, 2*np.pi) for r in r_data]
-        #bc_max1 = np.max(np.abs(bc_data1))
-        #print('bc_max1:', bc_max1)
+        bc_data1 = [self.problem.eval_phi1(r) - self.eval_v_asympt(r, 2*np.pi)
+            - eval_g(r, 2*np.pi) for r in r_data]
+        bc_max1 = np.max(np.abs(bc_data1))
+        print('bc_max1:', bc_max1)
 
-        #bc_data2 = [self.problem.eval_phi2(r) - self.eval_v_asympt(r, self.a)
-        #    - eval_g(r, self.a) for r in r_data]
-        #bc_max2 = np.max(np.abs(bc_data2))
-        #print('bc_max2:', bc_max2)
+        bc_data2 = [self.problem.eval_phi2(r) - self.eval_v_asympt(r, self.a)
+            - eval_g(r, self.a) for r in r_data]
+        bc_max2 = np.max(np.abs(bc_data2))
+        print('bc_max2:', bc_max2)"""
 
         #th = np.pi
         #z_data = [self.problem.eval_v(r, th) - self.eval_v_asympt(r, th)

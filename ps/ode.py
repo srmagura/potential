@@ -6,10 +6,10 @@ from scipy.interpolate import interp1d
 import abcoef
 import fourier
 
-# Recommended: 512
+# Recommended: 1024
 fourier_N = 1024
 
-# Recommended: 1e-10
+# Recommended: 1e-12
 atol = rtol = 1e-12
 
 def my_print(s):

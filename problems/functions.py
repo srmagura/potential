@@ -27,6 +27,4 @@ def eval_parabola(th, a):
     return -(th - a) * (th - 2*np.pi)
 
 def eval_linesine(th, k, R, a, nu):
-    # FIXME ? (depends on k)
-
     return jv(nu/2, k*R)*((th - a)/(2*np.pi - a) - np.sin(nu/2*(th-a)))

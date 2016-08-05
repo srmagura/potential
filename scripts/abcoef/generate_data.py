@@ -17,7 +17,7 @@ M = 7
 
 output = {}
 
-problem_list = ('trace-hat', 'trace-parabola', 'trace-line-sine',)
+problem_list = ('trace-line-sine', 'trace-parabola')
 boundary_list = problems.boundary.boundaries.keys()
 
 m1_list = range(8, 250, 2)
@@ -48,7 +48,7 @@ for problem_name in problem_list:
 
         if boundary.name == 'arc':
             max_series_error = 0
-            for th in np.linspace(problem.a, 2*np.pi, 512):
+            for th in np.linspace(problem.a, 2*np.pi, 1024):
                 series_error = abs(problem.eval_bc(th, 0) - problem.eval_phi0(th))
 
                 if series_error > max_series_error:
@@ -57,9 +57,6 @@ for problem_name in problem_list:
             problem_results['series_error'] = max_series_error
 
         min_error7 = float('inf')
-
-        # FIXME
-        m1_list = [problem.get_m1()]
 
         for m1 in m1_list:
             a_coef, singular_vals = calc_a_coef(problem, boundary,
