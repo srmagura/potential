@@ -10,7 +10,7 @@ from .smooth import Smooth_Sine, Smooth_E, Smooth_YCos
 from .sing_h_trace import Trace_Hat, Trace_Parabola,\
     Trace_Sine8, Trace_SineRange, Trace_LineSine
 from .sing_h_shift import Shift_Hat, Shift_Parabola, Shift_LineSine
-from .sing_ih import I_Bessel #, I_Bessel3, IH_Bessel_Line  #IH_Bessel_Quadratic,
+from .sing_ih import I_Bessel, IH_Bessel_Line
 from .sing_ihz import IZ_Bessel, IHZ_Bessel_Line, IHZ_Bessel_Quadratic
 
 problem_dict = OrderedDict((
@@ -26,6 +26,7 @@ problem_dict = OrderedDict((
     ('shift-parabola', Shift_Parabola),
     ('shift-line-sine', Shift_LineSine),
     ('i-bessel', I_Bessel),
+    ('ih-bessel-line', IH_Bessel_Line),
     ('iz-bessel', IZ_Bessel),
     ('ihz-bessel-line', IHZ_Bessel_Line),
     ('ihz-bessel-quadratic', IHZ_Bessel_Quadratic),

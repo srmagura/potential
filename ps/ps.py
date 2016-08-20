@@ -4,6 +4,9 @@ import numpy as np
 import scipy
 from scipy.special import jv
 
+# TODO remove
+import matplotlib.pyplot as plt
+
 from solver import Solver, Result
 from linop import apply_B
 import fourier
@@ -131,6 +134,30 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         for i, j in self.all_gamma[0]:
             self.boundary_coord_cache[(i, j)] = self.get_boundary_coord(i, j)
 
+    def get_d_matrix(self):
+        """
+        Create matrix whose columns contain the Chebyshev coefficients
+        for the functions jv*sin(m*nu*(th-a)) for m=1...M.
+        """
+        # FIXME for perturbed
+
+        k = self.k
+        R = self.R
+        a = self.a
+        nu = self.nu
+
+        d_columns = []
+
+        for m in range(1, self.M+1):
+            def func(th):
+                return np.sin(m*nu*(th-a))
+
+            d = self.get_chebyshev_coef(0, func)
+            d = np.matrix(d.reshape((len(d), 1)))
+            d_columns.append(jv(m*nu, k*R) * d)
+
+        return np.column_stack(d_columns)
+
 
     def get_potential(self, ext):
         """
@@ -163,12 +190,15 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         return trace
 
-    def get_Q(self, index):
+    def get_Q(self, index, sid):
+        """
+        Get one of the three submatrices that are used in the construction of
+        V.
+        """
         columns = []
 
-        for JJ in range(len(self.B_desc)):
+        for JJ in self.segment_desc[sid]['JJ_list']:
             ext = self.extend_basis(JJ, index)
-
             potential = self.get_potential(ext)
             projection = self.get_trace(potential)
 
@@ -180,31 +210,165 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         """
         Get the matrices V0 and V1, and the RHS of the variational
         formulation.
-
         V0, V1, and RHS are the main components of the variational formulation,
         an overdetermined linear system used to solve for the unknown Neumann
         coefficients. V0 operates on the (known) Dirichlet Chebyshev
         coefficients, while V1 operates on the vector of unknowns (Neumann
-        Chebyshev coefficients).
+        Chebyshev coefficients and Fourier b coefficients).
+        index -- 0 or 1
         """
-        Q0 = self.get_Q(0)
-        Q1 = self.get_Q(1)
+
+        # Put the Q-submatrices in a 2x3 multidimensional list. The first row
+        # corresponds to V0, while the second row corresponds to V1.
+        submatrices = []
+        for index in (0, 1):
+            row = []
+            for sid in range(self.N_SEGMENT):
+                row.append(self.get_Q(index, sid))
+
+            submatrices.append(row)
+
+        rhs = np.zeros(len(self.union_gamma), dtype=complex)
+
+        #if self.problem.var_compute_a:
+
+        submatrices[1].append(-submatrices[0][0].dot(
+            self.get_d_matrix()))
+
+        V0 = np.concatenate(submatrices[0], axis=1)
+        V1 = np.concatenate(submatrices[1], axis=1)
 
         # Compute the RHS of the variational formulation.
         ext_f = self.extend_inhomo_f()
         proj_f = self.get_potential(ext_f)
 
         term = self.get_trace(proj_f + self.ap_sol_f)
-        rhs = -Q0.dot(self.c0) + ext_f - term
+        rhs += -V0.dot(self.c0) + ext_f - term
 
-        return (Q1, rhs)
+        M = self.M
+
+        for match_r in np.arange(.001, 1, .01):
+            enforce_nodes = []
+            for i, j in self.union_gamma:
+                r, th = self.get_polar(i, j)
+                if .001 < r and r < match_r:
+                    if (i, j) in self.all_gamma[1]:
+                        enforce_nodes.append((i, j, 1))
+                    if (i, j) in self.all_gamma[2]:
+                        enforce_nodes.append((i, j, 1))
+
+            if len(enforce_nodes) >= 10:
+                break
+
+        print('match_r={}  count={}'.format(match_r, len(enforce_nodes)))
+
+        new_V1 = np.zeros((V1.shape[0]+len(enforce_nodes), V1.shape[1]), dtype=complex)
+        new_V1[:V1.shape[0], :] = V1
+
+        chebyshev_error = []
+        for l in range(len(enforce_nodes)):
+            i, j, sid = enforce_nodes[l]
+
+            if sid == 1:
+                th = 2*np.pi
+            else:
+                th = self.a
+
+            nu = self.nu
+
+            for m in range(1, self.M+1):
+                def nmn(r):
+                    f=1
+                    if r < 0:
+                        f = -1
+                        r *= -1
+
+                    return f*jv(m*nu, self.k*r) * m*nu*np.cos(m*nu*(th-self.a))
+
+                s = .95
+
+                t_data = []
+                for t in self.chebyshev_roots:
+                    if t < s:
+                        t_data.append(t)
+
+                ccoef = self.get_chebyshev_coef(sid, nmn, t_data=t_data)
+
+                # Test chebyshev error
+                r_data = np.arange(.05, 2.3, .0025)
+                series_data = []
+                exp_data = []
+                for r in r_data:
+                    series = 0
+                    for J in range(self.segment_desc[sid]['n_basis']):
+                        JJ = self.segment_desc[sid]['JJ_list'][J]
+                        series += ccoef[J] * self.eval_dn_B_arg(0, JJ, r, sid)
+
+                    chebyshev_error.append(series-nmn(r))
+                #    series_data.append(series)
+                #    exp_data.append(nmn(r))
+
+                #plt.plot(r_data, series_data, color='green')
+                #plt.plot(r_data, exp_data, color='black')
+                #plt.show()
+
+                #sys.exit(0)
+
+                r, th = self.get_polar(i, j)
+                for J in range(self.segment_desc[sid]['n_basis']):
+                    JJ = self.segment_desc[sid]['JJ_list'][J]
+                    new_V1[V1.shape[0]+l, JJ] += ccoef[J] * self.eval_dn_B_arg(0, JJ, r, sid)
+
+                new_V1[V1.shape[0]+l, len(self.c0)+(m-1)] = -nmn(r)
+
+        new_rhs = np.zeros(len(rhs)+len(enforce_nodes), dtype=complex)
+        new_rhs[:len(rhs)] = rhs
+
+        print('Chebyshev error:', np.max(np.abs(chebyshev_error)))
+
+        return (new_V1, new_rhs)
+
 
     def solve_var(self):
         """
         Setup and solve the variational formulation.
         """
-        Q1, rhs = self.get_var()
-        self.c1 = np.linalg.lstsq(Q1, rhs)[0]
+        V1, rhs = self.get_var()
+        varsol = np.linalg.lstsq(V1, rhs)[0]
+
+        self.handle_varsol(varsol)
+
+    def handle_varsol(self, varsol):
+        """
+        Break up the solution vector of the variational formulation into
+        its meaningful parts.
+        Set c1. Update the boundary data if necessary.
+        """
+        self.c1 = varsol[:len(self.c0)]
+
+        #if self.var_compute_a:
+        var_a = varsol[len(self.c0):]
+
+        #if self.var_method in fft_test_var_methods:
+        #    a_coef = self.problem.fft_a_coef[:self.M]
+        #else:
+        #a_coef = np.zeros(self.M, dtype=complex)
+        #print(var_a)
+        print(np.max(np.abs(var_a)))
+
+        """for i in range(len(self.m_list)):
+            m = self.m_list[i]
+            a_coef[m-1] = var_a[i]
+
+        if self.var_compute_a_only:
+            self.a_coef = a_coef
+            return
+
+        self.problem.a_coef = a_coef
+
+        if self.problem.regularize_bc:
+            self.update_c0()"""
+
 
     def get_singular_part(self):
         singular_part = np.zeros((self.N-1, self.N-1), dtype=complex)

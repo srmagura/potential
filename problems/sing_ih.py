@@ -17,7 +17,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
     k = 3
 
     n_basis_dict = {
-        16: (24, 6),
+        16: (24, 40),
         32: (33, 8),
         64: (42, 12),
         128: (65, 18),
@@ -35,7 +35,6 @@ class SingIH_Problem(SympyProblem, SingularKnown):
     }
 
     def __init__(self, **kwargs):
-        #g = kwargs.pop('g')
         v_asympt = kwargs.pop('v_asympt')
 
         diff = sympy.diff
@@ -46,47 +45,14 @@ class SingIH_Problem(SympyProblem, SingularKnown):
             d_u_r = diff(u, r)
             return diff(d_u_r, r) + d_u_r / r + diff(u, th, 2) / r**2 + k**2 * u
 
-        #f = -apply_helmholtz_op(g + v_asympt)
         f = -apply_helmholtz_op(v_asympt)
         kwargs['f_expr'] = f
 
-        #logistic = 1 / (1 + sympy.exp(-90*(x-0.5)))
-
-        # TODO insert q2
-        #q1 = (r**2 * 1/2 * (th-2*pi)**2 * f.subs(th, 2*pi) *
-        #    logistic.subs(x, (th-2*pi)/(2*pi-a)+1))
-
-        #f1 = f - apply_helmholtz_op(q1)
 
         self.build_sympy_subs_dict()
         subs_dict = self.sympy_subs_dict
         lambdify_modules = SympyProblem.lambdify_modules
 
-        #plt.plot(r_data, f1_data)
-        #plt.show()
-
-        #_f_lambda = sympy.lambdify(r, f.subs(subs_dict).subs('th', 2*np.pi),
-        #    modules=lambdify_modules)
-        #f_data = np.array([_f_lambda(r) for r in r_data])
-        #print('fmax: ', np.max(np.abs(f_data)))
-
-        #plt.plot(r_data, f_data)
-
-        #q1_lambda = sympy.lambdify(r, q1.subs(subs_dict).subs('th', np.pi),
-        #    modules=lambdify_modules)
-        #q1_data = np.array([q1_lambda(r) for r in r_data])
-        #print('qmax: ', np.max(np.abs(q1_data)))
-
-        #plt.plot(r_data, q1_data)
-        #plt.show()
-
-        #_lambda = sympy.lambdify(r,
-        #    (abs(diff(q1, u, r) + .subs(subs_dict).subs('th', 2*np.pi),
-        #    modules=lambdify_modules)
-        #f_data = np.array([_f_lambda(r) for r in r_data])
-
-        #plt.show()
-        #import sys; sys.exit(0)
 
         def my_lambdify(expr):
             return sympy.lambdify((r, th),
@@ -103,14 +69,6 @@ class SingIH_Problem(SympyProblem, SingularKnown):
                 return 0
 
         self.eval_regfunc = eval_regfunc
-
-        #self.eval_q = my_lambdify(q1)
-        #self.eval_f1 = my_lambdify(f1)
-
-        #r_data = np.arange(self.R/256, self.R, .0001)
-
-        #f1_data = np.array([self.eval_f1(r, 2*np.pi) for r in r_data])
-        #print('f1_max:', np.max(np.abs(f1_data)))'''
 
         super().__init__(**kwargs)
 
@@ -202,13 +160,13 @@ class I_Bessel(IH_Bessel):
         elif sid == 2:
             return 0
 
-
-class I_Bessel3(I_Bessel):
-
-    K = 3
+    def eval_expected_polar(self, r, th):
+        return self.eval_v(r, th)
 
 
 class IH_Bessel_Line(IH_Bessel):
+
+    hreg = HReg.none
 
     def __init__(self, **kwargs):
         a = self.a

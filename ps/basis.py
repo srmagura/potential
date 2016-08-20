@@ -130,7 +130,7 @@ class PsBasis:
             print()
 
 
-    def get_chebyshev_coef(self, sid, func):
+    def get_chebyshev_coef(self, sid, func, t_data=None):
         """
         Compute the Chebyshev expansion of a function defined on one of
         the segments of the boundary.
@@ -141,7 +141,8 @@ class PsBasis:
         sid -- segment ID for the boundary segment
         func -- the function to be approximated
         """
-        t_data = self.chebyshev_roots
+        if t_data is None:
+            t_data = self.chebyshev_roots
         boundary_data = np.zeros(len(t_data), dtype=complex)
 
         for i in range(len(t_data)):
@@ -149,6 +150,7 @@ class PsBasis:
             boundary_data[i] = func(arg)
 
         n_basis = self.segment_desc[sid]['n_basis']
+
         return np.polynomial.chebyshev.chebfit(t_data, boundary_data,
             n_basis-1)
 
