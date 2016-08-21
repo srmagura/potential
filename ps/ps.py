@@ -4,6 +4,8 @@ import numpy as np
 import scipy
 from scipy.special import jv
 
+from chebyshev import eval_T
+
 # TODO remove
 import matplotlib.pyplot as plt
 
@@ -247,7 +249,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         M = self.M
 
-        for match_r in np.arange(.001, 1, .01):
+        """for match_r in np.arange(.001, 1, .01):
             enforce_nodes = []
             for i, j in self.union_gamma:
                 r, th = self.get_polar(i, j)
@@ -255,19 +257,30 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
                     if (i, j) in self.all_gamma[1]:
                         enforce_nodes.append((i, j, 1))
                     if (i, j) in self.all_gamma[2]:
-                        enforce_nodes.append((i, j, 1))
+                        enforce_nodes.append((i, j, 2))
 
             if len(enforce_nodes) >= 10:
-                break
+                break"""
 
-        print('match_r={}  count={}'.format(match_r, len(enforce_nodes)))
+        #print('match_r={}  count={}'.format(match_r, len(enforce_nodes)))
 
-        new_V1 = np.zeros((V1.shape[0]+len(enforce_nodes), V1.shape[1]), dtype=complex)
+        conper = 4
+        constraints = conper*2
+        h = .025 #.2*self.AD_len / self.N
+        s = .1
+        conr = np.linspace(s, s+conper*h, conper)
+        #print('conr:', conr)
+
+        new_V1 = np.zeros((V1.shape[0]+constraints, V1.shape[1]), dtype=complex)
         new_V1[:V1.shape[0], :] = V1
 
         chebyshev_error = []
-        for l in range(len(enforce_nodes)):
-            i, j, sid = enforce_nodes[l]
+
+        for sid in [1,2]:
+            t_data = []
+            for t in self.chebyshev_roots:
+                if self.eval_g(sid, t) > conr[0]:
+                    t_data.append(t)
 
             if sid == 1:
                 th = 2*np.pi
@@ -278,24 +291,17 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
             for m in range(1, self.M+1):
                 def nmn(r):
-                    f=1
-                    if r < 0:
-                        f = -1
-                        r *= -1
-
-                    return f*jv(m*nu, self.k*r) * m*nu*np.cos(m*nu*(th-self.a))
-
-                s = .95
-
-                t_data = []
-                for t in self.chebyshev_roots:
-                    if t < s:
-                        t_data.append(t)
+                    val = jv(m*nu, self.k*r) * m*nu*np.cos(m*nu*(th-self.a))
+                    if sid == 1:
+                        return val
+                    elif sid == 2:
+                        return -val
 
                 ccoef = self.get_chebyshev_coef(sid, nmn, t_data=t_data)
 
                 # Test chebyshev error
-                r_data = np.arange(.05, 2.3, .0025)
+                #r_data = np.arange(self.get_polar(i,j)[0], 2.3, .0025)
+                r_data = np.arange(conr[0], 2.3, .0025)
                 series_data = []
                 exp_data = []
                 for r in r_data:
@@ -305,8 +311,11 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
                         series += ccoef[J] * self.eval_dn_B_arg(0, JJ, r, sid)
 
                     chebyshev_error.append(series-nmn(r))
-                #    series_data.append(series)
-                #    exp_data.append(nmn(r))
+                    #if abs(chebyshev_error[-1]) > .02:
+                    #    print('r=', r, 'm=', m, 'sid=', sid)
+
+                    #series_data.append(series)
+                    #exp_data.append(nmn(r))
 
                 #plt.plot(r_data, series_data, color='green')
                 #plt.plot(r_data, exp_data, color='black')
@@ -314,14 +323,15 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
                 #sys.exit(0)
 
-                r, th = self.get_polar(i, j)
-                for J in range(self.segment_desc[sid]['n_basis']):
-                    JJ = self.segment_desc[sid]['JJ_list'][J]
-                    new_V1[V1.shape[0]+l, JJ] += ccoef[J] * self.eval_dn_B_arg(0, JJ, r, sid)
+                for l in range(conper):
+                    r = conr[l]
+                    for J in range(self.segment_desc[sid]['n_basis']):
+                        JJ = self.segment_desc[sid]['JJ_list'][J]
+                        new_V1[V1.shape[0]+l, JJ] += ccoef[J] * self.eval_dn_B_arg(0, JJ, r, sid)
 
-                new_V1[V1.shape[0]+l, len(self.c0)+(m-1)] = -nmn(r)
+                    new_V1[V1.shape[0]+l, len(self.c0)+(m-1)] = -nmn(r)
 
-        new_rhs = np.zeros(len(rhs)+len(enforce_nodes), dtype=complex)
+        new_rhs = np.zeros(len(rhs)+constraints, dtype=complex)
         new_rhs[:len(rhs)] = rhs
 
         print('Chebyshev error:', np.max(np.abs(chebyshev_error)))
@@ -353,8 +363,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #    a_coef = self.problem.fft_a_coef[:self.M]
         #else:
         #a_coef = np.zeros(self.M, dtype=complex)
-        #print(var_a)
-        print(np.max(np.abs(var_a)))
+        print(np.abs(var_a))
+        #print(np.max(np.abs(var_a)))
 
         """for i in range(len(self.m_list)):
             m = self.m_list[i]

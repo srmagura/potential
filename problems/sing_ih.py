@@ -17,13 +17,13 @@ class SingIH_Problem(SympyProblem, SingularKnown):
     k = 3
 
     n_basis_dict = {
-        16: (24, 40),
+        16: (24, 6),
         32: (33, 8),
-        64: (42, 12),
-        128: (65, 18),
-        256: (80, 30),
-        512: (100, 40),
-        1024: (120, 45),
+        64: (42, 18),
+        128: (65, 25),
+        256: (80, 35),
+        512: (100, 45),
+        1024: (120, 55),
     }
 
     m1_dict = {
@@ -161,7 +161,7 @@ class I_Bessel(IH_Bessel):
             return 0
 
     def eval_expected_polar(self, r, th):
-        return self.eval_v(r, th)
+        return self.eval_v(r, th) - self.eval_regfunc(r, th)
 
 
 class IH_Bessel_Line(IH_Bessel):
