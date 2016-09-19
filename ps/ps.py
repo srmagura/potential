@@ -267,7 +267,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         conper = 4
         constraints = conper*2
         h = .025 #.2*self.AD_len / self.N
-        s = .1
+        s = .02
         conr = np.linspace(s, s+conper*h, conper)
         #print('conr:', conr)
 
