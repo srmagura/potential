@@ -7,7 +7,7 @@ from .problem import PizzaProblem
 import problems.functions as functions
 from .singular import SingularKnown, HReg
 
-_k = 3
+_k = 9.75
 
 _n_basis_dict = {
     16: (24, 6),

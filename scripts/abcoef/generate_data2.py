@@ -60,14 +60,14 @@ def go(problem_name, boundary_name):
         progress = n_done / n_tests
         print('\r{}%'.format(int(100*progress)), end='')
 
-    fname = 'm1trend_{}_{}.dat'.format(problem_name, boundary_name)
+    fname = 'm1trend_{}_{}_{}.dat'.format(problem_name, boundary_name, problem.k)
     outfile = open(sys.path[0] + '/' + fname, 'w')
     json.dump(output, outfile)
 
-_problems = ['trace-hat', 'trace-line-sine', 'trace-parabola']
+_problems = ['trace-line-sine']#['trace-hat', 'trace-line-sine', 'trace-parabola']
 #_boundaries = ['outer-sine', 'sine7']
 _boundaries = ['inner-sine', 'cubic']
-m1_list = range(8, 275, 2)
+m1_list = range(8, 275, 5)
 n_tests = len(m1_list) * len(_problems) * len(_boundaries)
 
 for problem_name in _problems:

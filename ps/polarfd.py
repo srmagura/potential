@@ -6,13 +6,11 @@ from scipy.sparse.linalg import spsolve
 
 class PolarFD:
 
-    # rec: .05
-    R0 = .05
-
-    def __init__(self, N, a, nu, R1):
+    def __init__(self, N, a, nu, R0, R1):
         self.N = N
         self.a = a
         self.nu = nu
+        self.R0 = R0
         self.R1 = R1
 
         self.calc_N_var()
@@ -52,12 +50,13 @@ class PolarFD:
         N = self.N
         for l in range(1, N):
             i = self.get_index(0, l)
+            th = self.get_th(l)
 
             self.data.append(1)
             self.row_ind.append(self.row)
             self.col_ind.append(i)
 
-            self.rhs.append(0)
+            self.rhs.append(self.eval_phi_initial(th))
             self.row += 1
 
     def set_bc_wedge(self):
@@ -196,13 +195,14 @@ class PolarFD:
             self.row_ind.append(self.row)
             self.col_ind.append(self.get_index(m1, l1))
 
-    def solve(self, k, eval_phi0, eval_phi1, eval_phi2,
+    def solve(self, k, eval_phi_initial, eval_phi0, eval_phi1, eval_phi2,
         eval_f, eval_d_f_r, eval_d2_f_r, eval_d2_f_th):
         """
 
         """
         self.k = k
 
+        self.eval_phi_initial = eval_phi_initial
         self.eval_phi0 = eval_phi0
         self.eval_phi1 = eval_phi1
         self.eval_phi2 = eval_phi2

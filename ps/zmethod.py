@@ -1,7 +1,7 @@
 import numpy as np
 import sympy
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 import scipy
 from scipy.interpolate import interp2d
@@ -24,6 +24,7 @@ import abcoef
 class ZMethod:
 
     M = 7
+    R0 = .1
 
     def __init__(self, options):
         self.options = options
@@ -72,7 +73,7 @@ class ZMethod:
             return diff(d_u_r, r) + d_u_r / r + diff(u, th, 2) / r**2 + k**2 * u
 
         f = -apply_helmholtz_op(v_asympt)
-        f0 = f - apply_helmholtz_op(g)
+        f0 = -apply_helmholtz_op(g)
 
         # Polynomial with p(0) = p'(0) = p"(0) = 0,
         # p(1) = 1 and p'(1) = p"(1) = 0
@@ -93,6 +94,9 @@ class ZMethod:
             'nu': self.nu,
         }
 
+        initial_func = self.problem.v_series - (g+q)
+        d_initial_func = diff(initial_func, r)
+
         lambdify_modules = SympyProblem.lambdify_modules
 
         def my_lambdify(expr):
@@ -110,9 +114,18 @@ class ZMethod:
 
             return newfunc
 
+        v_series_lambda = my_lambdify(self.problem.v_series)
+        R0 = self.R0
+        v_series_error = [self.problem.eval_v(R0, th) - v_series_lambda(R0, th)
+            for th in np.arange(self.a, 2*np.pi, .1)]
+        print('v_series_error:', np.max(np.abs(v_series_error)))
 
         self.f_expr = f
         self.eval_v_asympt = my_lambdify(v_asympt)
+
+        self.eval_initial_func = my_lambdify(initial_func)
+        self.eval_d_initial_func = my_lambdify(d_initial_func)
+        self.eval_v_series = my_lambdify(self.problem.v_series)
 
         eval_g = my_lambdify(g)
         self.eval_gq = my_lambdify(g+q)
@@ -152,8 +165,10 @@ class ZMethod:
             pass
         else:
             self.z1_fourier = ps.ode.calc_z1_fourier(
+                self.eval_initial_func,
+                self.eval_d_initial_func,
                 self.eval_f1, self.a, self.nu, self.k,
-                self.arc_R, self.M
+                self.R0, self.arc_R, self.M
             )
 
             print('ODE error:')
@@ -171,9 +186,7 @@ class ZMethod:
         R = self.arc_R
 
         def z1_expected(th):
-            return (self.problem.eval_v(R, th) -
-                (self.eval_gq(R, th) + self.eval_v_asympt(R, th))
-            )
+            return self.problem.eval_v(R, th) - self.eval_gq(R, th)
 
         # This should be close to 0
         return arc_dst(self.a, z1_expected)[:self.M]
@@ -203,21 +216,25 @@ class ZMethod:
 
         def eval_phi1(r):
             if r >= 0:
-                v_asympt = self.eval_v_asympt(r, 2*np.pi)
-                return self.problem.eval_phi1(r) - v_asympt
+                #v_asympt = self.eval_v_asympt(r, 2*np.pi)
+                return self.problem.eval_phi1(r)# - v_asympt
 
         def eval_phi2(r):
             if r >= 0:
-                v_asympt = self.eval_v_asympt(r, a)
-                return self.problem.eval_phi2(r) - v_asympt
+                #v_asympt = self.eval_v_asympt(r, a)
+                return self.problem.eval_phi2(r)# - v_asympt
 
-        self.polarfd = PolarFD(N, a, nu, self.arc_R)
+        self.polarfd = PolarFD(N, a, nu, self.R0, self.arc_R)
 
         if not self.acheat:
+            zero = lambda r, th: 0
+
             z = self.polarfd.solve(k,
+                lambda th: self.eval_v_series(self.R0, th),
                 eval_phi0, eval_phi1, eval_phi2,
-                dummy.eval_f_polar, dummy.eval_d_f_r,
-                dummy.eval_d2_f_r, dummy.eval_d2_f_th
+                zero, zero, zero, zero
+                #dummy.eval_f_polar, dummy.eval_d_f_r,
+                #dummy.eval_d2_f_r, dummy.eval_d2_f_th
             )
         else:
             z = np.zeros((N+1)**2)
@@ -230,7 +247,7 @@ class ZMethod:
                 r = self.polarfd.get_r(m)
                 th = self.polarfd.get_th(l)
                 index = self.polarfd.get_index(m, l)
-                self.v[m, l] = z[index] + self.eval_v_asympt(r, th)
+                self.v[m, l] = z[index]# + self.eval_v_asympt(r, th)
 
     def calc_a_coef(self):
         a = self.a
@@ -265,14 +282,17 @@ class ZMethod:
                 print()
 
     def get_expected_a_coef(self):
+        if self.problem.name == 'iz-bessel':
+            return np.zeros(self.M)
+
+        # Arc only
+        r = self.problem.R
+
         def eval_bc0(th):
-            r = self.boundary.eval_r(th)
             return self.problem.eval_phi0(th) - self.problem.eval_v(r, th)
 
         def eval_diff(th):
-            r = self.boundary.eval_r(th)
             return self.problem.eval_v(r, th) - self.v_interp(r, th)
-
 
         interp_error = arc_dst(self.a, eval_diff)[:self.M]
         print('b interp error:')

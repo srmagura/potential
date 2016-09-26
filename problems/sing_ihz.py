@@ -35,13 +35,13 @@ class SingIH_Problem(PizzaProblem):
         'sine7': 200,
     }
 
-nterms = 8
-print('FS nterms:', nterms)
+_nterms = 3
+print('FS nterms:', _nterms)
 
 alt_phi1_ext = False
 print('ihz-bessel-line alternate phi1 extension:', alt_phi1_ext)
 
-def get_v_asympt0(K, k, nu):
+def get_v_asympt0(K, k, nu, nterms=_nterms):
     v_asympt0 = 0
     r, th = sympy.symbols('r th')
     kr2 = k*r/2
@@ -59,23 +59,27 @@ class IH_Bessel(SingIH_Problem):
     """ Abstract class. """
 
     expected_known = False
+    K = 0
 
 
     def __init__(self, **kwargs):
         a = self.a
         nu = self.nu
         k = self.k
+        K = self.K
         R = self.R
 
         r, th = sympy.symbols('r th')
 
-        v_asympt01 = get_v_asympt0(0, k, nu)
+        v_asympt01 = get_v_asympt0(K, k, nu)
 
         self.v_asympt = (
-            get_v_asympt0(0, k, nu) * sympy.sin(nu/2*(th-a))
+            get_v_asympt0(K, k, nu) * sympy.sin((K+1/2)*nu*(th-a))
         )
 
-        phi1 = sympy.besselj(nu/2, k*r) - v_asympt01
+        self.v_series = get_v_asympt0(K, k, nu, nterms=10)* sympy.sin((K+1/2)*nu*(th-a))
+
+        phi1 = sympy.besselj((K+1/2)*nu, k*r)
         if alt_phi1_ext:
             phi1 += sympy.Piecewise((0, r<R), ((r-R)**5, True))
 
@@ -88,17 +92,18 @@ class IH_Bessel(SingIH_Problem):
         a = self.a
         nu = self.nu
         k = self.k
+        K = self.K
 
-        return jv(nu/2, k*r) * np.sin(nu/2* (th-a))
+        return jv((K+1/2)*nu, k*r) * np.sin((K+1/2)*nu* (th-a))
 
-    #def eval_expected__no_w(self, r, th):
-    #    return self.eval_v(r, th)
 
 
 class IZ_Bessel(IH_Bessel):
     """
     a coefficients are all 0
     """
+
+    k = 5.5
 
     m1_dict = {
         'arc': 7,
@@ -127,7 +132,7 @@ class IZ_Bessel(IH_Bessel):
 
 class IHZ_Bessel_Line(IH_Bessel):
 
-    k = 5.5
+    k = 9.75
 
     def eval_phi0(self, th):
         a = self.a
@@ -135,12 +140,11 @@ class IHZ_Bessel_Line(IH_Bessel):
         k = self.k
 
         r = self.boundary.eval_r(th)
-        return jv(nu/2, k*r) * (th - a) / (2*np.pi - a)
+        return jv((self.K+1/2)*nu, k*r) * (th - a) / (2*np.pi - a)
 
     def eval_phi1(self, r):
         R = self.R
-        bc = jv(self.nu/2, self.k*r)
-
+        bc = jv((self.K+1/2)*self.nu, self.k*r)
 
         if r > R and alt_phi1_ext:
             return bc + (r-R)**5
