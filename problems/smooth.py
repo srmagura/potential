@@ -69,7 +69,6 @@ class Smooth_Sine(SmoothProblem):
 
 class Smooth_E(SmoothProblem):
 
-    k = 5.5
     homogeneous = True
 
     def eval_expected(self, x, y):
@@ -94,7 +93,6 @@ class Smooth_YCos(SympyProblem, SmoothProblem):
     """
 
     # WARNING: homogeneous if k=1
-    k = 5.5
 
     def __init__(self, **kwargs):
         k, r, th = sympy.symbols('k r th')
@@ -115,7 +113,6 @@ class Smooth_YCos2(SympyProblem, SmoothProblem):
     """
 
     # WARNING: homogeneous if k=1
-    k = 3
 
     def __init__(self, **kwargs):
         k, r, th = sympy.symbols('k r th')

@@ -58,6 +58,7 @@ def nodes_to_plottable(nodes):
 
     return x_data, y_data
 
+
 def plot_Mplus():
     plot_Gamma()
 
@@ -71,6 +72,32 @@ def plot_Mplus():
         label_text = 'Mplus{}'.format(sid)
         plt.plot(x_data, y_data, markers[sid], label=label_text,
             mfc='none', mec=colors[sid], mew=1)
+
+    plt.xlim(-4,4)
+    plt.ylim(-4,4)
+    plt.legend(loc=3)
+    plt.show()
+
+def plot_allMK(ntype):
+    plot_Gamma()
+
+    colors = ('red', 'black')
+
+    if ntype == 'm':
+        node_choices = (solver.global_Mplus, solver.global_Mminus)
+        labels = ('Mplus', 'Mminus')
+    elif ntype == 'k':
+        node_choices = (solver.Kplus, [])
+        labels = ('Kplus', '')
+
+    markers = ('o', 'x')
+    zipped = zip(colors, node_choices, labels, markers)
+
+    for color, nodes, label, marker in zipped:
+        x_data, y_data = nodes_to_plottable(nodes)
+
+        plt.plot(x_data, y_data, marker, label=label,
+            mfc='none', mec=color, mew=1)
 
     plt.xlim(-4,4)
     plt.ylim(-4,4)
@@ -99,7 +126,7 @@ def plot_gamma():
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('method', choices=('gamma', 'pert'))
+parser.add_argument('method', choices=('gamma', 'pert', 'm', 'k'))
 io_util.add_arguments(parser, ('boundary', 'N'))
 args = parser.parse_args()
 
@@ -122,3 +149,7 @@ elif args.method == 'pert':
     plot_Gamma(color='black', extended=False)
     plt.axes().set_aspect('equal', 'datalim')
     plt.show()
+elif args.method == 'm':
+    plot_allMK('m')
+elif args.method == 'k':
+    plot_allMK('k')

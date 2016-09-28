@@ -165,25 +165,15 @@ class PsBasis:
         a = self.a
         nu = self.nu
 
-        self.calc_a_coef()
-
-        def eval_bc0_reg(th):
-            bc0 = self.problem.eval_bc(th, 0)
-            r = self.boundary.eval_r(th)
-
-            if self.problem.hreg != HReg.none:
-                for m in range(1, self.M+1):
-                    bc0 -= self.a_coef[m-1] * jv(m*nu, k*r) * np.sin(m*nu*(th-a))
-
-            return bc0
-
-        self.c0.extend(self.get_chebyshev_coef(0, eval_bc0_reg))
+        bc = lambda th: self.problem.eval_bc(th, 0)
+        self.c0.extend(self.get_chebyshev_coef(0, bc))
 
         for sid in (1, 2):
             def func(arg):
                 return self.problem.eval_bc(arg, sid)
 
             self.c0.extend(self.get_chebyshev_coef(sid, func))
+
 
     def extend_basis(self, JJ, index):
         """

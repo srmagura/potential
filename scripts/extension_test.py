@@ -113,7 +113,7 @@ if __name__ == '__main__':
     options = {
         'problem': problem,
         'scheme_order': 4,
-        'fake_grid': False,
+        'fake_grid': True,
     }
 
     if options['fake_grid']:

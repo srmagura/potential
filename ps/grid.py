@@ -83,6 +83,7 @@ class PsGrid:
         self.all_gamma = {
             0: [
                 inv(R+h/2, h/2),
+                inv(-R+h/2, h/2),
                 inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2),
                 inv(R*np.cos(a)-h/2, R*np.sin(a)-h/2),
             ],
