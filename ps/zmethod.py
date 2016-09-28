@@ -214,16 +214,6 @@ class ZMethod:
 
             return fourier_series + self.eval_gq(self.arc_R, th)
 
-        def eval_phi1(r):
-            if r >= 0:
-                #v_asympt = self.eval_v_asympt(r, 2*np.pi)
-                return self.problem.eval_phi1(r)# - v_asympt
-
-        def eval_phi2(r):
-            if r >= 0:
-                #v_asympt = self.eval_v_asympt(r, a)
-                return self.problem.eval_phi2(r)# - v_asympt
-
         self.polarfd = PolarFD(N, a, nu, self.R0, self.arc_R)
 
         if not self.acheat:
@@ -231,7 +221,9 @@ class ZMethod:
 
             z = self.polarfd.solve(k,
                 lambda th: self.eval_v_series(self.R0, th),
-                eval_phi0, eval_phi1, eval_phi2,
+                eval_phi0,
+                self.problem.eval_phi1,
+                self.problem.eval_phi2,
                 zero, zero, zero, zero
                 #dummy.eval_f_polar, dummy.eval_d_f_r,
                 #dummy.eval_d2_f_r, dummy.eval_d2_f_th

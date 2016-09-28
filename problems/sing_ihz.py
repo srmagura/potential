@@ -23,8 +23,8 @@ class SingIH_Problem(PizzaProblem):
         64: (42, 12),
         128: (65, 18),
         256: (80, 30),
-        512: (100, 40),
-        1024: (120, 45),
+        512: (80, 45),
+        1024: (80, 45),
     }
 
     m1_dict = {
@@ -61,6 +61,7 @@ class IH_Bessel(SingIH_Problem):
     expected_known = False
     K = 0
 
+    k = 5.5
 
     def __init__(self, **kwargs):
         a = self.a
@@ -103,16 +104,6 @@ class IZ_Bessel(IH_Bessel):
     a coefficients are all 0
     """
 
-    k = 5.5
-
-    m1_dict = {
-        'arc': 7,
-        'outer-sine': 134,
-        'inner-sine': 220,
-        'cubic': 210,
-        'sine7': 200,
-    }
-
     def eval_phi0(self, th):
         r = self.boundary.eval_r(th)
         return self.eval_v(r, th)
@@ -131,8 +122,6 @@ class IZ_Bessel(IH_Bessel):
 
 
 class IHZ_Bessel_Line(IH_Bessel):
-
-    k = 9.75
 
     def eval_phi0(self, th):
         a = self.a

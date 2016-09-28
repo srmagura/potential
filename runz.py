@@ -110,9 +110,9 @@ for N in N_list:
     if v_error is not None:
         print('v error: ' + prec_str.format(v_error))
 
-    #if v2 is not None:
-    #    convergence = polarfd.calc_rel_convergence(v0, v1, v2)
-    #    print('v rel convergence: ' + prec_str.format(convergence))
+    if v2 is not None:
+        convergence = polarfd.calc_rel_convergence(v0, v1, v2)
+        print('v rel convergence: ' + prec_str.format(convergence))
 
     if prev_v_error is not None:
         convergence = np.log2(prev_v_error / v_error)
