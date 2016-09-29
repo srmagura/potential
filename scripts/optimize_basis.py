@@ -30,7 +30,7 @@ io_util.add_arguments(parser, ('problem', 'N'))
 args = parser.parse_args()
 
 problem = problems.problem_dict[args.problem]()
-boundary = problems.boundary.Arc(problem.R)
+boundary = problems.boundary.OuterSine(problem.R)
 problem.boundary = boundary
 
 # Options to pass to the solver
@@ -62,8 +62,8 @@ def worker(t):
 
 all_options = []
 # Tweak the following ranges as needed
-for n_circle in range(28, 40, 3):
-    for n_radius in range(5, int(.87*n_circle), 2):
+for n_circle in range(30, 100, 5):
+    for n_radius in range(17, n_circle, 4):
         all_options.append((n_circle, n_radius))
 
 with Pool(4) as p:

@@ -82,18 +82,21 @@ class PsGrid:
 
         self.all_gamma = {
             0: [
-                inv(R+h/2, h/2),
-                inv(-R+h/2, h/2),
-                inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2),
-                inv(R*np.cos(a)-h/2, R*np.sin(a)-h/2),
+                #inv(R+h/2, h/2),
+                #inv(-R+h/2, h/2),
+                #inv(-R-h/2, 0),
+                #inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2),
+                #inv(R*np.cos(a)-h/2, R*np.sin(a)-h/2),
+                #inv(R*np.cos(a)-h/2, R*np.sin(a)+h/2),
             ],
             1: [
-                inv(R+h/2, h/2),
-                inv(R+h/2, -h/2),
+                #inv(R+h/2, h/2),
+                #inv(R+h/2, -h/2),
             ],
-            2: [inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2)],
+            2: []#inv(R*np.cos(a)+h/2, R*np.sin(a)-h/2)],
         }
 
         self.union_gamma = set()
         for sid in range(3):
             self.union_gamma |= set(self.all_gamma[sid])
+        self.union_gamma = list(self.union_gamma)

@@ -52,12 +52,17 @@ def run_test(N):
     solver.calc_c0()
     solver.calc_c1_exact()
 
+    #solver.c0_test(plot=False)
+    #solver.c1_test(plot=False)
+
     mv_ext = solver.mv_extend_boundary()
+    reduced_ext = mv_ext.reduce()
 
     th_list = []
     error = []
 
-    for node in solver.union_gamma:
+    for l in range(len(solver.union_gamma)):
+        node = solver.union_gamma[l]
         r, th = solver.get_polar(*node)
 
         for data in mv_ext[node]:
@@ -67,12 +72,24 @@ def run_test(N):
             if setypes is None or setype in setypes:
 
                 exp = problem.eval_expected_polar(r, th)
+                #bc = problem.eval_bc(th, 0)
+
+
+                #print('exp:', exp)
+                #print('bc:', bc)
+                #print('act:', data['value'])
+                #print('r th:', r, th)
+                #print('x={}  y={}'.format(*solver.get_coord(*node)))
 
                 diff = abs(exp - data['value'])
+                diff2 = abs(exp - reduced_ext[l])
+
                 error.append(diff)
+                error.append(diff2)
+
                 th_list.append(th)
 
-                #if diff > 1e-5:
+                #if diff > 5e-8:
                 #    print('r={}  th={}  diff={}'.format(r, th, diff))
                 #    print('x={}  y={}'.format(*solver.get_coord(*node)))
                     #    print('exp={}   act={}'.format(exp, data['value']))
@@ -113,7 +130,9 @@ if __name__ == '__main__':
     options = {
         'problem': problem,
         'scheme_order': 4,
-        'fake_grid': True,
+        'fake_grid': False,
+        'n_circle': 120,
+        'n_radius': 60,
     }
 
     if options['fake_grid']:

@@ -140,7 +140,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         potential -- shape (N-1, N-1)
         """
         N = self.N
-        args = (self.scheme_order, self.problem.AD_len, self.k)
         w = np.zeros((N-1, N-1), dtype=complex)
 
         for l in range(len(self.union_gamma)):
@@ -230,6 +229,11 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         """
         The main procedure for PizzaSolver.
         """
+        #self.Q_residual()
+        #result = Result()
+        #result.error = 0.
+        #return result
+
         self.calc_c0()
 
         '''
@@ -237,7 +241,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         its Chebyshev series, which has coefficients c0. There is also an
         analogous function c1_test().
         '''
-        #self.c0_test(plot=False)
+        self.c0_test(plot=True)
 
         self.solve_var()
 

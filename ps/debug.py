@@ -122,7 +122,9 @@ class PsDebug:
         s_data = np.zeros(len(sample))
         exact_data = np.zeros(len(sample))
         expansion_data = np.zeros(len(sample))
-        #print('c0_test: fixme for regularized problems')
+
+        exact_data_outer = []
+        expansion_data_outer = []
 
         for l in range(len(sample)):
             p = sample[l]
@@ -134,11 +136,6 @@ class PsDebug:
             exact_data[l] = self.problem.eval_bc(p['arg'], sid).real
 
             if sid == 0:
-                for m in range(1, self.M+1):
-                    exact_data[l] -= (self.a_coef[m-1] *
-                        jv(m*nu, k*r) * np.sin(m*nu*(th-a))).real
-
-            if sid == 0:
                 arg = th
             else:
                 arg = r
@@ -148,7 +145,15 @@ class PsDebug:
                     (self.c0[JJ] *
                     self.eval_dn_B_arg(0, JJ, arg, sid)).real
 
+            if sid == 0:
+                exact_data_outer.append(exact_data[l])
+                expansion_data_outer.append(expansion_data[l])
+
         print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
+
+        exact_data_outer = np.array(exact_data_outer)
+        expansion_data_outer = np.array(expansion_data_outer)
+        print('c0 error outer:', np.max(np.abs(exact_data_outer - expansion_data_outer)))
 
         #for l in range(len(exact_data)):
         #    diff = abs(exact_data[l] - expansion_data[l])
@@ -240,6 +245,25 @@ class PsDebug:
         plt.xlabel('Arclength s')
         plt.ylabel('Reconstructed Neumann data')
         plt.show()
+
+    def Q_residual(self):
+        self.calc_c0()
+        self.calc_c1_exact()
+
+        gamma_info = []
+        for node in self.union_gamma:
+            r, th = self.get_polar(*node)
+            gamma_info.append([node[0], node[1], r, th])
+
+        np.savetxt('gamma_info.dat', np.array(gamma_info))
+        Q1, rhs = self.get_var()
+        residual = np.abs(Q1.dot(self.c1) - rhs)
+        np.savetxt('{}_Qresidual.dat'.format(self.N), residual)
+
+        print(residual)
+        print()
+        print('Max(residual):', np.max(residual))
+
 
     def color_plot(self, u=None):
         N = self.N

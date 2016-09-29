@@ -52,7 +52,12 @@ class PsInhomo:
             elif sid == 2:
                 x0, y0 = self.get_radius_point(2, x, y)
             elif sid == 0:
-                n, th0 = self.boundary_coord_cache[i, j]
+                try:
+                    n, th0 = self.boundary_coord_cache[i, j]
+                except KeyError:
+                    print('Aborting extend_f  !!!!')
+                    return
+
                 r0 = self.boundary.eval_r(th0)
 
                 if etype == EType.standard:
@@ -400,7 +405,6 @@ class PsInhomo:
         return self._extend_inhomo_12_r(i, j, 2)
 
     def mv_extend_inhomo_f(self):
-        R = self.R
         k = self.problem.k
 
         mv_ext = Multivalue(self.union_gamma)

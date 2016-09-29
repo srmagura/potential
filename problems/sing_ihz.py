@@ -17,10 +17,12 @@ class SingIH_Problem(PizzaProblem):
 
     zmethod = True
 
+    k = 6.75
+
     n_basis_dict = {
-        16: (24, 6),
-        32: (33, 8),
-        64: (42, 12),
+        16: (25, 5),
+        32: (30, 17),
+        64: (40, 21),
         128: (65, 18),
         256: (80, 30),
         512: (80, 45),
@@ -60,8 +62,6 @@ class IH_Bessel(SingIH_Problem):
 
     expected_known = False
     K = 0
-
-    k = 5.5
 
     def __init__(self, **kwargs):
         a = self.a
@@ -147,8 +147,6 @@ class IHZ_Bessel_Line(IH_Bessel):
 
 
 class IHZ_Bessel_Quadratic(SingIH_Problem):
-
-    k = 3
 
     expected_known = False
 

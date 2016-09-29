@@ -260,12 +260,15 @@ class PsExtend:
 
     def do_extend_0_standard(self, i, j, **kwargs):
         n, th = self.boundary_coord_cache[(i, j)]
+        #print(n, th)
 
         deriv_types = (
             (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (3, 0), (4, 0)
         )
 
         derivs = self.ext_calc_xi_derivs(deriv_types, th, 0, **kwargs)
+        #print(derivs['xi0'])
+
         return {'elen': abs(n), 'value': self.do_extend_0(i, j, derivs)}
 
     def do_extend_0_left(self, i, j, **kwargs):

@@ -13,7 +13,7 @@ class SmoothProblem(PizzaProblem):
     expected_known = True
     hreg = HReg.none
 
-    k = 1
+    k = 5.5
 
     n_basis_dict = {
         16: (24, 6),
