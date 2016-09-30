@@ -73,10 +73,10 @@ def run_test(N):
                 exp = problem.eval_expected_polar(r, th)
 
                 diff = abs(exp - data['value'])
-                diff2 = abs(exp - reduced_ext[l])
+                #diff2 = abs(exp - reduced_ext[l])
 
                 error.append(diff)
-                error.append(diff2)
+                #error.append(diff2)
 
                 th_list.append(th)
 
@@ -86,8 +86,13 @@ def run_test(N):
                     #    print('exp={}   act={}'.format(exp, data['value']))
                     #    print()
 
+    #abs_error = np.abs(error)
+    #max_error = np.max(abs_error)
+    #worst_th = th_list[np.argmax(abs_error)]
+    #print('worst_th:', worst_th)
+    #print('worst val:', abs_error[np.argmax(abs_error)])
 
-    #plt.plot(th_list, np.log10(error), 'o')
+    #plt.plot(th_list, np.log10(abs_error), 'o')
     #plt.show()
 
     return np.max(np.abs(error))

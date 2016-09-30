@@ -6,7 +6,8 @@ This module defines choices for the problem command-line argument.
 """
 from collections import OrderedDict
 
-from .smooth import Smooth_Sine, Smooth_E, Smooth_YCos, Smooth_YCos2, Smooth_One
+from .smooth import Smooth_Sine, Smooth_E, Smooth_YCos, Smooth_YCos2,\
+    Smooth_One, Smooth_Two, Smooth_F0, Smooth_F1
 from .sing_h_trace import Trace_Hat, Trace_Parabola,\
     Trace_Sine8, Trace_SineRange, Trace_LineSine
 from .sing_h_shift import Shift_Hat, Shift_Parabola, Shift_LineSine
@@ -19,6 +20,9 @@ problem_dict = OrderedDict((
     ('smooth-ycos', Smooth_YCos),
     ('smooth-ycos2', Smooth_YCos2),
     ('smooth-one', Smooth_One),
+    ('smooth-two', Smooth_Two),
+    ('smooth-f0', Smooth_F0),
+    ('smooth-f1', Smooth_F1),
     ('trace-sine8', Trace_Sine8),
     ('trace-sine-range', Trace_SineRange),
     ('trace-hat', Trace_Hat),

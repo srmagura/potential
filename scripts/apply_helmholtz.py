@@ -7,7 +7,7 @@ def apply_helmholtz_op(u):
     d_u_r = diff(u, r)
     return diff(d_u_r, r) + d_u_r / r + diff(u, th, 2) / r**2 + k**2 * u
 
-u = r**8
+u = r
 print('Input:')
 print(u)
 

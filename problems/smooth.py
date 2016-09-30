@@ -106,6 +106,7 @@ class Smooth_YCos(SympyProblem, SmoothProblem):
     def get_grad(self, x, y):
         return (-y*np.sin(x), np.cos(x))
 
+
 class Smooth_YCos2(SympyProblem, SmoothProblem):
     """
     Inhomogeneous problem.
@@ -145,3 +146,82 @@ class Smooth_One(SympyProblem, SmoothProblem):
     def get_grad(self, x, y):
         k = self.k
         return (k*np.cos(k*x) + 1/k**2, 0)
+
+class Smooth_Two(SympyProblem, SmoothProblem):
+
+    def __init__(self, **kwargs):
+        r, k= sympy.symbols('r k')
+        sin = sympy.sin
+        cos = sympy.cos
+        kwargs['f_expr'] = k**2*r + 1/r
+        super().__init__(**kwargs)
+
+    def eval_expected(self, x, y):
+        r = np.sqrt(x**2 + y**2)
+        return np.sin(self.k*x) + r
+
+    #def get_grad(self, x, y):
+    #    k = self.k
+    #    return (k*np.cos(k*x) + 1/k**2, 0)
+
+class Smooth_F0(SmoothProblem):
+
+    def __init__(self, **kwargs):
+        zero = lambda r, th: 0
+        self.eval_d_f_r = zero
+        self.eval_d2_f_r = zero
+        self.eval_d_f_th = zero
+        self.eval_d2_f_th = zero
+        self.eval_d2_f_r_th = zero
+
+    def eval_expected(self, x, y):
+        return y*np.cos(x)
+
+    def eval_f_polar(self, r, th):
+        k = self.k
+        return (k**2 - 1) * r * np.sin(th) * np.cos(r * np.cos(th))
+
+    def get_grad(self, x, y):
+        return (-y*np.sin(x), np.cos(x))
+
+    def eval_grad_f(self, x, y):
+        return self.eval_grad_f_polar(*domain_util.cart_to_polar(x, y))
+
+    def eval_grad_f_polar(self, r, th):
+        return np.array((0, 0), dtype=float)
+
+    def eval_hessian_f(self, x, y):
+        return self.eval_hessian_f_polar(*domain_util.cart_to_polar(x, y))
+
+    def eval_hessian_f_polar(self, r, th):
+        return np.zeros((2, 2), dtype=float)
+
+class Smooth_F1(SympyProblem, SmoothProblem):
+
+    def __init__(self, **kwargs):
+        k, r, th = sympy.symbols('k r th')
+        sin = sympy.sin
+        cos = sympy.cos
+        kwargs['f_expr'] = (k**2 - 1) * r * sin(th) * cos(r * cos(th))
+        super().__init__(**kwargs)
+
+        zero = lambda r, th: 0
+        self.eval_d2_f_r = zero
+        self.eval_d2_f_th = zero
+        self.eval_d2_f_r_th = zero
+
+    def eval_expected(self, x, y):
+        return y*np.cos(x)
+
+    def eval_f_polar(self, r, th):
+        k = self.k
+        return (k**2 - 1) * r * np.sin(th) * np.cos(r * np.cos(th))
+
+    def get_grad(self, x, y):
+        return (-y*np.sin(x), np.cos(x))
+
+    def eval_hessian_f(self, x, y):
+        return self.eval_hessian_f_polar(*domain_util.cart_to_polar(x, y))
+
+    def eval_hessian_f_polar(self, r, th):
+        return np.zeros((2, 2), dtype=float)

@@ -14,7 +14,9 @@ class Multivalue:
     'setype', and 'elen'. The current algorithm computes at most 2
     extension values at a given node, so reduce() with throw an
     AssertionError if there are 3 or more items in the list.
+
     """
+    # TODO: remove elen
 
     def __init__(self, nodes):
         self.nodes = nodes
@@ -46,12 +48,14 @@ class Multivalue:
                 dict2 = mv2[node][i]
 
                 assert dict1['setype'] == dict2['setype']
+                #assert dict1['elen'] == dict2['elen']
 
                 dict_result = {
                     'elen': dict1['elen'],
                     'value': dict1['value'] + dict2['value'],
                     'setype': dict1['setype']
                 }
+
 
                 result[node].append(dict_result)
 
@@ -75,19 +79,22 @@ class Multivalue:
             if len(list_) == 1:
                 ext[l] = list_[0]['value']
             elif len(list_) == 2:
-                elen0 = list_[0]['elen']
+
+                #elen0 = list_[0]['elen']
                 value0 = list_[0]['value']
 
-                elen1 = list_[1]['elen']
+                #elen1 = list_[1]['elen']
                 value1 = list_[1]['value']
 
                 # To prevent divide-by-zero
-                if elen0 == 0 and elen1 == 0:
-                    elen0 = elen1 = 1
+                #if elen0 == 0 and elen1 == 0:
+                #    elen0 = elen1 = 1
 
                 # Weighted average
-                ext[l] = (elen1*value0 + elen0*value1) / (elen0 + elen1)
+                #ext[l] = (elen1*value0 + elen0*value1) / (elen0 + elen1)
 
+                # Plain average
+                ext[l] = (value0+value1)/2
             else:
                 # We should never have 3 or more values at one node
                 assert False

@@ -7,9 +7,6 @@ from .extend import EType
 
 class PsInhomo:
 
-    # TODO this class is for the arc only.
-    # Need to add arbitrary curve extension
-
     def _extend_f_get_sid(self, i, j):
         R = self.R
         a = self.a
@@ -19,7 +16,7 @@ class PsInhomo:
         if ((i, j) in self.all_gamma[0] and
             self.get_etype(0, i, j) == EType.standard):
             return 0
-        elif r < self.R:
+        elif r < self.boundary.eval_r(th):
             if th >= 2*np.pi:
                 return 1
             else:
@@ -39,9 +36,16 @@ class PsInhomo:
         if p.homogeneous:
             return
 
+        cheat = False
+        if cheat:
+            print('extend_f: cheating  !!!!')
+
         for i,j in self.Kplus - self.global_Mplus:
             x, y = self.get_coord(i, j)
             r, th = self.get_polar(i, j)
+
+            if cheat:
+                self.f[i,j] = self.problem.eval_f_polar(r, th)
 
             sid = self._extend_f_get_sid(i, j)
             etype = self.get_etype(sid, i, j)
