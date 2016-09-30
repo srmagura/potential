@@ -131,6 +131,23 @@ class Smooth_YCos2(SympyProblem, SmoothProblem):
 
         return grad
 
+class Smooth_YCos3(SympyProblem, SmoothProblem):
+    """
+    Inhomogeneous problem.
+    """
+
+    # WARNING: homogeneous if k=1
+
+    def __init__(self, **kwargs):
+        k, r, th = sympy.symbols('k r th')
+        sin = sympy.sin
+        cos = sympy.cos
+        kwargs['f_expr'] = (k**2 - 1) * r * sin(th) * cos(r * cos(th))
+        super().__init__(**kwargs)
+
+    def eval_expected(self, x, y):
+        return y*np.cos(x) + np.sin(self.k*x)
+
 class Smooth_One(SympyProblem, SmoothProblem):
 
     def __init__(self, **kwargs):
