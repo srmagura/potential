@@ -160,11 +160,6 @@ class PsBasis:
         """
         self.c0 = []
 
-        k = self.problem.k
-        R = self.problem.R
-        a = self.a
-        nu = self.nu
-
         bc = lambda th: self.problem.eval_bc(th, 0)
         self.c0.extend(self.get_chebyshev_coef(0, bc))
 

@@ -54,7 +54,6 @@ class SmoothProblem(PizzaProblem):
         return np.dot(grad, normal)
 
 
-
 class Smooth_Sine(SmoothProblem):
 
     homogeneous = True
@@ -130,3 +129,19 @@ class Smooth_YCos2(SympyProblem, SmoothProblem):
         grad += np.array([8*x*(x**2 + y**2)**3, 8*y*(x**2 + y**2)**3])
 
         return grad
+
+class Smooth_One(SympyProblem, SmoothProblem):
+
+    def __init__(self, **kwargs):
+        k, r, th = sympy.symbols('k r th')
+        sin = sympy.sin
+        cos = sympy.cos
+        kwargs['f_expr'] = sympy.sympify(1)
+        super().__init__(**kwargs)
+
+    def eval_expected(self, x, y):
+        return np.sin(self.k*x) + 1/self.k**2
+
+    def get_grad(self, x, y):
+        k = self.k
+        return (k*np.cos(k*x) + 1/k**2, 0)

@@ -52,7 +52,7 @@ def run_test(N):
     solver.calc_c0()
     solver.calc_c1_exact()
 
-    #solver.c0_test(plot=False)
+    solver.c0_test(plot=False)
     #solver.c1_test(plot=False)
 
     mv_ext = solver.mv_extend_boundary()
@@ -70,16 +70,7 @@ def run_test(N):
             sid, etype = setype
 
             if setypes is None or setype in setypes:
-
                 exp = problem.eval_expected_polar(r, th)
-                #bc = problem.eval_bc(th, 0)
-
-
-                #print('exp:', exp)
-                #print('bc:', bc)
-                #print('act:', data['value'])
-                #print('r th:', r, th)
-                #print('x={}  y={}'.format(*solver.get_coord(*node)))
 
                 diff = abs(exp - data['value'])
                 diff2 = abs(exp - reduced_ext[l])

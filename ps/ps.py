@@ -205,25 +205,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Q1, rhs = self.get_var()
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
 
-    def get_singular_part(self):
-        singular_part = np.zeros((self.N-1, self.N-1), dtype=complex)
-
-        if self.problem.hreg == HReg.none:
-            return singular_part
-
-        k = self.k
-        R = self.R
-        a = self.a
-        nu = self.nu
-
-        for i, j in self.global_Mplus:
-            r, th = self.get_polar(i, j)
-            for m in range(1, self.M+1):
-                singular_part[i-1, j-1] += (self.a_coef[m-1] * jv(m*nu, k*r) *
-                    np.sin(m*nu*(th-a)))
-
-        return singular_part
-
 
     def run(self):
         """
@@ -241,7 +222,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         its Chebyshev series, which has coefficients c0. There is also an
         analogous function c1_test().
         '''
-        self.c0_test(plot=True)
+        self.c0_test(plot=False)
 
         self.solve_var()
 

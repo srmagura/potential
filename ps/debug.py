@@ -123,8 +123,8 @@ class PsDebug:
         exact_data = np.zeros(len(sample))
         expansion_data = np.zeros(len(sample))
 
-        exact_data_outer = []
-        expansion_data_outer = []
+        #exact_data_outer = []
+        #expansion_data_outer = []
 
         for l in range(len(sample)):
             p = sample[l]
@@ -145,15 +145,15 @@ class PsDebug:
                     (self.c0[JJ] *
                     self.eval_dn_B_arg(0, JJ, arg, sid)).real
 
-            if sid == 0:
-                exact_data_outer.append(exact_data[l])
-                expansion_data_outer.append(expansion_data[l])
+        #    if sid == 0:
+        #        exact_data_outer.append(exact_data[l])
+        #        expansion_data_outer.append(expansion_data[l])
 
         print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
 
-        exact_data_outer = np.array(exact_data_outer)
-        expansion_data_outer = np.array(expansion_data_outer)
-        print('c0 error outer:', np.max(np.abs(exact_data_outer - expansion_data_outer)))
+        #exact_data_outer = np.array(exact_data_outer)
+        #expansion_data_outer = np.array(expansion_data_outer)
+        #print('c0 error outer:', np.max(np.abs(exact_data_outer - expansion_data_outer)))
 
         #for l in range(len(exact_data)):
         #    diff = abs(exact_data[l] - expansion_data[l])
