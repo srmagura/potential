@@ -9,6 +9,10 @@ import domain_util
 from .singular import SingularKnown, HReg
 from .sympy_problem import SympyProblem
 
+from .sing_ihz import _n_basis_dict
+from .sing_ihz import _nterms
+
+from ps.zmethod import ZMethod
 
 class SingIH_Problem(SympyProblem, SingularKnown):
 
@@ -16,15 +20,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
 
     k = 6.75
 
-    n_basis_dict = {
-        16: (25, 5),
-        32: (30, 17),
-        64: (40, 21),
-        128: (65, 30),
-        256: (80, 45),
-        512: (80, 45),
-        1024: (80, 45),
-    }
+    n_basis_dict = _n_basis_dict
 
     def __init__(self, **kwargs):
         #g = kwargs.pop('g')
@@ -51,7 +47,6 @@ class SingIH_Problem(SympyProblem, SingularKnown):
                 modules=lambdify_modules)
 
         self.eval_regfunc = my_lambdify(v_asympt)
-
         super().__init__(**kwargs)
 
     def eval_bc(self, arg, sid):
@@ -59,7 +54,7 @@ class SingIH_Problem(SympyProblem, SingularKnown):
         r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
 
         if r <= 0:
-            return 0
+            return -self.eval_bc(-arg, sid)
 
         return self.eval_bc__noreg(arg, sid) - self.eval_regfunc(r, th)
 
@@ -81,13 +76,26 @@ class IH_Bessel(SingIH_Problem):
 
         v_asympt0 = 0
 
-        for l in range(3):
+        for l in range(_nterms):
             x = (K+1/2)*nu + l + 1
             v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
 
         v_asympt0 *= kr2**((K+1/2)*nu)
 
         v_asympt = v_asympt0 * sympy.sin(nu*(K+1/2)*(th-a))
+
+        # Taper v_asympt to 0 away from the tip
+        x = sympy.symbols('x')
+        p = sympy.Piecewise(
+            (0, x < 0),
+            (x**7*(924*x**6 - 6006*x**5 + 16380*x**4 -
+                24024*x**3 + 20020*x**2 - 9009*x + 1716), x <= 1),
+            (1, x > 1),
+        )
+
+        r1 = ZMethod.R0
+        r2 = 2.3
+        v_asympt = p.subs(x, 1-(r-r1)/(r2-r1))*v_asympt
 
         kwargs['v_asympt'] = v_asympt
         super().__init__(**kwargs)
@@ -112,23 +120,40 @@ class I_Bessel(IH_Bessel):
     expected_known = True
 
     def eval_bc__noreg(self, arg, sid):
+        # r > 0 only
         a = self.a
         nu = self.nu
         k = self.k
 
         r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-        if sid == 0:
-            return self.eval_v(r, th)
-        elif sid == 1:
-            if r > 0:
-                return self.eval_v(r, th)
-            else:
-                return 0
-        elif sid == 2:
-            return 0
+        return self.eval_v(r, th)
 
     def eval_expected_polar(self, r, th):
-        if r == 0:
-            return 0
+        #if r == 0:
+        #    return 0
 
         return self.eval_v(r, th) - self.eval_regfunc(r, th)
+
+
+class I_Bessel2(IH_Bessel):
+    """
+    a coefficients are all 0
+    """
+
+    expected_known = True
+
+    def eval_bc__noreg(self, arg, sid):
+        # r > 0 only
+        a = self.a
+        nu = self.nu
+        k = self.k
+
+        r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
+        x = r*np.cos(th)
+        return self.eval_v(r, th) + np.sin(k*x)
+
+    def eval_expected_polar(self, r, th):
+        #if r == 0:
+        #    return 0
+        x = r*np.cos(th)
+        return self.eval_v(r, th) + np.sin(self.k*x) - self.eval_regfunc(r, th)

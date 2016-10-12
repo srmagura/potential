@@ -127,8 +127,8 @@ if __name__ == '__main__':
         'problem': problem,
         'scheme_order': 4,
         'fake_grid': False,
-        'n_circle': 120,
-        'n_radius': 60,
+        'n_circle': 115,
+        'n_radius': 30,
     }
 
     if options['fake_grid']:

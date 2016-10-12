@@ -215,6 +215,12 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         #result.error = 0.
         #return result
 
+        #r_data = np.arange(0, 2.3, .001)
+        #f_data = np.array([self.problem.eval_f_polar(r, 1) for r in r_data])
+        #import matplotlib.pyplot as plt
+        #plt.plot(r_data, f_data)
+        #plt.show()
+
         self.calc_c0()
 
         '''

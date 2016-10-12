@@ -13,21 +13,23 @@ from .problem import PizzaProblem
 
 # These are very different than "real" problems since zmethod is used
 
+_n_basis_dict = {
+    16: (50, 50),
+    #32: (30, 17),
+    #64: (40, 21),
+    #128: (65, 30),
+    #256: (80, 45),
+    #512: (80, 45),
+    #1024: (80, 45),
+}
+
 class SingIH_Problem(PizzaProblem):
 
     zmethod = True
 
     k = 6.75
 
-    n_basis_dict = {
-        16: (25, 5),
-        32: (30, 17),
-        64: (40, 21),
-        128: (65, 18),
-        256: (80, 30),
-        512: (80, 45),
-        1024: (80, 45),
-    }
+    n_basis_dict = _n_basis_dict
 
     m1_dict = {
         'arc': 7,
@@ -96,7 +98,6 @@ class IH_Bessel(SingIH_Problem):
         K = self.K
 
         return jv((K+1/2)*nu, k*r) * np.sin((K+1/2)*nu* (th-a))
-
 
 
 class IZ_Bessel(IH_Bessel):

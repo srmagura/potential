@@ -151,6 +151,7 @@ class PsDebug:
 
         print('c0 error:', np.max(np.abs(exact_data - expansion_data)))
 
+
         #exact_data_outer = np.array(exact_data_outer)
         #expansion_data_outer = np.array(expansion_data_outer)
         #print('c0 error outer:', np.max(np.abs(exact_data_outer - expansion_data_outer)))

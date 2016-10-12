@@ -13,16 +13,16 @@ class SmoothProblem(PizzaProblem):
     expected_known = True
     hreg = HReg.none
 
-    k = 5.5
+    k = 6.75
 
     n_basis_dict = {
-        16: (24, 6),
-        32: (33, 8),
-        64: (42, 12),
-        128: (65, 18),
-        256: (80, 30),
-        512: (80, 45),
-        1024: (80, 45),
+        16: (115, 30),
+        #32: (33, 8),
+        #64: (42, 12),
+        #128: (65, 18),
+        #256: (80, 30),
+        #512: (80, 45),
+        #1024: (80, 45),
     }
 
     def eval_bc(self, arg, sid):
@@ -118,18 +118,16 @@ class Smooth_YCos2(SympyProblem, SmoothProblem):
         k, r, th = sympy.symbols('k r th')
         sin = sympy.sin
         cos = sympy.cos
-        kwargs['f_expr'] = (k**2 - 1) * r * sin(th) * cos(r * cos(th)) + k**2*r**8 + 64*r**6
+        kwargs['f_expr'] = (k**2 - 1) * r * sin(th) * cos(r * cos(th))
         super().__init__(**kwargs)
 
     def eval_expected(self, x, y):
         r, th = domain_util.cart_to_polar(x, y)
-        return y*np.cos(x) + r**8
+        return y*np.cos(x) + np.sin(self.k*x)
 
-    def get_grad(self, x, y):
-        grad = np.array([-y*np.sin(x), np.cos(x)])
-        grad += np.array([8*x*(x**2 + y**2)**3, 8*y*(x**2 + y**2)**3])
-
-        return grad
+    #def get_grad(self, x, y):
+    #    grad = np.array([-y*np.sin(x), np.cos(x)])
+    #    return grad
 
 class Smooth_YCos3(SympyProblem, SmoothProblem):
     """
