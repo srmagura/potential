@@ -7,10 +7,10 @@ import abcoef
 import fourier
 
 # Recommended: 1024
-fourier_N = 128
+fourier_N = 1024
 
 # Recommended: 1e-12
-atol = rtol = 1e-5
+atol = rtol = 1e-12
 
 # Default: 500?
 mxstep = 3000

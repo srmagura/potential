@@ -7,7 +7,6 @@ import argparse
 import numpy as np
 
 import problems
-from problems.singular import HReg
 
 import ps.ps
 import ps.zmethod
@@ -50,9 +49,6 @@ args = parser.parse_args()
 problem = problems.problem_dict[args.problem]()
 boundary = problems.boundary.boundaries[args.boundary](problem.R, k=problem.k)
 problem.set_boundary(boundary)
-
-if args.acheat:
-    problem.hreg = HReg.acheat
 
 N_list = get_N_list(args.N, args.c)
 

@@ -6,7 +6,6 @@ from chebyshev import eval_dn_T_t, get_chebyshev_roots
 import abcoef
 import domain_util
 
-from problems.singular import HReg
 
 class PsBasis:
     """
@@ -85,50 +84,6 @@ class PsBasis:
             return (d_g_inv_arg)**n * eval_dn_T_t(n, J, t)
         else:
             return 0
-
-    def calc_a_coef(self):
-        """
-        Calculate the coefficients necessary to remove the homogeneous
-        part of the singularity, using one of several metods.
-        """
-        hreg = self.problem.hreg
-        eval_bc0 = None
-
-        if hreg == HReg.acheat:
-            if hasattr(self.problem, 'fft_a_coef'):
-                self.a_coef = self.problem.fft_a_coef[:self.M]
-            else:
-                def eval_bc0(th):
-                    r = self.boundary.eval_r(th)
-                    return self.problem.eval_bc__noreg(th, 0) - self.problem.eval_v(r, th)
-
-        elif hreg == HReg.linsys:
-
-            def eval_bc0(th):
-                return self.problem.eval_bc(th, 0)
-
-        else:
-            assert hreg == HReg.none
-            self.a_coef = np.zeros(self.M)
-
-
-        if eval_bc0 is not None:
-            m1 = self.problem.get_m1()
-            self.a_coef = abcoef.calc_a_coef(self.problem, self.boundary,
-                eval_bc0, self.M, m1)[0]
-            self.problem.a_coef = self.a_coef
-
-            if(self.boundary.name == 'arc' and
-                hasattr(self.problem, 'fft_a_coef')):
-                error = np.max(np.abs(self.a_coef - self.problem.fft_a_coef[:self.M]))
-                print('a_coef error:', error)
-
-            np.set_printoptions(precision=15)
-            print()
-            print('a_coef:')
-            print(scipy.real(self.a_coef))
-            print()
-
 
     def get_chebyshev_coef(self, sid, func):
         """

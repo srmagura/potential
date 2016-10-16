@@ -1,3 +1,7 @@
+"""
+Script for running multiple problems on several different boundaries
+with one command. Saves the output of each run to a file
+"""
 import os
 import subprocess
 import itertools as it
@@ -8,7 +12,7 @@ OUT_DIR_noescape = r'/Users/sam/Google Drive/research/output/'
 
 #problem_list = ('trace-sine-range', 'shift-hat', 'shift-parabola',
 #    'shift-line-sine',)
-problem_list = ('ihz-bessel-quadratic',)
+problem_list = ('ihz-bessel-line',)
 boundary_list = ('arc', 'outer-sine', 'inner-sine', 'cubic', 'sine7',)
 
 args = '-c 1024'

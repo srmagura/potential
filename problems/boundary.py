@@ -188,14 +188,9 @@ class Cubic(Boundary):
     name = 'cubic'
     r_expr_str = 'R + bet/C*(th-a)*(th-pi)*(th-2*pi)'
 
-    bet0 = 0.2
+    bet0 = 0.075
     additional_params = {'C': cubic_C}
 
-    def set_bet(self, k):
-        if k == 10.75:
-            self.bet = .015
-        else:
-            self.bet = self.bet0
 
 _boundary_cls = (Arc, OuterSine, InnerSine, Sine7, Cubic)
 

@@ -7,21 +7,39 @@ import sympy
 import domain_util
 
 import problems.functions as functions
-from .singular import SingularKnown, HReg
+from .singular import SingularKnown
 from .sympy_problem import SympyProblem
 from .problem import PizzaProblem
+
+from ps.zmethod import ZMethod
 
 # These are very different than "real" problems since zmethod is used
 
 _n_basis_dict = {
-    16: (50, 50),
-    #32: (30, 17),
-    #64: (40, 21),
-    #128: (65, 30),
-    #256: (80, 45),
-    #512: (80, 45),
-    #1024: (80, 45),
+    16: (25, 5),
+    32: (30, 20),
+    64: (40, 30),
+    128: (55, 40),
+    256: (70, 50),
 }
+
+def get_tapering_func(R):
+    """
+    A function that smoothly decreases from 1 to 0 between values r1
+    and r2. Used to prevent v_asympt from becoming very large near
+    outer boundary
+    """
+    r, x = sympy.symbols('r x')
+    p = sympy.Piecewise(
+        (0, x < 0),
+        (x**7*(924*x**6 - 6006*x**5 + 16380*x**4 -
+            24024*x**3 + 20020*x**2 - 9009*x + 1716), x <= 1),
+        (1, x > 1),
+    )
+
+    r1 = ZMethod.R0
+    r2 = R
+    return p.subs(x, 1-(r-r1)/(r2-r1))
 
 class SingIH_Problem(PizzaProblem):
 
@@ -78,7 +96,7 @@ class IH_Bessel(SingIH_Problem):
 
         self.v_asympt = (
             get_v_asympt0(K, k, nu) * sympy.sin((K+1/2)*nu*(th-a))
-        )
+        ) * get_tapering_func(R)
 
         self.v_series = get_v_asympt0(K, k, nu, nterms=10)* sympy.sin((K+1/2)*nu*(th-a))
 
@@ -164,7 +182,7 @@ class IHZ_Bessel_Quadratic(SingIH_Problem):
         self.v_asympt = (
             v_asympt01 * sympy.sin(nu/2*(th-a)) +
             v_asympt03 * sympy.sin(3*nu/2*(th-2*np.pi))
-        )
+        ) * get_tapering_func(self.R)
 
         self.g = (
             (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt01)
@@ -193,7 +211,6 @@ class IHZ_Bessel_Quadratic(SingIH_Problem):
         p = lambda th: (th-a) * (th - (2*np.pi-a)) / (a*(2*np.pi - a))
 
         return jv(3*nu/2, k*r) + (jv(nu/2, k*r) - jv(3*nu/2, k*r)) * p(th)
-        #return self.eval_v(r, th) #FIXME
 
     def eval_phi1(self, r):
         if r > 0:

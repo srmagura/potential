@@ -11,7 +11,6 @@ from scipy.fftpack import dst
 from problems.problem import PizzaProblem
 from problems.sympy_problem import SympyProblem
 from problems.boundary import Arc
-from problems.singular import HReg
 
 import ps.ps
 import ps.ode
@@ -361,8 +360,6 @@ class ZMethod:
         expected_known = self.problem.name == 'iz-bessel'
 
         class u_BVP(SympyProblem, PizzaProblem):
-
-            hreg = HReg.none
 
             def __init__(self):
                 self.k = k

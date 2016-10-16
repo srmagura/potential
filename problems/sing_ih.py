@@ -6,17 +6,12 @@ import sympy
 
 import domain_util
 
-from .singular import SingularKnown, HReg
+from .singular import SingularKnown
 from .sympy_problem import SympyProblem
 
-from .sing_ihz import _n_basis_dict
-from .sing_ihz import _nterms
-
-from ps.zmethod import ZMethod
+from .sing_ihz import _n_basis_dict, _nterms, get_tapering_func
 
 class SingIH_Problem(SympyProblem, SingularKnown):
-
-    hreg = HReg.ode
 
     k = 6.75
 
@@ -81,21 +76,10 @@ class IH_Bessel(SingIH_Problem):
             v_asympt0 += (-1)**l/(factorial(l)*gamma(x)) * kr2**(2*l)
 
         v_asympt0 *= kr2**((K+1/2)*nu)
-
         v_asympt = v_asympt0 * sympy.sin(nu*(K+1/2)*(th-a))
 
-        # Taper v_asympt to 0 away from the tip
-        x = sympy.symbols('x')
-        p = sympy.Piecewise(
-            (0, x < 0),
-            (x**7*(924*x**6 - 6006*x**5 + 16380*x**4 -
-                24024*x**3 + 20020*x**2 - 9009*x + 1716), x <= 1),
-            (1, x > 1),
-        )
-
-        r1 = ZMethod.R0
-        r2 = 2.3
-        v_asympt = p.subs(x, 1-(r-r1)/(r2-r1))*v_asympt
+        tapering_func = get_tapering_func(R)
+        v_asympt = tapering_func*v_asympt
 
         kwargs['v_asympt'] = v_asympt
         super().__init__(**kwargs)
@@ -133,27 +117,3 @@ class I_Bessel(IH_Bessel):
         #    return 0
 
         return self.eval_v(r, th) - self.eval_regfunc(r, th)
-
-
-class I_Bessel2(IH_Bessel):
-    """
-    a coefficients are all 0
-    """
-
-    expected_known = True
-
-    def eval_bc__noreg(self, arg, sid):
-        # r > 0 only
-        a = self.a
-        nu = self.nu
-        k = self.k
-
-        r, th = domain_util.arg_to_polar(self.boundary, self.a, arg, sid)
-        x = r*np.cos(th)
-        return self.eval_v(r, th) + np.sin(k*x)
-
-    def eval_expected_polar(self, r, th):
-        #if r == 0:
-        #    return 0
-        x = r*np.cos(th)
-        return self.eval_v(r, th) + np.sin(self.k*x) - self.eval_regfunc(r, th)

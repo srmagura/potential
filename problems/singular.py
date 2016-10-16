@@ -10,8 +10,6 @@ import abcoef
 
 from .problem import PizzaProblem
 
-HReg = enum.Enum('EType', 'none acheat linsys ode')
-
 class SingularProblem(PizzaProblem):
     """
     A problem that should be treated as if it has a singularity.

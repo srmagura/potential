@@ -8,7 +8,6 @@ from solver import Solver, Result
 from linop import apply_B
 import fourier
 import abcoef
-from problems.singular import HReg
 
 from ps.basis import PsBasis
 from ps.grid import PsGrid
@@ -228,7 +227,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         its Chebyshev series, which has coefficients c0. There is also an
         analogous function c1_test().
         '''
-        #self.c0_test(plot=False)
+        #self.c0_test(plot=True)
 
         self.solve_var()
 

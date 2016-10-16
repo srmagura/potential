@@ -5,7 +5,7 @@ import domain_util
 
 from .problem import PizzaProblem
 import problems.functions as functions
-from .singular import SingularKnown, HReg
+from .singular import SingularKnown
 
 _k = 9.75
 
@@ -22,7 +22,6 @@ _n_basis_dict = {
 class SingH_Trace(SingularKnown):
 
     homogeneous = True
-    hreg = HReg.linsys
 
     expected_known = True
     no_fourier = False
