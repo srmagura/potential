@@ -6,16 +6,19 @@ from chebyshev import eval_dn_T_t, get_chebyshev_roots
 import abcoef
 import domain_util
 
-
 class PsBasis:
     """
     Functionality related to the basis functions defined on the boundary.
     """
 
     N_SEGMENT = 3
+    eps = 1e-3
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if self.eps == 0:
+            print('FIXME: basis eps')
 
         # Used for computing Chebyshev expansions
         self.chebyshev_roots = get_chebyshev_roots(1024)
@@ -48,7 +51,7 @@ class PsBasis:
                 JJ += 1
 
     def get_span_center(self, sid):
-        eps = 1e-3
+        eps = self.eps
 
         if sid == 0:
             span = np.pi - .5*self.a + eps

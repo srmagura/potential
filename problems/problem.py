@@ -44,7 +44,7 @@ class Problem:
         return self.eval_f(x, y)
 
 
-_a = np.pi / 6
+_a = np.pi / 2
 _nu = np.pi / (2*np.pi - _a)
 
 class PizzaProblem(Problem):

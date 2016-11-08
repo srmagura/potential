@@ -39,7 +39,8 @@ class ZMethod:
         self.nu = PizzaProblem.nu
         self.k = self.problem.k
 
-        self.arc_R = self.boundary.R + self.boundary.bet + 1
+        # FIXME
+        self.arc_R = self.boundary.R + self.boundary.bet # + 1
 
         self.do_algebra()
         self.calc_z1_fourier()
@@ -356,10 +357,13 @@ class ZMethod:
         eval_expected_polar = self.problem.eval_expected_polar
 
         a_coef = self.a_coef
+        _n_basis_dict = self.problem.n_basis_dict
 
         expected_known = self.problem.name == 'iz-bessel'
 
         class u_BVP(SympyProblem, PizzaProblem):
+
+            n_basis_dict = _n_basis_dict
 
             def __init__(self):
                 self.k = k

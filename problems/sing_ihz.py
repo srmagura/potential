@@ -15,13 +15,26 @@ from ps.zmethod import ZMethod
 
 # These are very different than "real" problems since zmethod is used
 
+
 _n_basis_dict = {
     16: (25, 5),
     32: (30, 20),
     64: (40, 30),
     128: (55, 40),
-    256: (70, 50),
+    256: (70, 60),
+    #512: (90, 60),
+    #1024: (110, 60),
 }
+
+'''_n_basis_dict  = {
+    16: (21, 9),
+    32: (28, 9),
+    64: (34, 17),
+    128: (40, 24),
+    256: (45, 29),
+#    None: (53, 50)
+    #None: (65, 34)
+}'''
 
 def get_tapering_func(R):
     """
@@ -45,8 +58,6 @@ class SingIH_Problem(PizzaProblem):
 
     zmethod = True
 
-    k = 6.75
-
     n_basis_dict = _n_basis_dict
 
     m1_dict = {
@@ -57,7 +68,7 @@ class SingIH_Problem(PizzaProblem):
         'sine7': 200,
     }
 
-_nterms = 3
+_nterms = 2
 print('FS nterms:', _nterms)
 
 alt_phi1_ext = False
@@ -80,6 +91,7 @@ def get_v_asympt0(K, k, nu, nterms=_nterms):
 class IH_Bessel(SingIH_Problem):
     """ Abstract class. """
 
+    k = 6.75
     expected_known = False
     K = 0
 
@@ -167,6 +179,7 @@ class IHZ_Bessel_Line(IH_Bessel):
 
 class IHZ_Bessel_Quadratic(SingIH_Problem):
 
+    k = 10.75
     expected_known = False
 
     def __init__(self, **kwargs):
@@ -184,9 +197,14 @@ class IHZ_Bessel_Quadratic(SingIH_Problem):
             v_asympt03 * sympy.sin(3*nu/2*(th-2*np.pi))
         ) * get_tapering_func(self.R)
 
+        self.v_series = (
+            get_v_asympt0(0, k, nu, nterms=10) * sympy.sin(nu/2*(th-a)) +
+            get_v_asympt0(1, k, nu, nterms=10) * sympy.sin(3*nu/2*(th-2*np.pi))
+        )
+
         self.g = (
-            (th - a) / (2*np.pi - a) * (sympy.besselj(nu/2, k*r) - v_asympt01)
-            + (th - 2*np.pi) / (a - 2*np.pi) * (sympy.besselj(3*nu/2, k*r) - v_asympt03)
+            (th - a) / (2*np.pi - a) * sympy.besselj(nu/2, k*r)
+            + (th - 2*np.pi) / (a - 2*np.pi) * sympy.besselj(3*nu/2, k*r)
         )
 
     def eval_v(self, r, th):
