@@ -1,8 +1,9 @@
 import numpy as np
+from ps.extend import EType
 
 class PsGrid:
 
-    def ps_construct_grids(self, scheme_order):
+    '''def ps_construct_grids(self, scheme_order):
         self.construct_grids(scheme_order)
 
         R = self.R # remove eventually?
@@ -100,3 +101,163 @@ class PsGrid:
         for sid in range(3):
             self.union_gamma |= set(self.all_gamma[sid])
         self.union_gamma = list(self.union_gamma)
+
+    def ps_grid_dist_test(self):
+        def get_dist(node, setype):
+            def dformula(x0, y0, _x, _y):
+                return np.sqrt((x0-_x)**2 + (y0-_y)**2)
+
+            x, y = self.get_coord(*node)
+            dist = -1
+            R = self.R
+            a = self.a
+
+            if setype == (0, EType.standard):
+                n, th = self.boundary.get_boundary_coord(
+                    *self.get_polar(*node)
+                )
+                dist = abs(n)
+
+            elif setype == (0, EType.left):
+                x0, y0 = (R*np.cos(a), R*np.sin(a))
+                dist = dformula(x0, y0, x, y)
+
+            elif setype == (0, EType.right):
+                x0, y0 = (R, 0)
+                dist = dformula(x0, y0, x, y)
+
+            elif setype == (1, EType.standard):
+                dist = abs(y)
+
+            elif setype == (1, EType.left):
+                x0, y0 = (0, 0)
+                dist = dformula(x0, y0, x, y)
+
+            elif setype == (1, EType.right):
+                x0, y0 = (R, 0)
+                dist = dformula(x0, y0, x, y)
+
+            elif setype == (2, EType.standard):
+                dist = self.dist_to_radius(2, x, y)
+
+            elif setype == (2, EType.left):
+                x0, y0 = (0, 0)
+                dist = dformula(x0, y0, x, y)
+
+            elif setype == (2, EType.right):
+                x0, y0 = (R*np.cos(a), R*np.sin(a))
+                dist = dformula(x0, y0, x, y)
+
+            return dist
+
+        all_gamma2 = {0: set(), 1: set(), 2: set()}
+
+        for node in self.union_gamma:
+            for sid in (0, 1, 2):
+                etype = self.get_etype(sid, *node)
+                setype = (sid, etype)
+                dist = get_dist(node, setype)
+
+                h = self.AD_len / self.N
+                if dist <= h*np.sqrt(2):
+                    all_gamma2[sid].add(node)
+
+        for sid in (0, 1, 2):
+            print('=== {} ==='.format(sid))
+            diff = all_gamma2[sid] - set(self.all_gamma[sid])
+            print('all_gamma2 - all_gamma:', all_gamma2[sid] - set(self.all_gamma[sid]))
+            for node in diff:
+                print('{}: x={}  y={}'.format(node, *self.get_coord(*node)))
+
+            print('all_gamma - all_gamma2:', set(self.all_gamma[sid]) - all_gamma2[sid])
+            print()
+
+        #assert self.all_gamma == all_gamma2
+'''
+
+    def ps_construct_grids(self, scheme_order):
+        self.construct_grids(scheme_order)
+
+        Nplus = set()
+        Nminus = set()
+
+        for i, j in self.M0:
+            Nm = set([(i, j), (i-1, j), (i+1, j), (i, j-1), (i, j+1)])
+
+            if scheme_order > 2:
+                Nm |= set([(i-1, j-1), (i+1, j-1), (i-1, j+1),
+                    (i+1, j+1)])
+
+            if (i, j) in self.global_Mplus:
+                Nplus |= Nm
+            elif (i, j) in self.global_Mminus:
+                Nminus |= Nm
+
+        self.union_gamma = list(Nplus & Nminus)
+
+
+        def get_dist(node, setype):
+            def dformula(x0, y0, _x, _y):
+                return np.sqrt((x0-_x)**2 + (y0-_y)**2)
+
+            x, y = self.get_coord(*node)
+            dist = -1
+            R = self.R
+            a = self.a
+
+            if setype == (0, EType.standard):
+                n, th = self.boundary.get_boundary_coord(
+                    *self.get_polar(*node)
+                )
+                dist = abs(n)
+
+            elif setype == (0, EType.left):
+                x0, y0 = (R*np.cos(a), R*np.sin(a))
+                dist = dformula(x0, y0, x, y)
+
+            elif setype == (0, EType.right):
+                x0, y0 = (R, 0)
+                dist = dformula(x0, y0, x, y)
+
+            elif setype == (1, EType.standard):
+                dist = abs(y)
+
+            elif setype == (1, EType.left):
+                x0, y0 = (0, 0)
+                dist = dformula(x0, y0, x, y)
+
+            elif setype == (1, EType.right):
+                x0, y0 = (R, 0)
+                dist = dformula(x0, y0, x, y)
+
+            elif setype == (2, EType.standard):
+                dist = self.dist_to_radius(2, x, y)
+
+            elif setype == (2, EType.left):
+                x0, y0 = (0, 0)
+                dist = dformula(x0, y0, x, y)
+
+            elif setype == (2, EType.right):
+                x0, y0 = (R*np.cos(a), R*np.sin(a))
+                dist = dformula(x0, y0, x, y)
+
+            return dist
+
+        self.all_gamma = {0: [], 1: [], 2: []}
+
+        for node in self.union_gamma:
+            r, th = self.get_polar(*node)
+            placed = False
+            for sid in (0, 1, 2):
+                etype = self.get_etype(sid, *node)
+                setype = (sid, etype)
+                dist = get_dist(node, setype)
+
+                h = self.AD_len / self.N
+                if dist <= h*np.sqrt(2):
+                    self.all_gamma[sid].append(node)
+                    placed = True
+
+            # Every node in union_gamma should go in at least one of the
+            # all_gamma sets
+            assert placed

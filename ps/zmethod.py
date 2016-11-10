@@ -39,8 +39,7 @@ class ZMethod:
         self.nu = PizzaProblem.nu
         self.k = self.problem.k
 
-        # FIXME
-        self.arc_R = self.boundary.R + self.boundary.bet # + 1
+        self.arc_R = self.boundary.R + self.boundary.bet
 
         self.do_algebra()
         self.calc_z1_fourier()

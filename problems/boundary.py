@@ -119,6 +119,7 @@ class Boundary:
         Given a point with polar coordinates (r1, th1), find its
         coordinates (n, th) with respect to the boundary.
         """
+        #print(r1,th1)
         x1 = r1 * np.cos(th1)
         y1 = r1 * np.sin(th1)
 
@@ -146,7 +147,13 @@ class Boundary:
         if ubound > 2*np.pi + self.a/2:
             ubound = 2*np.pi + self.a/2
 
-        th0 = brentq(eval_dist_deriv, lbound, ubound, xtol=1e-16)
+        try:
+            th0 = brentq(eval_dist_deriv, lbound, ubound, xtol=1e-16)
+        except ValueError:
+            # f(a) and f(b) have the same sign.
+            # This can only happen when the node is far from the
+            # outer boundary
+            return None
 
         # Get (absolute value of) n
         r = self.eval_r(th0)

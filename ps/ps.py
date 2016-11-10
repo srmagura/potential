@@ -48,8 +48,8 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
             assert 'n_radius' in options
             self.setup_basis(options['n_circle'], options['n_radius'])
 
+        self.boundary_coord_cache = {}
         self.ps_construct_grids(self.scheme_order)
-
         self.build_boundary_coord_cache()
 
         apsolver = fourier.APSolver(self.N, self.scheme_order, self.AD_len, self.k)
@@ -203,7 +203,6 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         """
         Q1, rhs = self.get_var()
         self.c1 = np.linalg.lstsq(Q1, rhs)[0]
-
 
     def run(self):
         """

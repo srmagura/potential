@@ -36,9 +36,15 @@ class PsExtend:
                 n, th = self.boundary_coord_cache[(i, j)]
             else:
                 # This can only happen during testing
-                n, th = self.boundary.get_boundary_coord(
+                result = self.boundary.get_boundary_coord(
                     *self.get_polar(i, j)
                 )
+
+                # Hack for grid construction
+                if result is None:
+                    return EType.right
+
+                n, th = result
 
             if th > 2*np.pi:
                 return EType.right
