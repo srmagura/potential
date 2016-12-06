@@ -2,7 +2,8 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 
-k = 9.75
+# TODO need to incorporate multiple values of k
+k = 6.75
 
 dms = 6.5
 data = [
@@ -38,10 +39,10 @@ for dct in data:
     plt.semilogy(m1, new_error, label=label,
         color=dct['color'], marker=dct['marker'], ms=dct['ms'],
         markevery=14)
-    #plt.plot(m1, singular_vals, label='s:{}'.format(boundary))
+
     plt.xlabel('$m_1$', fontsize=20)
-    plt.ylabel('max(error in $a_1$, ..., error in $a_M$)', fontsize=16)
+    plt.ylabel('max(error in $a_1$, ..., error in $a_\{M_w\}$)', fontsize=16)
 
 plt.legend(loc='upper right')
-#plt.savefig('/Users/sam/Google Drive/research/writeup/images/m1trend.pdf')
+plt.savefig('/Users/sam/Google Drive/research/output/m1trend.pdf')
 plt.show()

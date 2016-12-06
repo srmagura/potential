@@ -64,10 +64,9 @@ def go(problem_name, boundary_name):
     outfile = open(sys.path[0] + '/' + fname, 'w')
     json.dump(output, outfile)
 
-_problems = ['trace-line-sine']#['trace-hat', 'trace-line-sine', 'trace-parabola']
-#_boundaries = ['outer-sine', 'sine7']
-_boundaries = ['inner-sine', 'cubic']
-m1_list = range(8, 275, 5)
+_problems = ['trace-hat', 'trace-line-sine', 'trace-parabola']
+_boundaries = ['outer-sine', 'sine7', 'inner-sine', 'cubic']
+m1_list = range(10, 276, 5)
 n_tests = len(m1_list) * len(_problems) * len(_boundaries)
 
 for problem_name in _problems:

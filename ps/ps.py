@@ -186,6 +186,15 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
         Chebyshev coefficients).
         """
         Q0 = self.get_Q(0)
+
+        # This stuff was for not using c0, just using the boundary data
+        # function as is
+        #self.c1 = np.zeros(len(self.c0))
+        #ext = self.extend_boundary(homogeneous_only=True)
+        #potential = self.get_potential(ext)
+        #projection = self.get_trace(potential)
+        #Q0c0 = projection - ext
+
         Q1 = self.get_Q(1)
 
         # Compute the RHS of the variational formulation.
@@ -194,6 +203,7 @@ class PizzaSolver(Solver, PsBasis, PsGrid, PsExtend, PsInhomo, PsDebug):
 
         term = self.get_trace(proj_f + self.ap_sol_f)
         rhs = -Q0.dot(self.c0) + ext_f - term
+        #rhs = -Q0c0 + ext_f - term
 
         return (Q1, rhs)
 

@@ -3,6 +3,7 @@ from ps.extend import EType
 
 class PsGrid:
 
+    # FIXME old way is deprecated
     '''def ps_construct_grids(self, scheme_order):
         self.construct_grids(scheme_order)
 
@@ -178,8 +179,8 @@ class PsGrid:
     def ps_construct_grids(self, scheme_order):
         self.construct_grids(scheme_order)
 
-        Nplus = set()
-        Nminus = set()
+        self.Nplus = set()
+        self.Nminus = set()
 
         for i, j in self.M0:
             Nm = set([(i, j), (i-1, j), (i+1, j), (i, j-1), (i, j+1)])
@@ -189,11 +190,11 @@ class PsGrid:
                     (i+1, j+1)])
 
             if (i, j) in self.global_Mplus:
-                Nplus |= Nm
+                self.Nplus |= Nm
             elif (i, j) in self.global_Mminus:
-                Nminus |= Nm
+                self.Nminus |= Nm
 
-        self.union_gamma = list(Nplus & Nminus)
+        self.union_gamma = list(self.Nplus & self.Nminus)
 
 
         def get_dist(node, setype):

@@ -1,34 +1,29 @@
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-from tabulate import tabulate
+import itertools as it
 
-problem = 'trace-line-sine'
-boundary_list = ['inner-sine', 'cubic', 'outer-sine', 'sine7']
-m1 = 200
+_problems = ['trace-hat', 'trace-line-sine', 'trace-parabola']
+_boundaries = ['outer-sine', 'sine7', 'inner-sine', 'cubic']
+_k = [3.25, 6.75, 10.75]
 
-table = []
+for problem, boundary, k in it.product(_problems, _boundaries, _k):
+    data = json.load(open('m1trend_{}_{}_{}.dat'.format(problem, boundary, k)))
 
-def number_fmt(x):
-    s = 'mony1{:.0e}mony2'.format(x)
-    #s = s.replace('e', 'ehere')
-    return s
+    m1 = np.array(data['m1_data'])
 
-for boundary in boundary_list:
-    data = json.load(open('m1trend_{}_{}.dat'.format(problem, boundary)))
+    new_error = []
+    singular_vals = []
+    for i in range(len(data['error'])):
+        new_error.append(np.max(data['error'][i]))
+        singular_vals.append(data['singular_vals'][i][-1])
 
-    i = data['m1_data'].index(m1)
-    error = data['error'][i]
-    new_error = [number_fmt(x) for x in error]
-    table.append([boundary] + new_error)
+    label = '({}, {})'.format(problem, boundary)
+    plt.semilogy(m1, new_error, label=label, markevery=14)
 
-headers = ['Boundary']
-for m in range(1, 8):
-    headers.append('acoef{}aend error'.format(m))
+plt.xlabel('$m_1$', fontsize=20)
+plt.ylabel('max(error in $a_1$, ..., error in $a_{M_w}$)', fontsize=16)
 
-s = tabulate(table, headers=headers, tablefmt='latex_booktabs')
-s = s.replace('acoef', '$a_').replace('aend', '$')
-#s = s.replace('ehere', '\\text{e}')
-s = s.replace('mony1', '\\num{')
-s = s.replace('mony2', '}')
-print(s)
+#plt.legend(loc='upper right')
+plt.savefig('/Users/sam/Google Drive/research/output/m1raw.pdf')
+plt.show()

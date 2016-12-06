@@ -22,8 +22,8 @@ _n_basis_dict = {
     64: (40, 30),
     128: (55, 40),
     256: (70, 60),
-    #512: (90, 60),
-    #1024: (110, 60),
+    512: (90, 60),
+    1024: (110, 60),
 }
 
 '''_n_basis_dict  = {
@@ -35,6 +35,12 @@ _n_basis_dict = {
 #    None: (53, 50)
     #None: (65, 34)
 }'''
+
+_nterms = 2
+print('FS nterms:', _nterms)
+
+alt_phi1_ext = False
+print('ihz-bessel-line alternate phi1 extension:', alt_phi1_ext)
 
 def get_tapering_func(R):
     """
@@ -68,11 +74,7 @@ class SingIH_Problem(PizzaProblem):
         'sine7': 200,
     }
 
-_nterms = 2
-print('FS nterms:', _nterms)
 
-alt_phi1_ext = False
-print('ihz-bessel-line alternate phi1 extension:', alt_phi1_ext)
 
 def get_v_asympt0(K, k, nu, nterms=_nterms):
     v_asympt0 = 0

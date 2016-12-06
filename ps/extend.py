@@ -23,7 +23,7 @@ def get_deriv_name(order, index):
 
 class PsExtend:
 
-    taylor_n_terms = 6
+    taylor_n_terms = 5
 
     def get_etype(self, sid, i, j):
         a = self.a
@@ -126,6 +126,17 @@ class PsExtend:
         derivs = {}
 
         for (order, index) in deriv_types:
+            # This stuff was for not using c0, just using the boundary data
+            # function as is
+            '''if index == 0:
+                phi = self.problem.phi_expr[sid]
+                if sid == 0:
+                    argsym = sympy.symbols('th')
+                else:
+
+
+                deriv = sympy.diff(phi, argsym, order)'''
+
             deriv = 0
             for JJ in JJ_list:
                 dn_B_arg = self.eval_dn_B_arg(order, JJ, arg, sid)
