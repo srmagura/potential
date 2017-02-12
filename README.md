@@ -43,10 +43,10 @@ There will undoubtedly be differences in variable names when comparing this soft
 
 Here are some naming conventions that are used throughout the project:
 
-Segment ID's -- 0 for outer boundary, 1 for lower radius, 2 for upper radius
-n_<something> -- shorthand notation for "number of <something>'s"
-eval_f(...) -- evaluate the (mathematical) function f
-d_f_x -- partial derivative of f with respect to x
-d2_f_x -- second partial derivative of f with respect to x
-d2_f_x_y -- partial derivative of f with respect to x and y (mixed partial)
-th -- shorthand for theta
+Segment ID's -- 0 for outer boundary, 1 for lower radius, 2 for upper radius   
+n_<something> -- shorthand notation for "number of <something>'s"    
+eval_f(...) -- evaluate the (mathematical) function f    
+d_f_x -- partial derivative of f with respect to x    
+d2_f_x -- second partial derivative of f with respect to x   
+d2_f_x_y -- partial derivative of f with respect to x and y (mixed partial)   
+th -- shorthand for theta   
