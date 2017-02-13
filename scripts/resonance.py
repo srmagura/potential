@@ -1,4 +1,6 @@
 """
+WARNING: This script might not give the correct values. (Unsure)
+
 Print values of k for which a resonance will occur.
 
 Accepts the side length of the square auxiliary domain as a
